@@ -243,15 +243,6 @@ for p in tqdm(zip(paper_list, range(num_download))):
                 if os.path.exists(this_paper_path):
                     os.remove(this_paper_path)
                 break
-            # try:
-            #     if os.path.exists(f'.\\download_papers\\{title}_NIPS_2019_main.pdf'.replace(' ', '_')):
-            #         os.remove(f'.\\download_papers\\{title}_NIPS_2019_main.pdf'.replace(' ', '_'))
-            #     if os.path.exists(f'.\\download_papers\\{title}_NIPS_2019_supp.'.replace(' ', '_') + supp_type):
-            #         os.remove(f'.\\download_papers\\{title}_NIPS_2019_supp.'.replace(' ', '_') + supp_type)
-            #     if os.path.exists(f'.\\download_papers\\{title}_NIPS_2019_supp.zip'.replace(' ', '_')):
-            #         os.remove(f'.\\download_papers\\{title}_NIPS_2019_supp.zip'.replace(' ', '_'))
-            # except:
-            #     pass
             continue
 
     if not success_flag:
