@@ -23,5 +23,5 @@ tqdm (pip install tqdm)
 IDM  
 python3  
 selenium (pip install selenium)  
-slugify (pip install slugify) 
+slugify (pip install slugify)   
 tqdm (pip install tqdm)
