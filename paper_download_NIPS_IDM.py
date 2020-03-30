@@ -1,4 +1,4 @@
-"""paper_download_IDM.py"""
+"""paper_download_NIPS_IDM.py"""
 
 from urllib.request import urlopen
 import time
