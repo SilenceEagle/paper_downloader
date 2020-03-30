@@ -10,9 +10,13 @@ forx from [Han-Jia/NIPS2018_Download](https://github.com/Han-Jia/NIPS2018_Downlo
 
 ### required 
 IDM
+
 python3
+
 bs4 (pip install bs4)
+
 PyPDF3 (pip install PyPDF3)
+
 tqdm (pip install tqdm)
 
 ## [ICLR](https://iclr.cc/)
@@ -21,7 +25,11 @@ tqdm (pip install tqdm)
 
 ### required
 IDM
+
 python3
+
 selenium (pip install selenium)
+
 slugify (pip install slugify)
+
 tqdm (pip install tqdm)
