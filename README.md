@@ -6,7 +6,7 @@ Download papers and supplemental materials from paper website, such as **NIPS**,
 
 *paper_download_NIPS_IDM.py* uses the IDM to download NIPS papers, the supplemental material will be merged with the main paper into one single pdf file.
 
-forx from [Han-Jia/NIPS2018_Download](https://github.com/Han-Jia/NIPS2018_Download) and update it.
+fork from [Han-Jia/NIPS2018_Download](https://github.com/Han-Jia/NIPS2018_Download) and update it.
 
 ### required 
 IDM  
