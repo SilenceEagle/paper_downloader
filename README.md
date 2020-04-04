@@ -1,6 +1,6 @@
 # paper_downloader
 
-Download Papers and Supplementary from given website, such as **NIPS**, **ICLR**
+Download papers and supplemental materials from paper website, such as **NIPS**, **ICLR**
 
 ## [NIPS or NeurIPS](https://nips.cc/)
 
