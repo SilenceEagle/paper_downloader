@@ -14,6 +14,7 @@ python3
 bs4 (pip install bs4)  
 PyPDF3 (pip install PyPDF3)  
 tqdm (pip install tqdm)
+slugify (pip install slugify) 
 
 ## [ICLR](https://iclr.cc/)
 
