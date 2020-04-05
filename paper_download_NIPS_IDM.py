@@ -92,7 +92,7 @@ def download_paper_and_sup_IDM(year, save_dir, is_download_supplement=True):
 
         # try 1 time
         # error_flag = False
-        timeout_seconds = 20
+        timeout_seconds = 50
         for d_iter in range(1):
             try:
                 abs_content = urlopen(paper_website + url2, timeout=timeout_seconds).read()
@@ -221,7 +221,6 @@ def merge_main_supplement(main_path, supplement_path, save_path, is_delete_ori_f
                         zip_ref.extractall(temp_zip_dir)
                         zip_ref.close()
                     except Exception as e:
-                        error_floa = True
                         print('Error: ' + name + ' - ' + str(e))
                         error_log.append((paper.path, supp_pdf_path, str(e)))
                     try:
@@ -300,8 +299,8 @@ def merge_main_supplement(main_path, supplement_path, save_path, is_delete_ori_f
 
 
 if __name__ == '__main__':
-    # download_paper_and_sup_IDM(2016, '.\\NIPS_2016', is_download_supplement=False)
-    merge_main_supplement(main_path=r'C:\files\NIPS_2016\main_paper',
-                          supplement_path=r'C:\files\paper_downloader-masterNIPS_2016\supplement',
-                          save_path=r'C:\files\NIPS_2016',
-                          is_delete_ori_files=True)
+    # download_paper_and_sup_IDM(2015, '.\\NIPS_2015', is_download_supplement=True)
+    # merge_main_supplement(main_path=r'C:\files\paper_downloader-master\NIPS_2015\main_paper',
+    #                       supplement_path=r'C:\files\paper_downloader-master\NIPS_2015\supplement',
+    #                       save_path=r'C:\files\paper_downloader-master\NIPS_2015',
+    #                       is_delete_ori_files=True)
