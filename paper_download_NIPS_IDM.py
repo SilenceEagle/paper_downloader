@@ -93,7 +93,7 @@ def download_paper_and_sup_IDM(year, save_dir, is_download_supplement=True):
                 all_a = soup_temp.findAll('a')
                 paper_link = None
                 supp_link = None
-                for a in all_a[4:7]:
+                for a in all_a[4:9]:
                     if '[PDF]' == a.text:
                         paper_link = a.get('href')
                     elif '[Supplemental]' == a.text:
