@@ -34,29 +34,29 @@ tqdm (pip install tqdm)
 *paper_download_ICML_IDM.py* uses the IDM to download ICML 2013-2019 papers, the supplemental material will be merged with the main paper into one single pdf file.
 
 ### required
-IDM
-python3
-bs4 (pip install bs4)
-PyPDF3 (pip install PyPDF3)
-tqdm (pip install tqdm)
+IDM  
+python3  
+bs4 (pip install bs4)  
+PyPDF3 (pip install PyPDF3)  
+tqdm (pip install tqdm)  
 
 ## [AISTATS](https://www.aistats.org/)
 
 *paper_download_AISTATS_IDM.py* uses the IDM to download AISTATS 2007-2019 papers, the supplemental material will be merged with the main paper into one single pdf file.
 
 ### required
-IDM
-python3
-bs4 (pip install bs4)
-PyPDF3 (pip install PyPDF3)
-tqdm (pip install tqdm)
+IDM  
+python3  
+bs4 (pip install bs4)  
+PyPDF3 (pip install PyPDF3)  
+tqdm (pip install tqdm)  
 
 ## [COLT](http://learningtheory.org/colt2020/)
 
 *paper_download_COLT_IDM.py* uses the IDM to download COLT 2011-2019 papers.
 
 ### required
-IDM
-python3
-bs4 (pip install bs4)
-tqdm (pip install tqdm)
+IDM  
+python3  
+bs4 (pip install bs4)  
+tqdm (pip install tqdm)  
