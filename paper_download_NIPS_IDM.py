@@ -93,7 +93,7 @@ def download_paper_and_sup_IDM(year, save_dir, is_download_supplement=True):
                 all_a = soup_temp.findAll('a')
                 paper_link = None
                 supp_link = None
-                for a in all_a[4:9]:
+                for a in all_a[4:]:
                     if '[PDF]' == a.text:
                         paper_link = a.get('href')
                     elif '[Supplemental]' == a.text:
@@ -255,7 +255,7 @@ def merge_main_supplement(main_path, supplement_path, save_path, is_delete_ori_f
                             else:
                                 print('Cannot Remove - ' + os.path.join(temp_zip_dir, unzip_file))
                         continue
-                if supp_pdf_path is not None and not error_floa:
+                if supp_pdf_path is not None:
                     try:
                         merger = PdfFileMerger()
                         f_handle1 = open(paper.path, 'rb')
@@ -338,26 +338,29 @@ def save_csv(year):
 
             # get abstract page url
             url2 = this_paper.a.get('href')
-            try:
-                abs_content = urlopen(paper_website + url2, timeout=50).read()
-                soup_temp = BeautifulSoup(abs_content, 'html.parser')
-                # abstract = soup_temp.find('p', {'class': 'abstract'}).text.strip()
-                # paper_dict[title] = abstract
-                all_a = soup_temp.findAll('a')
-                for a in all_a[4:9]:
-                    if '[PDF]' == a.text:
-                        paper_dict['main link'] = paper_website + a.get('href')
-                    elif '[Supplemental]' == a.text:
-                        paper_dict['supplemental link'] = paper_website + a.get('href')
-                        break
-            except Exception as e:
-                print('Error: ' + title + ' - ' + str(e))
-                if paper_dict['main link'] == '':
-                    paper_dict['main link'] = 'error'
-                if paper_dict['supplemental link'] == '':
-                    paper_dict['supplemental link'] = 'error'
+            for i in range(3):  # try 3 times
+                try:
+                    abs_content = urlopen(paper_website + url2, timeout=50).read()
+                    soup_temp = BeautifulSoup(abs_content, 'html.parser')
+                    # abstract = soup_temp.find('p', {'class': 'abstract'}).text.strip()
+                    # paper_dict[title] = abstract
+                    all_a = soup_temp.findAll('a')
+                    for a in all_a[4:]:
+                        if '[PDF]' == a.text:
+                            paper_dict['main link'] = paper_website + a.get('href')
+                        elif '[Supplemental]' == a.text:
+                            paper_dict['supplemental link'] = paper_website + a.get('href')
+                            break
+                    break
+                except Exception as e:
+                    print('Error: ' + title + ' - ' + str(e))
+                    if i == 2:
+                        if paper_dict['main link'] == '':
+                            paper_dict['main link'] = 'error'
+                        if paper_dict['supplemental link'] == '':
+                            paper_dict['supplemental link'] = 'error'
             writer.writerow(paper_dict)
-            time.sleep(2)
+            time.sleep(1)
 
 
 def download_from_csv(year, save_dir, is_download_supplement=True):
@@ -456,14 +459,17 @@ def download_from_csv(year, save_dir, is_download_supplement=True):
 
 
 if __name__ == '__main__':
-    # year = 2011
+    # year = 2004
     # download_paper_and_sup_IDM(year, f'..\\NIPS_{year}', is_download_supplement=True)
     # merge_main_supplement(main_path=f'..\\NIPS_{year}\main_paper',
     #                       supplement_path=f'..\\NIPS_{year}\supplement',
     #                       save_path=f'..\\NIPS_{year}',
     #                       is_delete_ori_files=True)
     # download_from_csv(year, f'..\\NIPS_{year}', is_download_supplement=True)
-    for year in range(2010, 1987, -1):
-        print(year)
-        save_csv(year)
+    # for year in range(1997, 1986, -1):
+    #     print(year)
+    #     save_csv(year)
+    # for year in range(1996, 1986, -1):
+    #     print(year)
+    #     download_from_csv(year, f'..\\NIPS_{year}', is_download_supplement=True)
     pass
