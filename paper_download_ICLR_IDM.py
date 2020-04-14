@@ -11,6 +11,9 @@ import requests
 import os
 #https://stackoverflow.com/questions/295135/turn-a-string-into-a-valid-filename
 from slugify import slugify
+from bs4 import BeautifulSoup
+import pickle
+from urllib.request import urlopen
 
 
 def download_iclr_oral_papers(save_dir, driver_path, year, base_url=None):
@@ -23,6 +26,8 @@ def download_iclr_oral_papers(save_dir, driver_path, year, base_url=None):
             base_url = 'https://openreview.net/group?id=ICLR.cc/2019/Conference#accepted-oral-papers'
         elif year == 2020:
             base_url = 'https://openreview.net/group?id=ICLR.cc/2020/Conference#accept-talk'
+        else:
+            raise ValueError('the website url is not given for this year!')
     first_poster_index = {'2017': 15}
     paper_postfix = f'ICLR_{year}'
     error_log = []
@@ -41,6 +46,7 @@ def download_iclr_oral_papers(save_dir, driver_path, year, base_url=None):
     res = wait.until(EC.presence_of_element_located((By.CLASS_NAME, "note")))
     print("Successful load the website notes!->",res)
     # parse the results
+
     if year >= 2020:
         divs = driver.find_elements_by_xpath('//*[@id="accept-talk"]/ul/li')
     elif year >= 2018:
@@ -94,6 +100,8 @@ def download_iclr_poster_papers(save_dir, driver_path, year, base_url=None):
             base_url = 'https://openreview.net/group?id=ICLR.cc/2019/Conference#accepted-poster-papers'
         elif year == 2020:
             base_url = 'https://openreview.net/group?id=ICLR.cc/2020/Conference#accept-poster'
+        else:
+            raise ValueError('the website url is not given for this year!')
     first_poster_index={'2017': 15}
     first_workshop_title = {'2017': 'Learning Continuous Semantic Representations of Symbolic Expressions'}
     paper_postfix = f'ICLR_{year}'
@@ -158,6 +166,149 @@ def download_iclr_poster_papers(save_dir, driver_path, year, base_url=None):
             f.write('\n')
 
 
+def download_iclr_paper(year, save_dir):
+    """
+    download iclr conference paper for year 2014, 2015 and 2016
+    :param year: int, iclr year
+    :param save_dir: str, paper save path
+    :return: True
+    """
+    is_use_arxiv_mirror = True
+    paper_postfix = f'ICLR_{year}'
+    if year == 2016:
+        base_url = 'https://iclr.cc/archive/www/doku.php%3Fid=iclr2016:main.html'
+    elif year == 2015:
+        base_url = 'https://iclr.cc/archive/www/doku.php%3Fid=iclr2015:main.html'
+    elif year == 2014:
+        base_url = 'https://iclr.cc/archive/2014/conference-proceedings/'
+    else:
+        raise ValueError('the website url is not given for this year!')
+    os.makedirs(save_dir, exist_ok=True)
+    if year == 2015:  # oral and poster seperated
+        oral_save_path = os.path.join(save_dir, 'oral')
+        poster_save_path = os.path.join(save_dir, 'poster')
+        os.makedirs(oral_save_path, exist_ok=True)
+        os.makedirs(poster_save_path, exist_ok=True)
+    if os.path.exists(f'init_url_iclr_{year}.dat'):
+        with open(f'init_url_iclr_{year}.dat', 'rb') as f:
+            content = pickle.load(f)
+    else:
+        content = urlopen(base_url).read()
+        with open(f'init_url_iclr_{year}.dat', 'wb') as f:
+            pickle.dump(content, f)
+    error_log = []
+    soup = BeautifulSoup(content, 'html.parser')
+    print('open url successfully!')
+    if year == 2016:
+        papers = soup.find('h3', {'id': 'accepted_papers_conference_track'}).findNext('div').find_all('a')
+        for paper in tqdm(papers):
+            link = paper.get('href')
+            if link.startswith('http://arxiv'):
+                title = slugify(paper.text)
+                try:
+                    if not os.path.exists(os.path.join(save_dir, title+f'_{paper_postfix}.pdf')):
+                        pdf_link = get_pdf_link_from_arxiv(link, is_use_mirror=is_use_arxiv_mirror)
+                        print(f'downloading {title}')
+                        download_pdf_idm(pdf_link, os.path.join(save_dir, title+f'_{paper_postfix}.pdf'))
+                        time.sleep(5)
+                except Exception as e:
+                    # error_flag = True
+                    print('Error: ' + title + ' - ' + str(e))
+                    error_log.append((title, link, 'paper download error', str(e)))
+    elif year == 2015:
+        # oral papers
+        oral_papers = soup.find('h3', {'id': 'conference_oral_presentations'}).findNext('div').find_all('a')
+        for paper in tqdm(oral_papers):
+            link = paper.get('href')
+            if link.startswith('http://arxiv'):
+                title = slugify(paper.text)
+                try:
+                    if not os.path.exists(os.path.join(oral_save_path, title+f'_{paper_postfix}.pdf')):
+                        pdf_link = get_pdf_link_from_arxiv(link, is_use_mirror=is_use_arxiv_mirror)
+                        print(f'downloading {title}')
+                        download_pdf_idm(pdf_link, os.path.join(oral_save_path, title+f'_{paper_postfix}.pdf'))
+                        time.sleep(5)
+                except Exception as e:
+                    # error_flag = True
+                    print('Error: ' + title + ' - ' + str(e))
+                    error_log.append((title, link, 'paper download error', str(e)))
+
+        # poster papers
+        poster_papers = soup.find('h3', {'id': 'may_9_conference_poster_session'}).findNext('div').find_all('a')
+        for paper in tqdm(poster_papers):
+            link = paper.get('href')
+            if link.startswith('http://arxiv'):
+                title = slugify(paper.text)
+                try:
+                    if not os.path.exists(os.path.join(poster_save_path, title + f'_{paper_postfix}.pdf')):
+                        pdf_link = get_pdf_link_from_arxiv(link, is_use_mirror=is_use_arxiv_mirror)
+                        print(f'downloading {title}')
+                        download_pdf_idm(pdf_link, os.path.join(poster_save_path, title + f'_{paper_postfix}.pdf'))
+                        time.sleep(5)
+                except Exception as e:
+                    # error_flag = True
+                    print('Error: ' + title + ' - ' + str(e))
+                    error_log.append((title, link, 'paper download error', str(e)))
+    elif year == 2014:
+        papers = soup.find('div', {'id': 'sites-canvas-main-content'}).find_all('a')
+        for paper in tqdm(papers):
+            link = paper.get('href')
+            if link.startswith('http://arxiv'):
+                title = slugify(paper.text)
+                try:
+                    if not os.path.exists(os.path.join(save_dir, title + f'_{paper_postfix}.pdf')):
+                        pdf_link = get_pdf_link_from_arxiv(link, is_use_mirror=is_use_arxiv_mirror)
+                        print(f'downloading {title}')
+                        download_pdf_idm(pdf_link, os.path.join(save_dir, title + f'_{paper_postfix}.pdf'))
+                        time.sleep(5)
+                except Exception as e:
+                    # error_flag = True
+                    print('Error: ' + title + ' - ' + str(e))
+                    error_log.append((title, link, 'paper download error', str(e)))
+
+
+    # write error log
+    print('write error log')
+    with open('download_err_log.txt', 'w') as f:
+        for log in tqdm(error_log):
+            for e in log:
+                if e is not None:
+                    f.write(e)
+                else:
+                    f.write('None')
+                f.write('\n')
+
+            f.write('\n')
+    return True
+
+
+def get_pdf_link_from_arxiv(abs_link, is_use_mirror=True):
+    if is_use_mirror:
+        # abs_link = abs_link.replace('arxiv.org', 'xxx.itp.ac.cn')
+        abs_link = abs_link.replace('arxiv.org', 'cn.arxiv.org')
+        for i in range(3):  # try 3 times
+            try:
+                abs_content = urlopen(abs_link, timeout=20).read()
+                break
+            except:
+                if 2 == i:
+                    return None
+        abs_soup = BeautifulSoup(abs_content, 'html.parser')
+        pdf_link = 'http://cn.arxiv.org' + abs_soup.find('div', {'class': 'full-text'}).find('ul').find('a').get('href')
+    else:
+        for i in range(3):  # try 3 times
+            try:
+                abs_content = urlopen(abs_link, timeout=20).read()
+                break
+            except:
+                if 2 == i:
+                    return None
+        abs_soup = BeautifulSoup(abs_content, 'html.parser')
+        pdf_link = 'http://arxiv.org' + abs_soup.find('div', {'class': 'full-text'}).find('ul').find('a').get('href')
+        if pdf_link[-3:] != 'pdf':
+            pdf_link += '.pdf'
+    return pdf_link
+
 def download_pdf(url, name):
     r = requests.get(url, stream=True)
 
@@ -184,10 +335,12 @@ def download_pdf_idm(url, name):
 
 
 if __name__ == '__main__':
-    driver_path = r'c:\files\chromedriver.exe'
-    save_dir_iclr = '.\\ICLR_2017_poster'
+    year = 2014
+    # driver_path = r'c:\files\chromedriver.exe'
+    # save_dir_iclr = f'.\\ICLR_{year}_poster'
 
-    # download_iclr_oral_papers(save_dir_iclr, driver_path, 2020)
-    download_iclr_poster_papers(save_dir_iclr, driver_path, 2020)
+    # download_iclr_oral_papers(save_dir_iclr, driver_path, year)
+    # download_iclr_poster_papers(save_dir_iclr, driver_path, year)
+    download_iclr_paper(year, save_dir=f'..\\ICLR_{year}')
 
 
