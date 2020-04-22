@@ -38,7 +38,9 @@ IDM
 python3  
 bs4 (pip install bs4)  
 PyPDF3 (pip install PyPDF3)  
-tqdm (pip install tqdm)  
+tqdm (pip install tqdm)   
+slugify (pip install python-slugify)   
+
 
 ## [AISTATS](https://www.aistats.org/)
 
@@ -49,7 +51,9 @@ IDM
 python3  
 bs4 (pip install bs4)  
 PyPDF3 (pip install PyPDF3)  
-tqdm (pip install tqdm)  
+tqdm (pip install tqdm)   
+slugify (pip install python-slugify)   
+
 
 ## [IJCAI](https://www.ijcai.org/)
 
@@ -70,4 +74,6 @@ slugify (pip install python-slugify)
 IDM  
 python3  
 bs4 (pip install bs4)  
-tqdm (pip install tqdm)   
+tqdm (pip install tqdm)    
+slugify (pip install python-slugify)   
+
