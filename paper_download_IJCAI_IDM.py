@@ -7,10 +7,10 @@ import bs4
 from bs4 import BeautifulSoup
 import pickle
 # from PyPDF2 import PdfFileMerger
-from PyPDF3 import PdfFileMerger
-import zipfile
+# from PyPDF3 import PdfFileMerger
+# import zipfile
 import os
-import shutil
+# import shutil
 from tqdm import tqdm
 import subprocess
 from slugify import slugify
