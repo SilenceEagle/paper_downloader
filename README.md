@@ -14,7 +14,7 @@ python3
 bs4 (pip install bs4)  
 PyPDF3 (pip install PyPDF3)  
 tqdm (pip install tqdm)
-slugify (pip install slugify) 
+slugify (pip install python-slugify) 
 
 ## [ICLR](https://iclr.cc/)
 
@@ -24,7 +24,7 @@ slugify (pip install slugify)
 IDM  
 python3  
 selenium (pip install selenium)  
-slugify (pip install slugify)   
+slugify (pip install python-slugify)   
 tqdm (pip install tqdm)
 
 
@@ -60,7 +60,7 @@ IDM
 python3  
 bs4 (pip install bs4)  
 tqdm (pip install tqdm)   
-slugify (pip install slugify)  
+slugify (pip install python-slugify)  
 
 ## [COLT](http://learningtheory.org/colt2020/)
 
