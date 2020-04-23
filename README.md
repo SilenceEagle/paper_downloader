@@ -57,7 +57,7 @@ slugify (pip install python-slugify)
 
 ## [IJCAI](https://www.ijcai.org/)
 
-*paper_download_IJCAI_IDM.py* uses the IDM to download IJCAI 1969-2018 papers.
+*paper_download_IJCAI_IDM.py* uses the IDM to download IJCAI 1969-2019 papers.
 
 ### required
 IDM  
