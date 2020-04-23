@@ -65,8 +65,8 @@ def download_paper_and_sup_IDM(year, save_dir, is_download_supplement=True, time
         with open(f'init_url_icml_{year}.dat', 'rb') as f:
             content = pickle.load(f)
     else:
-        # content = urlopen(init_url).read()
-        content = open(f'..\\ICML_{year}.html', 'rb').read()
+        content = urlopen(init_url).read()
+        # content = open(f'..\\ICML_{year}.html', 'rb').read()
         with open(f'init_url_icml_{year}.dat', 'wb') as f:
             pickle.dump(content, f)
     # soup = BeautifulSoup(content, 'html.parser')
