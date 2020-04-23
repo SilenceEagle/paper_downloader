@@ -21,7 +21,7 @@ def save_csv(year):
     """
     write IJCAI papers' urls in one csv file
     :param year: int, IJCAI year, such 2019
-    :return: True
+    :return: peper_index: int, the total number of papers
     """
     with open(f'IJCAI_{year}.csv', 'w', newline='') as csvfile:
         fieldnames = ['title', 'link', 'group']
@@ -64,9 +64,9 @@ def save_csv(year):
                 with open(f'.\\init_url_IJCAI_1_{year}.dat', 'wb') as f:
                     pickle.dump(content, f)
             contents.append(content)
+        paper_index = 0
         for content in contents:
             soup = BeautifulSoup(content, 'html5lib')
-            paper_index = 0
             if year >= 2017:
                 pbar = tqdm(soup.find_all('div', {'class': 'section_title'}))
                 for section in pbar:
@@ -199,7 +199,7 @@ def save_csv(year):
                                                   'link': 'error',
                                                   'group': this_group}
                                     print(f'get link for {title}_{year} failed!')
-                                    error_log.apend(title, 'no link')
+                                    error_log.append((title, 'no link'))
                                 # papers_bar.set_description(f'downloading paper {paper_index}: {title}')
                                 writer.writerow(paper_dict)
             elif year in [2005]:
@@ -226,6 +226,7 @@ def save_csv(year):
                 div_content = soup.find('div', {'id': 'content'})
                 papers_bar = tqdm(div_content.find_all(['p']))
                 this_group = ''
+                base_url = 'https://www.ijcai.org'
                 for paper in papers_bar:
                     try:
                         this_group = slugify(paper.b.text)
@@ -233,7 +234,7 @@ def save_csv(year):
                         pass
                     try:
                         title = slugify(paper.a.text)
-                        link = paper.a.get('href')
+                        link = base_url + paper.a.get('href')
                         paper_index += 1
                         papers_bar.set_description(f'downloading paper {paper_index}: {title}')
                         paper_dict = {'title': title,
@@ -375,13 +376,16 @@ def save_csv(year):
 
                 f.write('\n')
 
+    return paper_index if paper_index is not None else None
 
-def download_from_csv(year, save_dir, time_step_in_seconds=5):
+
+def download_from_csv(year, save_dir, time_step_in_seconds=5, total_paper_number=None):
     """
     download all IJCAI paper given year
     :param year: int, IJCAI year, such 2019
     :param save_dir: str, paper and supplement material's save path
     :param time_step_in_seconds: int, the interval time between two downlaod request in seconds
+    :param total_paper_number: int, the total number of papers that is going to download
     :return: True
     """
     # use IDM to download everything
@@ -408,7 +412,7 @@ def download_from_csv(year, save_dir, time_step_in_seconds=5):
             if os.path.exists(this_paper_main_path):
                 continue
             if 'error' == this_paper['link']:
-                error_log.append((title, 'no link'))
+                error_log.append((title, 'no link', f'''gropu:{this_paper['group']}'''))
             elif '' != this_paper['link']:
                 if '' != this_paper['group']:
                     os.makedirs(os.path.join(save_dir, slugify(this_paper['group'])), exist_ok=True)
@@ -416,7 +420,10 @@ def download_from_csv(year, save_dir, time_step_in_seconds=5):
                     # download paper with IDM
                     if not os.path.exists(this_paper_main_path):
                         # print('title')
-                        pbar.set_description(f'Downloading paper {i}')
+                        if total_paper_number is not None:
+                            pbar.set_description(f'Downloading paper {i}/{total_paper_number}')
+                        else:
+                            pbar.set_description(f'Downloading paper {i}')
                         basic_command[2] = this_paper['link']
                         basic_command[6] = this_paper_main_path
                         p = subprocess.Popen(' '.join(basic_command))
@@ -450,7 +457,8 @@ if __name__ == '__main__':
     #     # save_csv(year)
     #     # time.sleep(2)
     #     download_from_csv(year, save_dir=f'..\\IJCAI_{year}', time_step_in_seconds=1)
-    year = 1983
-    # save_csv(year)
-    download_from_csv(year, save_dir=f'..\\IJCAI_{year}', time_step_in_seconds=1)
+    year = 2019
+    total_paper_number = None
+    total_paper_number = save_csv(year)
+    download_from_csv(year, save_dir=f'..\\IJCAI_{year}', time_step_in_seconds=2, total_paper_number=total_paper_number)
     pass
