@@ -77,3 +77,14 @@ bs4 (pip install bs4)
 tqdm (pip install tqdm)    
 slugify (pip install python-slugify)   
 
+## [AAAI](https://www.aaai.org/Library/AAAI/aaai-library.php)
+
+*paper_download_AAAI_IDM.py* uses the IDM to download AAAI 1980-2019 papers.
+
+### required
+IDM  
+python3  
+bs4 (pip install bs4)  
+tqdm (pip install tqdm)    
+slugify (pip install python-slugify)   
+
