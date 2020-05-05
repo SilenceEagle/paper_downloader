@@ -97,7 +97,7 @@ slugify (pip install python-slugify)
 ****
 ## [NIPS or NeurIPS](https://nips.cc/)
 
-*paper_download_NIPS_IDM.py* uses the IDM to download NIPS papers, the supplemental material will be merged with the main paper into one single pdf file.
+*paper_download_NIPS_IDM.py* uses the IDM to download NIPS 1987-2019 papers, the supplemental material will be merged with the main paper into one single pdf file.
 
 fork from [Han-Jia/NIPS2018_Download](https://github.com/Han-Jia/NIPS2018_Download) and update it.
 
