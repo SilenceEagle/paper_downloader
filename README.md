@@ -1,6 +1,6 @@
 # paper_downloader
 
-Download papers and supplemental materials from paper website, such as **AAAI**，**AISTATS**, **COLT**, **CVPR**，**ICCV**，**ICLR**, **ICML**, **IJCAI**, **NIPS**.
+Download papers and supplemental materials from paper website, such as **AAAI**，**AISTATS**, **COLT**, **CVPR**,**ICCV**,**ICLR**, **ICML**, **IJCAI**, **NIPS**.
 ****
 
 ## [AAAI](https://www.aaai.org/Library/AAAI/aaai-library.php)
