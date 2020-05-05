@@ -31,8 +31,8 @@ def save_csv(year):
             with open(f'init_url_CVPR_{year}.dat', 'rb') as f:
                 content = pickle.load(f)
         else:
-            # content = urlopen(init_url).read()
-            content = open(f'..\\CVPR_{year}.html', 'rb').read()
+            content = urlopen(init_url).read()
+            # content = open(f'..\\CVPR_{year}.html', 'rb').read()
             with open(f'init_url_CVPR_{year}.dat', 'wb') as f:
                 pickle.dump(content, f)
         soup = BeautifulSoup(content, 'html5lib')
