@@ -23,7 +23,8 @@ def download_paper_and_sup_IDM(year, save_dir, is_download_supplement=True):
     :param is_download_supplement: bool, True for downloading supplemental material
     :return: True
     """
-    AISTATS_year_dict = {2019: 89,
+    AISTATS_year_dict = {2020: 108,
+                         2019: 89,
                          2018: 84,
                          2017: 54,
                          2016: 51,
@@ -110,7 +111,7 @@ def download_paper_and_sup_IDM(year, save_dir, is_download_supplement=True):
                     basic_command[6] = this_paper_main_path
                     p = subprocess.Popen(' '.join(basic_command))
                     p.wait()
-                    time.sleep(5)
+                    time.sleep(2)
                     # while True:
                     #     if os.path.exists(this_paper_main_path):
                     #         break
@@ -127,7 +128,7 @@ def download_paper_and_sup_IDM(year, save_dir, is_download_supplement=True):
                         basic_command[6] = this_paper_supp_path
                         p = subprocess.Popen(' '.join(basic_command))
                         p.wait()
-                        time.sleep(5)
+                        time.sleep(2)
                         # while True:
                         #     if os.path.exists(this_paper_supp_path_no_ext + supp_type):
                         #         break
@@ -277,10 +278,4 @@ def merge_main_supplement(main_path, supplement_path, save_path, is_delete_ori_f
 
 
 if __name__ == '__main__':
-    year = 2007
-    download_paper_and_sup_IDM(year, f'..\\AISTATS_{year}', is_download_supplement=True)
-    # merge_main_supplement(main_path=f'..\\AISTATS_{year}\\main_paper',
-    #                       supplement_path=f'..\\AISTATS_{year}\\supplement',
-    #                       save_path=f'..\\AISTATS_{year}',
-    #                       is_delete_ori_files=True)
     pass
