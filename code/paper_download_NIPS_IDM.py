@@ -38,12 +38,12 @@ def download_paper_and_sup_IDM(year, save_dir, is_download_supplement=True):
 
     paper_website = 'http://papers.nips.cc'
     postfix = f'NIPS_{year}'
-    if os.path.exists(f'init_url_nips_{year}.dat'):
-        with open(f'init_url_nips_{year}.dat', 'rb') as f:
+    if os.path.exists(f'..\\urls\\init_url_nips_{year}.dat'):
+        with open(f'..\\urls\\init_url_nips_{year}.dat', 'rb') as f:
             content = pickle.load(f)
     else:
         content = urlopen(init_url).read()
-        with open(f'init_url_nips_{year}.dat', 'wb') as f:
+        with open(f'..\\urls\\init_url_nips_{year}.dat', 'wb') as f:
             pickle.dump(content, f)
     soup = BeautifulSoup(content, 'html.parser')
     temp_soup = soup.find_all('ul')[1]  # after the book section
@@ -166,7 +166,7 @@ def download_paper_and_sup_IDM(year, save_dir, is_download_supplement=True):
 
     # 2. write error log
     print('write error log')
-    with open('download_err_log.txt', 'w') as f:
+    with open('..\\log\\download_err_log.txt', 'w') as f:
         for log in tqdm(error_log):
             for e in log:
                 if e is not None:
@@ -288,7 +288,7 @@ def merge_main_supplement(main_path, supplement_path, save_path, is_delete_ori_f
 
     # 2. write error log
     print('write error log')
-    with open('merge_err_log.txt', 'w') as f:
+    with open('..\\log\\merge_err_log.txt', 'w') as f:
         for log in tqdm(error_log):
             for e in log:
                 if e is None:
@@ -304,37 +304,39 @@ def save_csv(year):
     """
     write nips papers' and supplemental material's urls in one csv file
     :param year: int
-    :return: True
+    :return: num_dowload: int, the total number of papers.
     """
-    with open(f'NIPS_{year}.csv', 'w', newline='') as csvfile:
+    with open(f'..\\csv\\NIPS_{year}.csv', 'w', newline='') as csvfile:
         fieldnames = ['title', 'main link', 'supplemental link']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
 
         init_url = f'http://papers.nips.cc/book/advances-in-neural-information-processing-systems-{year - 1987}-{year}'
         paper_website = 'http://papers.nips.cc'
-        if os.path.exists(f'init_url_nips_{year}.dat'):
-            with open(f'init_url_nips_{year}.dat', 'rb') as f:
+        if os.path.exists(f'..\\urls\\init_url_nips_{year}.dat'):
+            with open(f'..\\urls\\init_url_nips_{year}.dat', 'rb') as f:
                 content = pickle.load(f)
         else:
             content = urlopen(init_url).read()
-            with open(f'init_url_nips_{year}.dat', 'wb') as f:
+            with open(f'..\\urls\\init_url_nips_{year}.dat', 'wb') as f:
                 pickle.dump(content, f)
         soup = BeautifulSoup(content, 'html.parser')
         temp_soup = soup.find_all('ul')[1]  # after the book section
         paper_list = temp_soup.find_all('li')
         # num_download = 5 # number of papers to download
         num_download = len(paper_list)
+        paper_list_bar = tqdm(zip(paper_list, range(num_download)))
         for paper in tqdm(zip(paper_list, range(num_download))):
             paper_dict = {'title': '',
                           'main link': '',
                           'supplemental link': ''}
             # get title
-            print('\n')
+            # print('\n')
             this_paper = paper[0]
             title = slugify(this_paper.a.text)
             paper_dict['title'] = title
-            print('Downloading paper {}/{}: {}'.format(paper[1] + 1, num_download, title))
+            # print('Downloading paper {}/{}: {}'.format(paper[1] + 1, num_download, title))
+            paper_list_bar.set_description('Downloading paper {}/{}: {}'.format(paper[1] + 1, num_download, title))
 
             # get abstract page url
             url2 = this_paper.a.get('href')
@@ -353,23 +355,26 @@ def save_csv(year):
                             break
                     break
                 except Exception as e:
-                    print('Error: ' + title + ' - ' + str(e))
                     if i == 2:
+                        print('Error: ' + title + ' - ' + str(e))
                         if paper_dict['main link'] == '':
                             paper_dict['main link'] = 'error'
                         if paper_dict['supplemental link'] == '':
                             paper_dict['supplemental link'] = 'error'
             writer.writerow(paper_dict)
-            time.sleep(1)
+            # time.sleep(1)
+    return num_download
 
 
-def download_from_csv(year, save_dir, is_download_supplement=True):
+def download_from_csv(year, save_dir, is_download_supplement=True, time_step_in_seconds=5, total_paper_number=None):
     """
     download all NIPS paper and supplement files given year, restore in save_dir/main_paper and save_dir/supplement
     respectively
     :param year: int, NIPS year, such 2019
     :param save_dir: str, paper and supplement material's save path
     :param is_download_supplement: bool, True for downloading supplemental material
+    :param time_step_in_seconds: int, the interval time between two downlaod request in seconds
+    :param total_paper_number: int, the total number of papers that is going to download
     :return: True
     """
     main_save_path = os.path.join(save_dir, 'main_paper')
@@ -383,17 +388,21 @@ def download_from_csv(year, save_dir, is_download_supplement=True):
     error_log = []
     paper_website = 'http://papers.nips.cc'
     postfix = f'NIPS_{year}'
-    with open(f'NIPS_{year}.csv', newline='') as csvfile:
+    with open(f'..\\csv\\NIPS_{year}.csv', newline='') as csvfile:
         myreader = csv.DictReader(csvfile, delimiter=',')
         pbar = tqdm(myreader)
         i = 0
         for this_paper in pbar:
             i += 1
             # get title
-            print('\n')
+            # print('\n')
             title = slugify(this_paper['title'])
             # print('Downloading paper {}: {}'.format(i, title))
-            pbar.set_description(f'Downloading paper {i}')
+            if total_paper_number is not None:
+                pbar.set_description(f'Downloading paper {i}/{total_paper_number}')
+
+            else:
+                pbar.set_description(f'Downloading paper {i}')
 
             this_paper_main_path = os.path.join(main_save_path, f'{title}_{postfix}.pdf')
             this_paper_supp_path_no_ext = os.path.join(supplement_save_path, f'{title}_{postfix}_supp.')
@@ -415,7 +424,7 @@ def download_from_csv(year, save_dir, is_download_supplement=True):
                         basic_command[6] = this_paper_main_path
                         p = subprocess.Popen(' '.join(basic_command))
                         p.wait()
-                        time.sleep(5)
+                        time.sleep(time_step_in_seconds)
                         # while True:
                         #     if os.path.exists(this_paper_main_path):
                         #         break
@@ -437,7 +446,7 @@ def download_from_csv(year, save_dir, is_download_supplement=True):
                                 basic_command[6] = this_paper_supp_path_no_ext + supp_type
                                 p = subprocess.Popen(' '.join(basic_command))
                                 p.wait()
-                                time.sleep(5)
+                                time.sleep(time_step_in_seconds)
                             except Exception as e:
                                 # error_flag = True
                                 print('Error: ' + title + ' - ' + str(e))
@@ -446,7 +455,7 @@ def download_from_csv(year, save_dir, is_download_supplement=True):
 
         # 2. write error log
         print('write error log')
-        with open('download_err_log.txt', 'w') as f:
+        with open('..\\log\\download_err_log.txt', 'w') as f:
             for log in tqdm(error_log):
                 for e in log:
                     if e is not None:
@@ -459,13 +468,16 @@ def download_from_csv(year, save_dir, is_download_supplement=True):
 
 
 if __name__ == '__main__':
-    # year = 2004
+    year = 2018
+    total_paper_number = 1009
+    # total_paper_number = save_csv(year)
     # download_paper_and_sup_IDM(year, f'..\\NIPS_{year}', is_download_supplement=True)
-    # merge_main_supplement(main_path=f'..\\NIPS_{year}\main_paper',
-    #                       supplement_path=f'..\\NIPS_{year}\supplement',
-    #                       save_path=f'..\\NIPS_{year}',
-    #                       is_delete_ori_files=True)
-    # download_from_csv(year, f'..\\NIPS_{year}', is_download_supplement=True)
+    merge_main_supplement(main_path=f'..\\NIPS_{year}\main_paper',
+                          supplement_path=f'..\\NIPS_{year}\supplement',
+                          save_path=f'..\\NIPS_{year}',
+                          is_delete_ori_files=False)
+    # download_from_csv(year, f'..\\NIPS_{year}', is_download_supplement=True, time_step_in_seconds=1,
+    #                   total_paper_number=total_paper_number)
     # for year in range(1997, 1986, -1):
     #     print(year)
     #     save_csv(year)

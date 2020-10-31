@@ -23,7 +23,7 @@ def save_csv(year):
     :param year: int, IJCAI year, such 2019
     :return: peper_index: int, the total number of papers
     """
-    with open(f'IJCAI_{year}.csv', 'w', newline='') as csvfile:
+    with open(f'..\\csv\\IJCAI_{year}.csv', 'w', newline='') as csvfile:
         fieldnames = ['title', 'link', 'group']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
@@ -38,30 +38,30 @@ def save_csv(year):
             raise ValueError('invalid year!')
         error_log = []
         if len(init_urls) == 1:
-            if os.path.exists(f'.\\init_url_IJCAI_{year}.dat'):
-                with open(f'.\\init_url_IJCAI_{year}.dat', 'rb') as f:
+            if os.path.exists(f'..\\urls\\init_url_IJCAI_{year}.dat'):
+                with open(f'..\\urls\\init_url_IJCAI_{year}.dat', 'rb') as f:
                     content = pickle.load(f)
             else:
                 content = urlopen(init_urls[0]).read()
-                with open(f'.\\init_url_IJCAI_{year}.dat', 'wb') as f:
+                with open(f'..\\urls\\init_url_IJCAI_{year}.dat', 'wb') as f:
                     pickle.dump(content, f)
             contents = [content]
         else:
             contents = []
-            if os.path.exists(f'.\\init_url_IJCAI_0_{year}.dat'):
-                with open(f'.\\init_url_IJCAI_0_{year}.dat', 'rb') as f:
+            if os.path.exists(f'..\\urls\\init_url_IJCAI_0_{year}.dat'):
+                with open(f'..\\urls\\init_url_IJCAI_0_{year}.dat', 'rb') as f:
                     content = pickle.load(f)
             else:
                 content = urlopen(init_urls[0]).read()
-                with open(f'.\\init_url_IJCAI_0_{year}.dat', 'wb') as f:
+                with open(f'..\\urls\\init_url_IJCAI_0_{year}.dat', 'wb') as f:
                     pickle.dump(content, f)
             contents.append(content)
-            if os.path.exists(f'.\\init_url_IJCAI_1_{year}.dat'):
-                with open(f'.\\init_url_IJCAI_1_{year}.dat', 'rb') as f:
+            if os.path.exists(f'..\\urls\\init_url_IJCAI_1_{year}.dat'):
+                with open(f'..\\urls\\init_url_IJCAI_1_{year}.dat', 'rb') as f:
                     content = pickle.load(f)
             else:
                 content = urlopen(init_urls[1]).read()
-                with open(f'.\\init_url_IJCAI_1_{year}.dat', 'wb') as f:
+                with open(f'..\\urls\\init_url_IJCAI_1_{year}.dat', 'wb') as f:
                     pickle.dump(content, f)
             contents.append(content)
         paper_index = 0
@@ -365,7 +365,7 @@ def save_csv(year):
                         continue
         #  write error log
         print('write error log')
-        with open('download_err_log.txt', 'w') as f:
+        with open('..\\log\\download_err_log.txt', 'w') as f:
             for log in tqdm(error_log):
                 for e in log:
                     if e is not None:
@@ -394,7 +394,7 @@ def download_from_csv(year, save_dir, time_step_in_seconds=5, total_paper_number
 
     error_log = []
     postfix = f'IJCAI_{year}'
-    with open(f'IJCAI_{year}.csv', newline='') as csvfile:
+    with open(f'..\\csv\\IJCAI_{year}.csv', newline='') as csvfile:
         myreader = csv.DictReader(csvfile, delimiter=',')
         pbar = tqdm(myreader)
         i = 0
@@ -439,7 +439,7 @@ def download_from_csv(year, save_dir, time_step_in_seconds=5, total_paper_number
 
         # 2. write error log
         print('write error log')
-        with open('download_err_log.txt', 'w') as f:
+        with open('..\\log\\download_err_log.txt', 'w') as f:
             for log in tqdm(error_log):
                 for e in log:
                     if e is not None:
@@ -457,8 +457,12 @@ if __name__ == '__main__':
     #     # save_csv(year)
     #     # time.sleep(2)
     #     download_from_csv(year, save_dir=f'..\\IJCAI_{year}', time_step_in_seconds=1)
-    year = 2019
-    total_paper_number = None
-    total_paper_number = save_csv(year)
-    download_from_csv(year, save_dir=f'..\\IJCAI_{year}', time_step_in_seconds=2, total_paper_number=total_paper_number)
+    year = 2020
+    total_paper_number = 778
+    # total_paper_number = save_csv(year)
+    download_from_csv(
+        year,
+        save_dir=f'..\\IJCAI_{year}',
+        time_step_in_seconds=5,
+        total_paper_number=total_paper_number)
     pass

@@ -21,19 +21,19 @@ def save_csv(year):
     :param year: int
     :return: True
     """
-    with open(f'CVPR_{year}.csv', 'w', newline='') as csvfile:
+    with open(f'..\\csv\\CVPR_{year}.csv', 'w', newline='') as csvfile:
         fieldnames = ['title', 'main link', 'supplemental link']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
 
         init_url = f'http://openaccess.thecvf.com/CVPR{year}.py'
-        if os.path.exists(f'init_url_CVPR_{year}.dat'):
-            with open(f'init_url_CVPR_{year}.dat', 'rb') as f:
+        if os.path.exists(f'..\\urls\\init_url_CVPR_{year}.dat'):
+            with open(f'..\\urls\\init_url_CVPR_{year}.dat', 'rb') as f:
                 content = pickle.load(f)
         else:
             # content = urlopen(init_url).read()
             content = open(f'..\\CVPR_{year}.html', 'rb').read()
-            with open(f'init_url_CVPR_{year}.dat', 'wb') as f:
+            with open(f'..\\urls\\init_url_CVPR_{year}.dat', 'wb') as f:
                 pickle.dump(content, f)
         soup = BeautifulSoup(content, 'html5lib')
         paper_list_bar = tqdm(soup.find('div', {'id': 'content'}).find_all(['dd', 'dt']))
@@ -78,19 +78,19 @@ def save_csv_workshops(year):
     :param year: int
     :return: True
     """
-    with open(f'CVPR_WS_{year}.csv', 'w', newline='') as csvfile:
+    with open(f'..\\csv\\CVPR_WS_{year}.csv', 'w', newline='') as csvfile:
         fieldnames = ['group', 'title', 'main link', 'supplemental link']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
 
         init_url = f'http://openaccess.thecvf.com/CVPR{year}_workshops/menu'
-        if os.path.exists(f'init_url_CVPR_WS_{year}.dat'):
-            with open(f'init_url_CVPR_WS_{year}.dat', 'rb') as f:
+        if os.path.exists(f'..\\urls\\init_url_CVPR_WS_{year}.dat'):
+            with open(f'..\\urls\\init_url_CVPR_WS_{year}.dat', 'rb') as f:
                 content = pickle.load(f)
         else:
             content = urlopen(init_url).read()
             # content = open(f'..\\CVPR_WS_{year}.html', 'rb').read()
-            with open(f'init_url_CVPR_WS_{year}.dat', 'wb') as f:
+            with open(f'..\\urls\\init_url_CVPR_WS_{year}.dat', 'wb') as f:
                 pickle.dump(content, f)
         soup = BeautifulSoup(content, 'html5lib')
         paper_group_list_bar = soup.find('div', {'id': 'content'}).find_all('dd')
@@ -167,7 +167,7 @@ def download_from_csv(
     postfix = f'CVPR_{year}'
     if is_workshops:
         postfix = f'CVPR_WS_{year}'
-    csv_file_name = f'CVPR_{year}.csv' if not is_workshops else f'CVPR_WS_{year}.csv'
+    csv_file_name = f'..\\csv\\CVPR_{year}.csv' if not is_workshops else f'..\\csv\\CVPR_WS_{year}.csv'
     with open(csv_file_name, newline='') as csvfile:
         myreader = csv.DictReader(csvfile, delimiter=',')
         pbar = tqdm(myreader)
@@ -249,7 +249,7 @@ def download_from_csv(
 
         # 2. write error log
         print('write error log')
-        with open('download_err_log.txt', 'w') as f:
+        with open('..\\log\\download_err_log.txt', 'w') as f:
             for log in tqdm(error_log):
                 for e in log:
                     if e is not None:
@@ -276,7 +276,7 @@ def merge_main_supplement(main_path, supplement_path, save_path, is_delete_ori_f
     os.makedirs(save_path, exist_ok=True)
     error_log = []
     # make temp dir to unzip zip file
-    temp_zip_dir = '.\\temp_zip'
+    temp_zip_dir = '..\\temp_zip'
     if not os.path.exists(temp_zip_dir):
         os.mkdir(temp_zip_dir)
     else:
@@ -371,7 +371,7 @@ def merge_main_supplement(main_path, supplement_path, save_path, is_delete_ori_f
 
     # 2. write error log
     print('write error log')
-    with open('merge_err_log.txt', 'w') as f:
+    with open('..\\log\\merge_err_log.txt', 'w') as f:
         for log in tqdm(error_log):
             for e in log:
                 if e is None:
@@ -395,7 +395,7 @@ def move_main_and_supplement_2_one_directory_WS(main_path, supplement_path):
         raise ValueError(f'''can not open '{supplement_path}' !''')
     error_log = []
     # make temp dir to unzip zip file
-    temp_zip_dir = '.\\temp_zip'
+    temp_zip_dir = '..\\temp_zip'
     if not os.path.exists(temp_zip_dir):
         os.mkdir(temp_zip_dir)
     else:
@@ -453,7 +453,7 @@ def move_main_and_supplement_2_one_directory_WS(main_path, supplement_path):
 
     # 2. write error log
     print('write error log')
-    with open('merge_err_log.txt', 'w') as f:
+    with open('..\\log\\merge_err_log.txt', 'w') as f:
         for log in tqdm(error_log):
             for e in log:
                 if e is None:
@@ -466,4 +466,27 @@ def move_main_and_supplement_2_one_directory_WS(main_path, supplement_path):
 
 
 if __name__ == '__main__':
+    year = 2020
+    total_paper_number = save_csv_workshops(year)
+    # total_paper_number = 613
+    # total_paper_number = save_csv(year)
+    download_from_csv(year,
+                      save_dir=f'F:\\workspace\\python3_ws\\CVPR_WS_{year}',
+                      is_download_supplement=True,
+                      time_step_in_seconds=5,
+                      total_paper_number=total_paper_number,
+                      is_workshops=True)
+    move_main_and_supplement_2_one_directory_WS(main_path=f'F:\\workspace\\python3_ws\\CVPR_WS_{year}\\main_paper',
+                                                supplement_path=f'F:\\workspace\\python3_ws\\CVPR_WS_{year}\\supplement')
+    # merge_main_supplement(main_path=f'..\\CVPR_{year}\main_paper',
+    #                       supplement_path=f'..\\CVPR_{year}\supplement',
+    #                       save_path=f'..\\CVPR_{year}',
+    #                       is_delete_ori_files=False)
+    # download_from_csv(year, f'..\\CVPR_{year}', is_download_supplement=True)
+    # for year in range(1997, 1986, -1):
+    #     print(year)
+    #     save_csv(year)
+    # for year in range(1996, 1986, -1):
+    #     print(year)
+    #     download_from_csv(year, f'..\\CVPR_{year}', is_download_supplement=True)
     pass

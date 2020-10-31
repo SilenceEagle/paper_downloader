@@ -33,7 +33,9 @@ def download_paper_and_sup_IDM(year, save_dir, is_download_supplement=True, time
                       2014: 32,
                       2013: 28
                       }
-    if year >= 2013 and year <= 2019:
+    if year == 2020:
+        init_url = f'https://proceedings.icml.cc/book/{year}'
+    elif year >= 2013 and year <= 2019:
         init_url = f'http://proceedings.mlr.press/v{icml_year_dict[year]}/'
     elif year == 2012:
         init_url = 'https://icml.cc/2012/papers.1.html'
@@ -61,19 +63,105 @@ def download_paper_and_sup_IDM(year, save_dir, is_download_supplement=True, time
     # paper_dict = dict()
 
     postfix = f'ICML_{year}'
-    if os.path.exists(f'init_url_icml_{year}.dat'):
-        with open(f'init_url_icml_{year}.dat', 'rb') as f:
+    if os.path.exists(f'..\\urls\\init_url_icml_{year}.dat'):
+        with open(f'..\\urls\\init_url_icml_{year}.dat', 'rb') as f:
             content = pickle.load(f)
     else:
         content = urlopen(init_url).read()
         # content = open(f'..\\ICML_{year}.html', 'rb').read()
-        with open(f'init_url_icml_{year}.dat', 'wb') as f:
+        with open(f'..\\urls\\init_url_icml_{year}.dat', 'wb') as f:
             pickle.dump(content, f)
     # soup = BeautifulSoup(content, 'html.parser')
     soup = BeautifulSoup(content, 'html5lib')
     # soup = BeautifulSoup(open(r'..\ICML_2011.html', 'rb'), 'html.parser')
     error_log = []
-    if year >= 2013:
+    if year == 2020:
+        main_save_path = os.path.join(save_dir, 'main_paper')
+        supplement_save_path = os.path.join(save_dir, 'supplement')
+        os.makedirs(main_save_path, exist_ok=True)
+        os.makedirs(supplement_save_path, exist_ok=True)
+        paper_list = soup.find('div', {'class': 'container-fluid'}).find_all('li')
+        num_download = len(paper_list)
+        for paper in tqdm(zip(paper_list, range(num_download))):
+            # get title
+            print('\n')
+            this_paper = paper[0]
+            a = this_paper.find('a')
+            title = slugify(a.text)
+            abs_link = None
+            abs_link = urllib.parse.urljoin(init_url, a.get('href'))
+            try:
+                print('Downloading paper {}/{}: {}'.format(paper[1] + 1, num_download, title))
+            except:
+                print(title.encode('utf8'))
+            title_list.append(title)
+            this_paper_main_path = os.path.join(main_save_path, f'{title}_{postfix}.pdf'.replace(' ', '_'))
+            this_paper_supp_path = os.path.join(supplement_save_path, f'{title}_{postfix}_supp.pdf')
+            this_paper_supp_path_no_ext = os.path.join(supplement_save_path, f'{title}_{postfix}_supp.')
+            if is_download_supplement:
+                if os.path.exists(this_paper_main_path) and (os.path.exists(this_paper_supp_path) or os.path.exists(this_paper_supp_path_no_ext+'zip')):
+                    continue
+            else:
+                if os.path.exists(this_paper_main_path):
+                    continue
+            for i in range(5):
+                try:
+                    abs_content = urlopen(abs_link).read()
+                    break
+                except:
+                    if i >= 4:
+                        abs_content = None
+                        print(str(e))
+                        error_log.append((title, abs_link, 'abstract link error', str(e)))
+            if abs_content is None:
+                continue
+            abs_soup = BeautifulSoup(abs_content, 'html5lib')
+            all_a = abs_soup.find('div', {'class': 'container-fluid'}).find_all('a')
+            main_link = None
+            supp_link = None
+            for a in all_a:
+                if a.text == 'Paper »':
+                    main_link = urllib.parse.urljoin('https://proceedings.icml.cc/', a.get('href'))
+                elif a.text == 'Supplemental »':
+                    supp_link = urllib.parse.urljoin('https://proceedings.icml.cc/', a.get('href'))
+                    break
+
+            # try 1 time
+            # error_flag = False
+            for d_iter in range(1):
+                try:
+                    # download paper with IDM
+                    if not os.path.exists(this_paper_main_path) and main_link is not None:
+                        basic_command[2] = main_link
+                        basic_command[6] = this_paper_main_path
+                        p = subprocess.Popen(' '.join(basic_command))
+                        p.wait()
+                        time.sleep(time_step_in_seconds)
+                        # while True:
+                        #     if os.path.exists(this_paper_main_path):
+                        #         break
+                except Exception as e:
+                    # error_flag = True
+                    print('Error: ' + title + ' - ' + str(e))
+                    error_log.append((title, main_link, 'main paper download error', str(e)))
+                # download supp
+                if is_download_supplement:
+                    # check whether the supp can be downloaded
+                    if not os.path.exists(this_paper_supp_path) and supp_link is not None:
+                        try:
+                            basic_command[2] = supp_link
+                            basic_command[6] = this_paper_supp_path_no_ext + supp_link[-3:]
+                            p = subprocess.Popen(' '.join(basic_command))
+                            p.wait()
+                            time.sleep(time_step_in_seconds)
+                            # while True:
+                            #     if os.path.exists(this_paper_supp_path_no_ext + supp_type):
+                            #         break
+                        except Exception as e:
+                            # error_flag = True
+                            print('Error: ' + title + ' - ' + str(e))
+                            error_log.append((title, supp_link, 'supplement download error', str(e)))
+    elif year >= 2013:
         main_save_path = os.path.join(save_dir, 'main_paper')
         supplement_save_path = os.path.join(save_dir, 'supplement')
         os.makedirs(main_save_path, exist_ok=True)
@@ -328,7 +416,7 @@ def download_paper_and_sup_IDM(year, save_dir, is_download_supplement=True, time
 
     # 2. write error log
     print('write error log')
-    with open('download_err_log.txt', 'w') as f:
+    with open('..\\log\\download_err_log.txt', 'w') as f:
         for log in tqdm(error_log):
             for e in log:
                 if e is not None:
@@ -449,7 +537,7 @@ def merge_main_supplement(main_path, supplement_path, save_path, is_delete_ori_f
 
     # 2. write error log
     print('write error log')
-    with open('merge_err_log.txt', 'w') as f:
+    with open('..\\log\\merge_err_log.txt', 'w') as f:
         for log in tqdm(error_log):
             for e in log:
                 if e is None:
@@ -501,11 +589,11 @@ def rename_downloaded_paper(year, source_path):
 
 
 if __name__ == '__main__':
-    year = 2008
-    download_paper_and_sup_IDM(year, f'..\\ICML_{year}', is_download_supplement=True, time_step_in_seconds=1)
-    # merge_main_supplement(main_path=f'..\\ICML_{year}\\main_paper',
-    #                       supplement_path=f'..\\ICML_{year}\\supplement',
-    #                       save_path=f'..\\ICML_{year}',
-    #                       is_delete_ori_files=True)
+    year = 2020
+    # download_paper_and_sup_IDM(year, f'..\\ICML_{year}', is_download_supplement=True, time_step_in_seconds=2)
+    merge_main_supplement(main_path=f'..\\ICML_{year}\\main_paper',
+                          supplement_path=f'..\\ICML_{year}\\supplement',
+                          save_path=f'..\\ICML_{year}',
+                          is_delete_ori_files=False)
     # rename_downloaded_paper(year, f'..\\ICML_{year}')
     pass

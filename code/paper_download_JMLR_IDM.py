@@ -1,5 +1,6 @@
-"""paper_download_COLT_IDM.py"""
+"""paper_download_JMLR_IDM.py"""
 
+import urllib
 from urllib.request import urlopen
 import time
 from bs4 import BeautifulSoup
@@ -14,29 +15,17 @@ import subprocess
 from slugify import slugify
 
 
-def download_paper_IDM(year, save_dir):
+def download_paper_IDM(volumn, save_dir, time_step_in_seconds=5):
     """
-    download all COLT papers given year, restore in save_dir
-    :param year: int, COLT year, such 2019
+    download all JMLR paper and supplement files given volumn, restore in save_dir/main_paper and save_dir/supplement
+    respectively
+    :param volumn: int, JMLR volumn, such as 2019
     :param save_dir: str, paper and supplement material's save path
+    :param time_step_in_seconds: int, the interval time between two downlaod request in seconds
     :return: True
     """
-    COLT_year_dict = {2019: 99,
-                      2018: 75,
-                      2017: 65,
-                      2016: 49,
-                      2015: 40,
-                      2014: 35,
-                      2013: 30,
-                      2012: 23,
-                      2011: 19
-                      }
-    if year >= 2011 and year <= 2019:
-        init_url = f'http://proceedings.mlr.press/v{COLT_year_dict[year]}/'
-    else:
-        raise ValueError('''the given year's url is unknown !''')
-    # init_url = f'http://papers.nips.cc/book/advances-in-neural-information-processing-systems-{year-1987}-{year}'
-    os.makedirs(save_dir, exist_ok=True)
+    init_url = f'http://jmlr.org/papers/v{volumn}/'
+
     # use IDM to download everything
     idm_path = '''"C:\Program Files (x86)\Internet Download Manager\IDMan.exe"'''  # should replace by the local IDM path
     basic_command = [idm_path, '/d', 'xxxx', '/p', os.getcwd(), '/f', 'xxxx', '/n']  # silent /n
@@ -44,40 +33,49 @@ def download_paper_IDM(year, save_dir):
     title_list = []
     # paper_dict = dict()
 
-    postfix = f'COLT_{year}'
-    if os.path.exists(f'init_url_COLT_{year}.dat'):
-        with open(f'init_url_COLT_{year}.dat', 'rb') as f:
+    postfix = f'JMLR_v{volumn}'
+    if os.path.exists(f'..\\urls\\init_url_JMLR_v{volumn}.dat'):
+        with open(f'..\\urls\\init_url_JMLR_v{volumn}.dat', 'rb') as f:
             content = pickle.load(f)
     else:
         content = urlopen(init_url).read()
-        with open(f'init_url_COLT_{year}.dat', 'wb') as f:
+        # content = open(f'..\\JMLR_{volumn}.html', 'rb').read()
+        with open(f'..\\urls\\init_url_JMLR_v{volumn}.dat', 'wb') as f:
             pickle.dump(content, f)
-    soup = BeautifulSoup(content, 'html.parser')
-    paper_list = soup.find_all('div', {'class': 'paper'})
+    # soup = BeautifulSoup(content, 'html.parser')
+    soup = BeautifulSoup(content, 'html5lib')
+    # soup = BeautifulSoup(open(r'..\JMLR_2011.html', 'rb'), 'html.parser')
     error_log = []
+    os.makedirs(save_dir, exist_ok=True)
+    if volumn <= 4:
+        paper_list = soup.find('div', {'id': 'content'}).find_all('tr')
+    else:
+        paper_list = soup.find('div', {'id': 'content'}).find_all('dl')
     # num_download = 5 # number of papers to download
     num_download = len(paper_list)
     for paper in tqdm(zip(paper_list, range(num_download))):
         # get title
         print('\n')
         this_paper = paper[0]
-        title = slugify(this_paper.find_all('p', {'class': 'title'})[0].text)
+        title = slugify(this_paper.find('dt').text)
         try:
             print('Downloading paper {}/{}: {}'.format(paper[1]+1, num_download, title))
         except:
             print(title.encode('utf8'))
         title_list.append(title)
 
-        this_paper_main_path = os.path.join(save_dir, f'{title}_{postfix}.pdf')
+        this_paper_main_path = os.path.join(save_dir, f'{title}_{postfix}.pdf'.replace(' ', '_'))
         if os.path.exists(this_paper_main_path):
             continue
 
         # get abstract page url
-        links = this_paper.find_all('p', {'class': 'links'})[0].find_all('a')
+        links = this_paper.find_all('a')
         main_link = None
         for link in links:
-            if 'Download PDF' == link.text:
-                main_link = link.get('href')
+            if '[pdf]' == link.text or 'pdf' == link.text:
+                main_link = urllib.parse.urljoin('http://jmlr.org', link.get('href'))
+                break
+
 
         # try 1 time
         # error_flag = False
@@ -89,7 +87,7 @@ def download_paper_IDM(year, save_dir):
                     basic_command[6] = this_paper_main_path
                     p = subprocess.Popen(' '.join(basic_command))
                     p.wait()
-                    time.sleep(5)
+                    time.sleep(time_step_in_seconds)
                     # while True:
                     #     if os.path.exists(this_paper_main_path):
                     #         break
@@ -105,7 +103,7 @@ def download_paper_IDM(year, save_dir):
 
     # 2. write error log
     print('write error log')
-    with open('download_err_log.txt', 'w') as f:
+    with open('..\\log\\download_err_log.txt', 'w') as f:
         for log in tqdm(error_log):
             for e in log:
                 if e is not None:
@@ -118,6 +116,6 @@ def download_paper_IDM(year, save_dir):
 
 
 if __name__ == '__main__':
-    year = 2011
-    download_paper_IDM(year, f'..\\COLT_{year}')
+    volumn = 21
+    download_paper_IDM(volumn, f'..\\JMLR_v{volumn}', time_step_in_seconds=1)
     pass

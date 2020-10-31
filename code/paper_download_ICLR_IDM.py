@@ -82,7 +82,7 @@ def download_iclr_oral_papers(save_dir, driver_path, year, base_url=None):
     driver.close()
     # 2. write error log
     print('write error log')
-    with open(os.path.join(save_dir, 'download_err_log.txt'), 'w') as f:
+    with open('..\\log\\download_err_log.txt', 'w') as f:
         for log in tqdm(error_log):
             for e in log:
                 f.write(e)
@@ -158,7 +158,73 @@ def download_iclr_poster_papers(save_dir, driver_path, year, base_url=None):
     driver.close()
     # 2. write error log
     print('write error log')
-    with open(os.path.join(save_dir, 'download_err_log.txt'), 'w') as f:
+    with open('..\\log\\download_err_log.txt', 'w') as f:
+        for log in tqdm(error_log):
+            for e in log:
+                f.write(e)
+                f.write('\n')
+            f.write('\n')
+
+
+def download_iclr_spotlight_papers(save_dir, driver_path, year, base_url=None):
+    if base_url is None:
+        if year == 2020:
+            base_url = 'https://openreview.net/group?id=ICLR.cc/2020/Conference#accept-spotlight'
+        else:
+            raise ValueError('the website url is not given for this year!')
+    first_poster_index = {'2017': 15}
+    paper_postfix = f'ICLR_{year}'
+    error_log = []
+    driver = webdriver.Chrome(driver_path)
+    driver.get(base_url)
+
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
+
+    # wait for the select element to become visible
+    print('Starting web driver wait...')
+    wait = WebDriverWait(driver, 20)
+    print('Starting web driver wait... finished')
+    res = wait.until(EC.presence_of_element_located((By.ID, "notes")))
+    print("Successful load the website!->",res)
+    res = wait.until(EC.presence_of_element_located((By.CLASS_NAME, "note")))
+    print("Successful load the website notes!->",res)
+    # parse the results
+
+    if year >= 2020:
+        divs = driver.find_elements_by_xpath('//*[@id="accept-spotlight"]/ul/li')
+    else:
+        divs = driver.find_elements_by_class_name('note')[:first_poster_index[str(year)]]
+    num_papers = len(divs)
+    print('found number of papers:',num_papers)
+    for index, paper in enumerate(divs):
+        a_hrefs = paper.find_elements_by_tag_name("a")
+        if year >= 2018:
+            name = slugify(a_hrefs[0].text.strip())
+            link = a_hrefs[1].get_attribute('href')
+        else:
+            name = slugify(paper.find_element_by_class_name('note_content_title').text)
+            link = paper.find_element_by_class_name('note_content_pdf').get_attribute('href')
+        print('Downloading paper {}/{}: {}'.format(index+1, num_papers, name))
+        pdf_name = name + '_' + paper_postfix + '.pdf'
+        if not os.path.exists(os.path.join(save_dir, pdf_name)):
+            # try 1 times
+            success_flag = False
+            for d_iter in range(1):
+                try:
+                    download_pdf_idm(link, os.path.join(save_dir, pdf_name))
+                    time.sleep(5)
+                    success_flag = True
+                    break
+                except Exception as e:
+                    print('Error: ' + name + ' - ' + str(e))
+                    time.sleep(5)
+            if not success_flag:
+                error_log.append((name, link))
+    driver.close()
+    # 2. write error log
+    print('write error log')
+    with open('..\\log\\download_err_log.txt', 'w') as f:
         for log in tqdm(error_log):
             for e in log:
                 f.write(e)
@@ -189,12 +255,12 @@ def download_iclr_paper(year, save_dir):
         poster_save_path = os.path.join(save_dir, 'poster')
         os.makedirs(oral_save_path, exist_ok=True)
         os.makedirs(poster_save_path, exist_ok=True)
-    if os.path.exists(f'init_url_iclr_{year}.dat'):
-        with open(f'init_url_iclr_{year}.dat', 'rb') as f:
+    if os.path.exists(f'..\\urls\\init_url_iclr_{year}.dat'):
+        with open(f'..\\urls\\init_url_iclr_{year}.dat', 'rb') as f:
             content = pickle.load(f)
     else:
         content = urlopen(base_url).read()
-        with open(f'init_url_iclr_{year}.dat', 'wb') as f:
+        with open(f'..\\urls\\init_url_iclr_{year}.dat', 'wb') as f:
             pickle.dump(content, f)
     error_log = []
     soup = BeautifulSoup(content, 'html.parser')
@@ -269,7 +335,7 @@ def download_iclr_paper(year, save_dir):
 
     # write error log
     print('write error log')
-    with open('download_err_log.txt', 'w') as f:
+    with open('..\\log\\download_err_log.txt', 'w') as f:
         for log in tqdm(error_log):
             for e in log:
                 if e is not None:
@@ -335,12 +401,13 @@ def download_pdf_idm(url, name):
 
 
 if __name__ == '__main__':
-    year = 2014
-    # driver_path = r'c:\files\chromedriver.exe'
-    # save_dir_iclr = f'.\\ICLR_{year}_poster'
+    year = 2020
+    driver_path = r'c:\files\chromedriver.exe'
+    save_dir_iclr = f'..\\ICLR_{year}_spotlight'
 
     # download_iclr_oral_papers(save_dir_iclr, driver_path, year)
     # download_iclr_poster_papers(save_dir_iclr, driver_path, year)
-    download_iclr_paper(year, save_dir=f'..\\ICLR_{year}')
+    download_iclr_spotlight_papers(save_dir_iclr, driver_path, year)
+    # download_iclr_paper(year, save_dir=f'..\\ICLR_{year}')
 
 

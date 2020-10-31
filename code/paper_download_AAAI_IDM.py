@@ -23,7 +23,7 @@ def save_csv(year):
     :param year: int, AAAI year, such 2019
     :return: peper_index: int, the total number of papers
     """
-    with open(f'AAAI_{year}.csv', 'w', newline='') as csvfile:
+    with open(f'..\\csv\\AAAI_{year}.csv', 'w', newline='') as csvfile:
         fieldnames = ['title', 'link', 'group']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
@@ -38,13 +38,13 @@ def save_csv(year):
         # paper_dict = dict()
 
         postfix = f'AAAI_{year}'
-        if os.path.exists(f'.\\init_url_AAAI_{year}.dat'):
-            with open(f'.\\init_url_AAAI_{year}.dat', 'rb') as f:
+        if os.path.exists(f'..\\urls\\init_url_AAAI_{year}.dat'):
+            with open(f'..\\urls\\init_url_AAAI_{year}.dat', 'rb') as f:
                 content = pickle.load(f)
         else:
             content = urlopen(init_url).read()
             # content = open(f'..\\AAAI_{year}.html', 'rb').read()
-            with open(f'.\\init_url_AAAI_{year}.dat', 'wb') as f:
+            with open(f'..\\urls\\init_url_AAAI_{year}.dat', 'wb') as f:
                 pickle.dump(content, f)
         soup = BeautifulSoup(content, 'html5lib')
         paper_index = 0
@@ -147,7 +147,7 @@ def save_csv(year):
 
         #  write error log
         print('write error log')
-        with open('download_err_log.txt', 'w') as f:
+        with open('..\\log\\download_err_log.txt', 'w') as f:
             for log in tqdm(error_log):
                 for e in log:
                     if e is not None:
@@ -175,7 +175,7 @@ def download_from_csv(year, save_dir, time_step_in_seconds=5, total_paper_number
 
     error_log = []
     postfix = f'AAAI_{year}'
-    with open(f'AAAI_{year}.csv', newline='') as csvfile:
+    with open(f'..\\csv\\AAAI_{year}.csv', newline='') as csvfile:
         myreader = csv.DictReader(csvfile, delimiter=',')
         pbar = tqdm(myreader)
         i = 0
@@ -215,7 +215,7 @@ def download_from_csv(year, save_dir, time_step_in_seconds=5, total_paper_number
 
         # 2. write error log
         print('write error log')
-        with open('download_err_log.txt', 'w') as f:
+        with open('..\\log\\download_err_log.txt', 'w') as f:
             for log in tqdm(error_log):
                 for e in log:
                     if e is not None:
