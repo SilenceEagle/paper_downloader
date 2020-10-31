@@ -1,6 +1,6 @@
 # paper_downloader
 
-Download papers and supplemental materials from paper website, such as **AAAI**, **AISTATS**, **COLT**, **CVPR**, **ICCV**, **ICLR**, **ICML**, **IJCAI**, **JMLR**, **NIPS**.
+Download papers and supplemental materials from paper website, such as **AAAI**, **AISTATS**, **COLT**, **CVPR**, **ECCV**, **ICCV**, **ICLR**, **ICML**, **IJCAI**, **JMLR**, **NIPS**.
 ****
 
 ## [AAAI](https://www.aaai.org/Library/AAAI/aaai-library.php)
@@ -49,18 +49,6 @@ PyPDF3 (pip install PyPDF3)
 tqdm (pip install tqdm)   
 slugify (pip install python-slugify)   
 ****
-## [ICCV](http://openaccess.thecvf.com/menu.py)
-
-*paper_download_ICCV_IDM.py* uses the IDM to download ICCV 2013-present papers, the supplemental material will be merged with the main paper into one single pdf file.
-
-### required
-IDM  
-python3  
-bs4 (pip install bs4)  
-PyPDF3 (pip install PyPDF3)  
-tqdm (pip install tqdm)   
-slugify (pip install python-slugify)   
-****
 ## [ECCV](https://www.ecva.net/papers.php)
 
 *paper_download_ECCV_IDM.py* uses the IDM to download ICCV 2013-present papers, the supplemental material will be merged with the main paper into one folder.
@@ -73,6 +61,19 @@ PyPDF3 (pip install PyPDF3)
 tqdm (pip install tqdm)   
 slugify (pip install python-slugify)   
 ****
+## [ICCV](http://openaccess.thecvf.com/menu.py)
+
+*paper_download_ICCV_IDM.py* uses the IDM to download ICCV 2013-present papers, the supplemental material will be merged with the main paper into one single pdf file.
+
+### required
+IDM  
+python3  
+bs4 (pip install bs4)  
+PyPDF3 (pip install PyPDF3)  
+tqdm (pip install tqdm)   
+slugify (pip install python-slugify)   
+****
+
 ## [ICLR](https://iclr.cc/)
 
 *paper_download_ICLR_IDM.py* uses the IDM to download ICLR 2014-present oral and poster papers.
