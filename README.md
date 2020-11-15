@@ -16,7 +16,7 @@ slugify (pip install python-slugify)
 ****
 ## [AISTATS](https://www.aistats.org/)
 
-*paper_download_AISTATS_IDM.py* uses the IDM to download AISTATS 2007-present papers, the supplemental material will be merged with the main paper into one single pdf file.
+*paper_download_AISTATS_IDM.py* uses the IDM to download AISTATS 2007-present papers, the supplemental material could be merged with the main paper into one single pdf file or be merged with the main paper into one folder.
 
 ### required
 IDM  
@@ -39,7 +39,7 @@ slugify (pip install python-slugify)
 ****
 ## [CVPR](http://openaccess.thecvf.com/menu.py)
 
-*paper_download_CVPR_IDM.py* uses the IDM to download CVPR 2013-present papers, the supplemental material will be merged with the main paper into one single pdf file.
+*paper_download_CVPR_IDM.py* uses the IDM to download CVPR 2013-present papers, the supplemental material could be merged with the main paper into one single pdf file or be merged with the main paper into one folder.
 
 ### required
 IDM  
@@ -51,7 +51,8 @@ slugify (pip install python-slugify)
 ****
 ## [ECCV](https://www.ecva.net/papers.php)
 
-*paper_download_ECCV_IDM.py* uses the IDM to download ECCV 1990-present papers, the supplemental material will be merged with the main paper into one folder.
+*paper_download_ECCV_IDM.py* uses the IDM to download ECCV 1990-present papers, the supplemental material could be merged with the main paper into one single pdf file or be merged with the main paper into one folder.
+
 
 ### required
 IDM  
@@ -63,7 +64,8 @@ slugify (pip install python-slugify)
 ****
 ## [ICCV](http://openaccess.thecvf.com/menu.py)
 
-*paper_download_ICCV_IDM.py* uses the IDM to download ICCV 2013-present papers, the supplemental material will be merged with the main paper into one single pdf file.
+*paper_download_ICCV_IDM.py* uses the IDM to download ICCV 2013-present papers, the supplemental material could be merged with the main paper into one single pdf file or be merged with the main paper into one folder.
+
 
 ### required
 IDM  
@@ -87,7 +89,8 @@ tqdm (pip install tqdm)
 ****
 ## [ICML](https://icml.cc/)
 
-*paper_download_ICML_IDM.py* uses the IDM to download ICML 2002-present papers, the supplemental material will be merged with the main paper into one single pdf file.
+*paper_download_ICML_IDM.py* uses the IDM to download ICML 2002-present papers, the supplemental material could be merged with the main paper into one single pdf file or be merged with the main paper into one folder.
+
 
 ### required
 IDM  
@@ -121,7 +124,8 @@ slugify (pip install python-slugify)
 ****
 ## [NIPS or NeurIPS](https://nips.cc/)
 
-*paper_download_NIPS_IDM.py* uses the IDM to download NIPS 1987-present papers, the supplemental material will be merged with the main paper into one single pdf file.
+*paper_download_NIPS_IDM.py* uses the IDM to download NIPS 1987-present papers, the supplemental material could be merged with the main paper into one single pdf file or be merged with the main paper into one folder.
+
 
 fork from [Han-Jia/NIPS2018_Download](https://github.com/Han-Jia/NIPS2018_Download) and update it.
 
