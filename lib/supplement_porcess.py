@@ -1,16 +1,56 @@
-
+"""
+    supplement_process.py
+"""
 from PyPDF3 import PdfFileMerger
 import zipfile
 import os
 import shutil
 from tqdm import tqdm
 
+def unzipfile(zip_file, save_path):
+    """
+    unzip zip file to save_path
+    :param zipfile: str, zip file's full pathname.
+    :param save_path: str, the path store unzipped files.
+    :return: None
+    """
+    zip_ref = zipfile.ZipFile(zip_file, 'r')
+    zip_ref.extractall(save_path)
+    zip_ref.close()
 
-def move_main_and_supplement_2_one_directory_with_group(main_path, supplement_path):
+
+def get_potential_supp_pdf(path):
+    """
+    get all the potential supplemental pdf file pathname
+    :param path: str, the path of unzipped files
+    :return: supp_pdf_list, List of str, pdf files' full pathnames
+    """
+    supp_pdf_list = [f for f in os.scandir(path) if f.name.endswith('.pdf')]
+    if len(supp_pdf_list) == 0:
+        supp_pdf_list = []
+        for dir in os.scandir(path):
+            if dir.is_dir() and not dir.name.startswith('__'):
+                for pdf in os.scandir(dir.path):
+                    if pdf.name.endswith('.pdf'):
+                        supp_pdf_list.append(pdf.path)
+    if len(supp_pdf_list) == 0:
+        supp_pdf_list = []
+        for dir in os.scandir(path):
+            if dir.is_dir() and not dir.name.startswith('__'):
+                for sub_dir in os.scandir(dir):
+                    if sub_dir.is_dir() and not sub_dir.name.startswith('__'):
+                        for pdf in os.scandir(sub_dir.path):
+                            if pdf.name.endswith('.pdf'):
+                                supp_pdf_list.append(pdf.path)
+    return supp_pdf_list
+
+
+def move_main_and_supplement_2_one_directory_with_group(main_path, supplement_path, supp_pdf_save_path):
     """
     merge the workshops main and supplemental material into main path
     :param main_path: str, the main papers' path
     :param supplement_path: str, the supplemental material 's path
+    :param supp_pdf_save_path: str, the supplemental pdf files' save path
     """
     if not os.path.exists(main_path):
         raise ValueError(f'''can not open '{main_path}' !''')
@@ -42,26 +82,32 @@ def move_main_and_supplement_2_one_directory_with_group(main_path, supplement_pa
                         # error_flag = False
                         if os.path.exists(os.path.join(supplement_path, group.name, f'{name}_supp.pdf')):
                             supp_pdf_path = os.path.join(supplement_path, group.name,  f'{name}_supp.pdf')
-                            shutil.move(supp_pdf_path, os.path.join(main_path, group.name,  f'{name}_supp.pdf'))
+                            shutil.copyfile(
+                                supp_pdf_path, os.path.join(supp_pdf_save_path, group.name,  f'{name}_supp.pdf'))
                         elif os.path.exists(os.path.join(supplement_path, group.name, f'{name}_supp.zip')):
                             try:
-                                zip_ref = zipfile.ZipFile(
-                                    os.path.join(supplement_path, group.name, f'{name}_supp.zip'), 'r')
-                                zip_ref.extractall(temp_zip_dir)
-                                zip_ref.close()
+                                unzipfile(
+                                    zip_file=os.path.join(supplement_path, group.name, f'{name}_supp.zip'),
+                                    save_path=temp_zip_dir
+                                )
                             except Exception as e:
                                 print('Error: ' + name + ' - ' + str(e))
                                 error_log.append((paper.path, supp_pdf_path, str(e)))
                             try:
                                 # find if there is a pdf file (by listing all files in the dir)
-                                supp_pdf_list = [os.path.join(dp, f) for dp, dn, filenames in os.walk(temp_zip_dir)
-                                                 for f in filenames if f.endswith('pdf')]
+                                supp_pdf_list = get_potential_supp_pdf(temp_zip_dir)
                                 # rename the first pdf file
                                 if len(supp_pdf_list) >= 1:
                                     # by default, we only deal with the first pdf
-                                    supp_pdf_path = os.path.join(main_path, group.name, name+'_supp.pdf')
+                                    supp_pdf_path = os.path.join(supp_pdf_save_path, group.name, name+'_supp.pdf')
                                     if not os.path.exists(supp_pdf_path):
-                                        os.rename(supp_pdf_list[0], supp_pdf_path)
+                                        os.rename(os.path.join(temp_zip_dir, supp_pdf_list[0]), supp_pdf_path)
+                                    if len(supp_pdf_list) > 1:
+                                        for i in range(1, len(supp_pdf_list)):
+                                            supp_pdf_path = os.path.join(
+                                                supp_pdf_save_path, group.name, name + f'_supp_{i}.pdf')
+                                            if not os.path.exists(supp_pdf_path):
+                                                os.rename(os.path.join(temp_zip_dir, supp_pdf_list[i]), supp_pdf_path)
                                 # empty the temp_folder (both the dirs and files)
                                 for unzip_file in os.listdir(temp_zip_dir):
                                     if os.path.isfile(os.path.join(temp_zip_dir, unzip_file)):
@@ -88,16 +134,19 @@ def move_main_and_supplement_2_one_directory_with_group(main_path, supplement_pa
             f.write('\n')
 
 
-def move_main_and_supplement_2_one_directory(main_path, supplement_path):
+def move_main_and_supplement_2_one_directory(main_path, supplement_path, supp_pdf_save_path):
     """
-    merge the workshops main and supplemental material into main path
+    unzip supplemental zip files to get the pdf files, copy and
+    rename them into given path
     :param main_path: str, the main papers' path
-    :param supplement_path: str, the supplemental material 's path
+    :param supplement_path: str, the supplemental material's path
+    :param supp_pdf_save_path: str, the supplemental pdf files' save path
     """
     if not os.path.exists(main_path):
         raise ValueError(f'''can not open '{main_path}' !''')
     if not os.path.exists(supplement_path):
         raise ValueError(f'''can not open '{supplement_path}' !''')
+    os.makedirs(supp_pdf_save_path, exist_ok=True)
     error_log = []
     # make temp dir to unzip zip file
     temp_zip_dir = '..\\temp_zip'
@@ -121,30 +170,34 @@ def move_main_and_supplement_2_one_directory(main_path, supplement_path):
                 paper_bar.set_description(f'''processing {name}''')
                 supp_pdf_path = None
                 # error_flag = False
-                if os.path.exists(os.path.join(main_path, f'{name}_supp.pdf')):
+                if os.path.exists(os.path.join(supp_pdf_save_path, f'{name}_supp.pdf')):
                     continue
                 elif os.path.exists(os.path.join(supplement_path, f'{name}_supp.pdf')):
                     supp_pdf_path = os.path.join(supplement_path, f'{name}_supp.pdf')
-                    shutil.move(supp_pdf_path, os.path.join(main_path, f'{name}_supp.pdf'))
+                    shutil.copyfile(supp_pdf_path, os.path.join(supp_pdf_save_path, f'{name}_supp.pdf'))
                 elif os.path.exists(os.path.join(supplement_path, f'{name}_supp.zip')):
                     try:
-                        zip_ref = zipfile.ZipFile(
-                            os.path.join(supplement_path, f'{name}_supp.zip'), 'r')
-                        zip_ref.extractall(temp_zip_dir)
-                        zip_ref.close()
+                        unzipfile(
+                            zip_file=os.path.join(supplement_path, f'{name}_supp.zip'),
+                            save_path=temp_zip_dir)
                     except Exception as e:
                         print('Error: ' + name + ' - ' + str(e))
                         error_log.append((paper.path, supp_pdf_path, str(e)))
                     try:
                         # find if there is a pdf file (by listing all files in the dir)
-                        supp_pdf_list = [os.path.join(dp, f) for dp, dn, filenames in os.walk(temp_zip_dir)
-                                         for f in filenames if f.endswith('pdf')]
+                        supp_pdf_list = get_potential_supp_pdf(temp_zip_dir)
+
                         # rename the first pdf file
                         if len(supp_pdf_list) >= 1:
                             # by default, we only deal with the first pdf
-                            supp_pdf_path = os.path.join(main_path, name+'_supp.pdf')
+                            supp_pdf_path = os.path.join(supp_pdf_save_path, name+'_supp.pdf')
                             if not os.path.exists(supp_pdf_path):
-                                os.rename(supp_pdf_list[0], supp_pdf_path)
+                                os.rename(os.path.join(temp_zip_dir, supp_pdf_list[0]), supp_pdf_path)
+                            if len(supp_pdf_list) > 1:
+                                for i in range(1, len(supp_pdf_list)):
+                                    supp_pdf_path = os.path.join(supp_pdf_save_path, name + f'_supp_{i}.pdf')
+                                    if not os.path.exists(supp_pdf_path):
+                                        os.rename(os.path.join(temp_zip_dir, supp_pdf_list[i]), supp_pdf_path)
                         # empty the temp_folder (both the dirs and files)
                         for unzip_file in os.listdir(temp_zip_dir):
                             if os.path.isfile(os.path.join(temp_zip_dir, unzip_file)):
@@ -212,15 +265,16 @@ def merge_main_supplement(main_path, supplement_path, save_path, is_delete_ori_f
                     supp_pdf_path = os.path.join(supplement_path, f'{name}_supp.pdf')
                 elif os.path.exists(os.path.join(supplement_path, f'{name}_supp.zip')):
                     try:
-                        zip_ref = zipfile.ZipFile(os.path.join(supplement_path, f'{name}_supp.zip'), 'r')
-                        zip_ref.extractall(temp_zip_dir)
-                        zip_ref.close()
+                        unzipfile(
+                            zip_file=os.path.join(supplement_path, f'{name}_supp.zip'),
+                            save_path=temp_zip_dir
+                        )
                     except Exception as e:
                         print('Error: ' + name + ' - ' + str(e))
                         error_log.append((paper.path, supp_pdf_path, str(e)))
                     try:
                         # find if there is a pdf file (by listing all files in the dir)
-                        supp_pdf_list = [os.path.join(dp, f) for dp, dn, filenames in os.walk(temp_zip_dir) for f in filenames if f.endswith('pdf')]
+                        supp_pdf_list = get_potential_supp_pdf(temp_zip_dir)
                         # rename the first pdf file
                         if len(supp_pdf_list) >= 1:
                             # by default, we only deal with the first pdf
