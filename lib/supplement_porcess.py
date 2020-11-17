@@ -47,7 +47,7 @@ def get_potential_supp_pdf(path):
 
 def move_main_and_supplement_2_one_directory_with_group(main_path, supplement_path, supp_pdf_save_path):
     """
-    merge the workshops main and supplemental material into main path
+    merge the workshops main and supplemental material into given path with group
     :param main_path: str, the main papers' path
     :param supplement_path: str, the supplemental material 's path
     :param supp_pdf_save_path: str, the supplemental pdf files' save path
