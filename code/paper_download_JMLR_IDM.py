@@ -2,17 +2,12 @@
 
 import urllib
 from urllib.request import urlopen
-import time
 from bs4 import BeautifulSoup
 import pickle
-# from PyPDF2 import PdfFileMerger
-from PyPDF3 import PdfFileMerger
-import zipfile
 import os
-import shutil
 from tqdm import tqdm
-import subprocess
 from slugify import slugify
+import lib.IDM as IDM
 
 
 def download_paper_IDM(volumn, save_dir, time_step_in_seconds=5):
@@ -26,19 +21,20 @@ def download_paper_IDM(volumn, save_dir, time_step_in_seconds=5):
     """
     init_url = f'http://jmlr.org/papers/v{volumn}/'
 
-    # use IDM to download everything
-    idm_path = '''"C:\Program Files (x86)\Internet Download Manager\IDMan.exe"'''  # should replace by the local IDM path
-    basic_command = [idm_path, '/d', 'xxxx', '/p', os.getcwd(), '/f', 'xxxx', '/n']  # silent /n
     # create current dict
     title_list = []
     # paper_dict = dict()
 
+    headers = {
+        'User-Agent':
+            'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:23.0) Gecko/20100101 Firefox/23.0'}
     postfix = f'JMLR_v{volumn}'
     if os.path.exists(f'..\\urls\\init_url_JMLR_v{volumn}.dat'):
         with open(f'..\\urls\\init_url_JMLR_v{volumn}.dat', 'rb') as f:
             content = pickle.load(f)
     else:
-        content = urlopen(init_url).read()
+        req = urllib.request.Request(url=init_url, headers=headers)
+        content = urllib.request.urlopen(req, timeout=10).read()
         # content = open(f'..\\JMLR_{volumn}.html', 'rb').read()
         with open(f'..\\urls\\init_url_JMLR_v{volumn}.dat', 'wb') as f:
             pickle.dump(content, f)
@@ -76,18 +72,17 @@ def download_paper_IDM(volumn, save_dir, time_step_in_seconds=5):
                 main_link = urllib.parse.urljoin('http://jmlr.org', link.get('href'))
                 break
 
-
         # try 1 time
         # error_flag = False
         for d_iter in range(1):
             try:
                 # download paper with IDM
                 if not os.path.exists(this_paper_main_path) and main_link is not None:
-                    basic_command[2] = main_link
-                    basic_command[6] = this_paper_main_path
-                    p = subprocess.Popen(' '.join(basic_command))
-                    p.wait()
-                    time.sleep(time_step_in_seconds)
+                    IDM.download(
+                        urls=main_link,
+                        save_path=this_paper_main_path,
+                        time_sleep_in_seconds=time_step_in_seconds
+                    )
                     # while True:
                     #     if os.path.exists(this_paper_main_path):
                     #         break
