@@ -12,15 +12,19 @@ import shutil
 from tqdm import tqdm
 import subprocess
 from slugify import slugify
+import lib.IDM as IDM
+import lib.thunder as Thunder
 
 
-def download_paper_and_sup_IDM(year, save_dir, is_download_supplement=True):
+def download_paper_and_sup_IDM(year, save_dir, is_download_supplement=True, time_step_in_seconds=10, downloader='IDM'):
     """
     download all AISTATS paper and supplement files given year, restore in save_dir/main_paper and save_dir/supplement
     respectively
     :param year: int, AISTATS year, such 2019
     :param save_dir: str, paper and supplement material's save path
     :param is_download_supplement: bool, True for downloading supplemental material
+    :param time_step_in_seconds: int, the interval time between two downlaod request in seconds
+    :param downloader: str, the downloader to download, could be 'IDM' or 'Thunder', default to 'IDM'
     :return: True
     """
     AISTATS_year_dict = {2020: 108,
@@ -37,18 +41,24 @@ def download_paper_and_sup_IDM(year, save_dir, is_download_supplement=True):
                          2009: 5,
                          2007: 2
                          }
+    AISTATS_year_dict_R = {
+        1999: 1
+    }
     if year in AISTATS_year_dict.keys():
         init_url = f'http://proceedings.mlr.press/v{AISTATS_year_dict[year]}/'
+    elif year in AISTATS_year_dict_R.keys():
+        init_url = f'http://proceedings.mlr.press/r{AISTATS_year_dict_R[year]}/'
     else:
         raise ValueError('''the given year's url is unknown !''')
     # init_url = f'http://papers.nips.cc/book/advances-in-neural-information-processing-systems-{year-1987}-{year}'
-    main_save_path = os.path.join(save_dir, 'main_paper')
-    supplement_save_path = os.path.join(save_dir, 'supplement')
-    os.makedirs(main_save_path, exist_ok=True)
-    os.makedirs(supplement_save_path, exist_ok=True)
-    # use IDM to download everything
-    idm_path = '''"C:\Program Files (x86)\Internet Download Manager\IDMan.exe"'''  # should replace by the local IDM path
-    basic_command = [idm_path, '/d', 'xxxx', '/p', os.getcwd(), '/f', 'xxxx', '/n']  # silent /n
+    if is_download_supplement:
+        main_save_path = os.path.join(save_dir, 'main_paper')
+        supplement_save_path = os.path.join(save_dir, 'supplement')
+        os.makedirs(main_save_path, exist_ok=True)
+        os.makedirs(supplement_save_path, exist_ok=True)
+    else:
+        main_save_path = save_dir
+        os.makedirs(main_save_path, exist_ok=True)
     # create current dict
     title_list = []
     # paper_dict = dict()
@@ -78,9 +88,10 @@ def download_paper_and_sup_IDM(year, save_dir, is_download_supplement=True):
         title_list.append(title)
 
         this_paper_main_path = os.path.join(main_save_path, f'{title}_{postfix}.pdf'.replace(' ', '_'))
-        this_paper_supp_path = os.path.join(supplement_save_path, f'{title}_{postfix}_supp.pdf')
-        this_paper_supp_path_no_ext = os.path.join(supplement_save_path, f'{title}_{postfix}_supp.')
         if is_download_supplement:
+            this_paper_supp_path = os.path.join(supplement_save_path, f'{title}_{postfix}_supp.pdf')
+            this_paper_supp_path_no_ext = os.path.join(supplement_save_path, f'{title}_{postfix}_supp.')
+
             if os.path.exists(this_paper_main_path) and os.path.exists(this_paper_supp_path):
                 continue
         else:
@@ -94,8 +105,8 @@ def download_paper_and_sup_IDM(year, save_dir, is_download_supplement=True):
         for link in links:
             if 'Download PDF' == link.text or 'pdf' == link.text:
                 main_link = link.get('href')
-            elif 'Supplementary PDF' == link.text or 'Supplementary Material' == link.text or \
-                    'supplementary' == link.text:
+            elif is_download_supplement and ('Supplementary PDF' == link.text or 'Supplementary Material' == link.text or \
+                    'supplementary' == link.text):
                 supp_link = link.get('href')
                 if supp_link[-3:] != 'pdf':
                     this_paper_supp_path = this_paper_supp_path_no_ext + supp_link[-3:]
@@ -107,11 +118,22 @@ def download_paper_and_sup_IDM(year, save_dir, is_download_supplement=True):
             try:
                 # download paper with IDM
                 if not os.path.exists(this_paper_main_path) and main_link is not None:
-                    basic_command[2] = main_link
-                    basic_command[6] = this_paper_main_path
-                    p = subprocess.Popen(' '.join(basic_command))
-                    p.wait()
-                    time.sleep(2)
+                    if 'IDM' == downloader:
+                        IDM.download(
+                            urls=main_link,
+                            save_path=this_paper_main_path,
+                            time_sleep_in_seconds=time_step_in_seconds
+                        )
+                    elif 'Thunder' == downloader:
+                        Thunder.download(
+                            urls=main_link,
+                            save_path=this_paper_main_path,
+                            time_sleep_in_seconds=time_step_in_seconds
+                        )
+                    else:
+                        raise ValueError(
+                            f'''ERROR: Unsupported downloader: {downloader}, we currently only support'''
+                            f''' "IDM" or "Thunder" ''')
                     # while True:
                     #     if os.path.exists(this_paper_main_path):
                     #         break
@@ -124,11 +146,22 @@ def download_paper_and_sup_IDM(year, save_dir, is_download_supplement=True):
                 # check whether the supp can be downloaded
                 if not os.path.exists(this_paper_supp_path) and supp_link is not None:
                     try:
-                        basic_command[2] = supp_link
-                        basic_command[6] = this_paper_supp_path
-                        p = subprocess.Popen(' '.join(basic_command))
-                        p.wait()
-                        time.sleep(2)
+                        if 'IDM' == downloader:
+                            IDM.download(
+                                urls=supp_link,
+                                save_path=this_paper_supp_path,
+                                time_sleep_in_seconds=time_step_in_seconds
+                            )
+                        elif 'Thunder' == downloader:
+                            Thunder.download(
+                                urls=supp_link,
+                                save_path=this_paper_supp_path,
+                                time_sleep_in_seconds=time_step_in_seconds
+                            )
+                        else:
+                            raise ValueError(
+                                f'''ERROR: Unsupported downloader: {downloader}, we currently only support'''
+                                f''' "IDM" or "Thunder" ''')
                         # while True:
                         #     if os.path.exists(this_paper_supp_path_no_ext + supp_type):
                         #         break
@@ -156,132 +189,13 @@ def download_paper_and_sup_IDM(year, save_dir, is_download_supplement=True):
             f.write('\n')
 
 
-def merge_main_supplement(main_path, supplement_path, save_path, is_delete_ori_files=False):
-    """
-    merge the main paper and supplemental material into one single pdf file
-    :param main_path: str, the main papers' path
-    :param supplement_path: str, the supplemental material 's path
-    :param save_path: str, merged pdf files's save path
-    :param is_delete_ori_files: Bool, True for deleting the original main and supplemental material after merging
-    """
-    if not os.path.exists(main_path):
-        raise ValueError(f'''can not open '{main_path}' !''')
-    if not os.path.exists(supplement_path):
-        raise ValueError(f'''can not open '{supplement_path}' !''')
-    os.makedirs(save_path, exist_ok=True)
-    # make temp dir to unzip zip file
-    temp_zip_dir = '..\\temp_zip'
-    if not os.path.exists(temp_zip_dir):
-        os.mkdir(temp_zip_dir)
-    else:
-        # remove all files
-        for unzip_file in os.listdir(temp_zip_dir):
-            if os.path.isfile(os.path.join(temp_zip_dir, unzip_file)):
-                os.remove(os.path.join(temp_zip_dir, unzip_file))
-            if os.path.isdir(os.path.join(temp_zip_dir, unzip_file)):
-                shutil.rmtree(os.path.join(temp_zip_dir, unzip_file))
-            else:
-                print('Cannot Remove - ' + os.path.join(temp_zip_dir, unzip_file))
-    error_log = []
-    paper_bar = tqdm(os.scandir(main_path))
-    for paper in paper_bar:
-        if paper.is_file():
-            name, extension = os.path.splitext(paper.name)
-            if '.pdf' == extension:
-                paper_bar.set_description(f'''processing {name}''')
-                if os.path.exists(os.path.join(save_path, paper.name)):
-                    continue
-                supp_pdf_path = None
-                if os.path.exists(os.path.join(supplement_path, f'{name}_supp.pdf')):
-                    supp_pdf_path = os.path.join(supplement_path, f'{name}_supp.pdf')
-                elif os.path.exists(os.path.join(supplement_path, f'{name}_supp.zip')):
-                    try:
-                        zip_ref = zipfile.ZipFile(os.path.join(supplement_path, f'{name}_supp.zip'), 'r')
-                        zip_ref.extractall(temp_zip_dir)
-                        zip_ref.close()
-                    except Exception as e:
-                        print('Error: ' + name + ' - ' + str(e))
-                        error_log.append((paper.path, supp_pdf_path, str(e)))
-                    try:
-                        # find if there is a pdf file (by listing all files in the dir)
-                        supp_pdf_list = [os.path.join(dp, f) for dp, dn, filenames in os.walk(temp_zip_dir) for f in filenames if f.endswith('pdf')]
-                        # rename the first pdf file
-                        if len(supp_pdf_list) >= 1:
-                            # by default, we only deal with the first pdf
-                            supp_pdf_path = os.path.join(supplement_path, name+'_supp.pdf')
-                            if not os.path.exists(supp_pdf_path):
-                                os.rename(supp_pdf_list[0], supp_pdf_path)
-                        # empty the temp_folder (both the dirs and files)
-                        for unzip_file in os.listdir(temp_zip_dir):
-                            if os.path.isfile(os.path.join(temp_zip_dir, unzip_file)):
-                                os.remove(os.path.join(temp_zip_dir, unzip_file))
-                            elif os.path.isdir(os.path.join(temp_zip_dir, unzip_file)):
-                                shutil.rmtree(os.path.join(temp_zip_dir, unzip_file))
-                            else:
-                                print('Cannot Remove - ' + os.path.join(temp_zip_dir, unzip_file))
-                    except Exception as e:
-                        error_floa = True
-                        print('Error: ' + name + ' - ' + str(e))
-                        error_log.append((paper.path, supp_pdf_path, str(e)))
-                        # empty the temp_folder (both the dirs and files)
-                        for unzip_file in os.listdir(temp_zip_dir):
-                            if os.path.isfile(os.path.join(temp_zip_dir, unzip_file)):
-                                os.remove(os.path.join(temp_zip_dir, unzip_file))
-                            elif os.path.isdir(os.path.join(temp_zip_dir, unzip_file)):
-                                shutil.rmtree(os.path.join(temp_zip_dir, unzip_file))
-                            else:
-                                print('Cannot Remove - ' + os.path.join(temp_zip_dir, unzip_file))
-                        continue
-                if supp_pdf_path is not None:
-                    try:
-                        merger = PdfFileMerger()
-                        f_handle1 = open(paper.path, 'rb')
-                        merger.append(f_handle1)
-                        f_handle2 = open(supp_pdf_path, 'rb')
-                        merger.append(f_handle2)
-                        with open(os.path.join(save_path, paper.name), 'wb') as fout:
-                            merger.write(fout)
-                            print('\tmerged!')
-                        f_handle1.close()
-                        f_handle2.close()
-                        merger.close()
-                        if is_delete_ori_files:
-                            os.remove(paper.path)
-                            if os.path.exists(os.path.join(supplement_path, f'{name}_supp.zip')):
-                                os.remove(os.path.join(supplement_path, f'{name}_supp.zip'))
-                            if os.path.exists(os.path.join(supplement_path, f'{name}_supp.pdf')):
-                                os.remove(os.path.join(supplement_path, f'{name}_supp.pdf'))
-                    except Exception as e:
-                        print('Error: ' + name + ' - ' + str(e))
-                        error_log.append((paper.path, supp_pdf_path, str(e)))
-                        if os.path.exists(os.path.join(save_path, paper.name)):
-                            os.remove(os.path.join(save_path, paper.name))
-
-                else:
-                    if is_delete_ori_files:
-                        os.rename(paper.path, os.path.join(save_path, paper.name))
-                    else:
-                        shutil.copyfile(paper.path, os.path.join(save_path, paper.name))
-
-    # 2. write error log
-    print('write error log')
-    with open('..\\log\\merge_err_log.txt', 'w') as f:
-        for log in tqdm(error_log):
-            for e in log:
-                if e is None:
-                    f.write('None')
-                else:
-                    f.write(e)
-                f.write('\n')
-
-            f.write('\n')
-
-
 if __name__ == '__main__':
-    year = 2020
-    download_paper_and_sup_IDM(year, f'..\\AISTATS_{year}', is_download_supplement=True)
-    # merge_main_supplement(main_path=f'..\\AISTATS_{year}\\main_paper',
-    #                       supplement_path=f'..\\AISTATS_{year}\\supplement',
-    #                       save_path=f'..\\AISTATS_{year}',
-    #                       is_delete_ori_files=True)
+    year = 1999
+    download_paper_and_sup_IDM(
+        year,
+        rf'F:\AISTATS_{year}',
+        is_download_supplement=False,
+        time_step_in_seconds=5,
+        downloader='IDM'
+    )
     pass
