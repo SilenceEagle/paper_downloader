@@ -9,11 +9,12 @@ from tqdm import tqdm
 from slugify import slugify
 import lib.IDM as IDM
 import lib.thunder as Thunder
+import time
 
 
-def download_paper(volumn, save_dir, time_step_in_seconds=5, downloader='IDM'):
+def download_paper(volumn, save_dir, time_step_in_seconds=5, downloader='IDM', url=None, is_use_url=False):
     """
-    download all JMLR paper and supplement files given volumn, restore in save_dir/main_paper and save_dir/supplement
+    download all JMLR paper files given volumn and restore in save_dir
     respectively
     :param volumn: int, JMLR volumn, such as 2019
     :param save_dir: str, paper and supplement material's save path
@@ -21,8 +22,6 @@ def download_paper(volumn, save_dir, time_step_in_seconds=5, downloader='IDM'):
     :param downloader: str, the downloader to download, could be 'IDM' or 'Thunder', default to 'IDM'
     :return: True
     """
-    init_url = f'http://jmlr.org/papers/v{volumn}/'
-
     # create current dict
     title_list = []
     # paper_dict = dict()
@@ -30,22 +29,31 @@ def download_paper(volumn, save_dir, time_step_in_seconds=5, downloader='IDM'):
     headers = {
         'User-Agent':
             'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:23.0) Gecko/20100101 Firefox/23.0'}
-    postfix = f'JMLR_v{volumn}'
-    if os.path.exists(f'..\\urls\\init_url_JMLR_v{volumn}.dat'):
-        with open(f'..\\urls\\init_url_JMLR_v{volumn}.dat', 'rb') as f:
-            content = pickle.load(f)
-    else:
-        req = urllib.request.Request(url=init_url, headers=headers)
+    if not is_use_url:
+        init_url = f'http://jmlr.org/papers/v{volumn}/'
+        postfix = f'JMLR_v{volumn}'
+        if os.path.exists(f'..\\urls\\init_url_JMLR_v{volumn}.dat'):
+            with open(f'..\\urls\\init_url_JMLR_v{volumn}.dat', 'rb') as f:
+                content = pickle.load(f)
+        else:
+            req = urllib.request.Request(url=init_url, headers=headers)
+            content = urllib.request.urlopen(req, timeout=10).read()
+            # content = open(f'..\\JMLR_{volumn}.html', 'rb').read()
+            with open(f'..\\urls\\init_url_JMLR_v{volumn}.dat', 'wb') as f:
+                pickle.dump(content, f)
+    elif url is not None:
+        req = urllib.request.Request(url=url, headers=headers)
         content = urllib.request.urlopen(req, timeout=10).read()
-        # content = open(f'..\\JMLR_{volumn}.html', 'rb').read()
-        with open(f'..\\urls\\init_url_JMLR_v{volumn}.dat', 'wb') as f:
-            pickle.dump(content, f)
+        postfix = f'JMLR'
+    else:
+        raise ValueError(''''url' could not be None when 'is_use_url'=True!!!''')
     # soup = BeautifulSoup(content, 'html.parser')
     soup = BeautifulSoup(content, 'html5lib')
     # soup = BeautifulSoup(open(r'..\JMLR_2011.html', 'rb'), 'html.parser')
     error_log = []
     os.makedirs(save_dir, exist_ok=True)
-    if volumn <= 4:
+
+    if (not is_use_url) and volumn <= 4:
         paper_list = soup.find('div', {'id': 'content'}).find_all('tr')
     else:
         paper_list = soup.find('div', {'id': 'content'}).find_all('dl')
@@ -123,7 +131,71 @@ def download_paper(volumn, save_dir, time_step_in_seconds=5, downloader='IDM'):
             f.write('\n')
 
 
+def download_special_topics_and_issues_paper(save_dir, time_step_in_seconds=5, downloader='IDM'):
+    """
+    download all JMLR special topics and issues paper files given volumn and restore in save_dir
+    respectively
+    :param volumn: int, JMLR volumn, such as 2019
+    :param save_dir: str, paper and supplement material's save path
+    :param time_step_in_seconds: int, the interval time between two downlaod request in seconds
+    :param downloader: str, the downloader to download, could be 'IDM' or 'Thunder', default to 'IDM'
+    :return: True
+    """
+    homepage = 'https://www.jmlr.org/papers/'
+    headers = {
+        'User-Agent':
+            'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:23.0) Gecko/20100101 Firefox/23.0'}
+    # postfix = f'JMLR_v{volumn}'
+
+    req = urllib.request.Request(url=homepage, headers=headers)
+    content = urllib.request.urlopen(req, timeout=10).read()
+    # content = open(f'..\\JMLR_{volumn}.html', 'rb').read()
+    # soup = BeautifulSoup(content, 'html.parser')
+    soup = BeautifulSoup(content, 'html5lib')
+    # soup = BeautifulSoup(open(r'..\JMLR_2011.html', 'rb'), 'html.parser')
+
+    all_topics = soup.find('div', {'id': 'content'}).find_all(['h2', 'p'])
+    is_topic = False
+    is_issue = False
+    for topic in all_topics:
+        if 'h2' == topic.name and slugify(topic.text.strip()) == 'special-topics':
+            is_topic = True
+        elif 'h2' == topic.name:
+            is_topic = False
+            if 'special-issues' == slugify(topic.text.strip()):
+                is_issue = True
+        if is_topic and 'p' == topic.name:
+            topic_name = slugify(topic.text.strip())
+            topic_url = urllib.parse.urljoin(homepage, topic.a.get('href'))
+            # print(f'T: {topic_name} url:{topic_url}')
+            print(f'processing special topic: {topic_name}')
+            download_paper(
+                volumn=1000,
+                save_dir=os.path.join(save_dir, 'special-topics', topic_name),
+                time_step_in_seconds=time_step_in_seconds,
+                downloader=downloader,
+                url=topic_url,
+                is_use_url=True
+            )
+            time.sleep(time_step_in_seconds)
+        if is_issue and 'p' == topic.name:
+            issue_name = slugify(topic.text.strip())
+            issue_url = urllib.parse.urljoin(homepage, topic.a.get('href'))
+            # print(f'T: {issue_name} url:{issue_url}')
+            print(f'processing special issue: {issue_name}')
+            download_paper(
+                volumn=1000,
+                save_dir=os.path.join(save_dir, 'special-issues', issue_name),
+                time_step_in_seconds=time_step_in_seconds,
+                downloader=downloader,
+                url=issue_url,
+                is_use_url=True
+            )
+            time.sleep(time_step_in_seconds)
+
+
 if __name__ == '__main__':
-    volumn = 21
-    download_paper(volumn, rf'E:\all_papers\JMLR\JMLR_v{volumn}', time_step_in_seconds=1)
+    # volumn = 21
+    # download_paper(volumn, rf'E:\all_papers\JMLR\JMLR_v{volumn}', time_step_in_seconds=1)
+    download_special_topics_and_issues_paper(rf'E:\all_papers\JMLR', time_step_in_seconds=2, downloader='IDM')
     pass
