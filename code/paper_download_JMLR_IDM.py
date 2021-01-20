@@ -20,6 +20,8 @@ def download_paper(volumn, save_dir, time_step_in_seconds=5, downloader='IDM', u
     :param save_dir: str, paper and supplement material's save path
     :param time_step_in_seconds: int, the interval time between two downlaod request in seconds
     :param downloader: str, the downloader to download, could be 'IDM' or 'Thunder', default to 'IDM'
+    :param url: None or str, None means to download volumn papers.
+    :param is_use_url: bool, if to download papers from 'url'. url couldn't be None when is_use_url is True.
     :return: True
     """
     # create current dict
