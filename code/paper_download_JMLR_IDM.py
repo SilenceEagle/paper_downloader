@@ -8,15 +8,17 @@ import os
 from tqdm import tqdm
 from slugify import slugify
 import lib.IDM as IDM
+import lib.thunder as Thunder
 
 
-def download_paper_IDM(volumn, save_dir, time_step_in_seconds=5):
+def download_paper(volumn, save_dir, time_step_in_seconds=5, downloader='IDM'):
     """
     download all JMLR paper and supplement files given volumn, restore in save_dir/main_paper and save_dir/supplement
     respectively
     :param volumn: int, JMLR volumn, such as 2019
     :param save_dir: str, paper and supplement material's save path
     :param time_step_in_seconds: int, the interval time between two downlaod request in seconds
+    :param downloader: str, the downloader to download, could be 'IDM' or 'Thunder', default to 'IDM'
     :return: True
     """
     init_url = f'http://jmlr.org/papers/v{volumn}/'
@@ -78,11 +80,22 @@ def download_paper_IDM(volumn, save_dir, time_step_in_seconds=5):
             try:
                 # download paper with IDM
                 if not os.path.exists(this_paper_main_path) and main_link is not None:
-                    IDM.download(
-                        urls=main_link,
-                        save_path=this_paper_main_path,
-                        time_sleep_in_seconds=time_step_in_seconds
-                    )
+                    if 'IDM' == downloader:
+                        IDM.download(
+                            urls=main_link,
+                            save_path=this_paper_main_path,
+                            time_sleep_in_seconds=time_step_in_seconds
+                        )
+                    elif 'Thunder' == downloader:
+                        Thunder.download(
+                            urls=main_link,
+                            save_path=this_paper_main_path,
+                            time_sleep_in_seconds=time_step_in_seconds
+                        )
+                    else:
+                        raise ValueError(
+                            f'''ERROR: Unsupported downloader: {downloader}, we currently only support'''
+                            f''' "IDM" or "Thunder" ''')
                     # while True:
                     #     if os.path.exists(this_paper_main_path):
                     #         break
@@ -112,5 +125,5 @@ def download_paper_IDM(volumn, save_dir, time_step_in_seconds=5):
 
 if __name__ == '__main__':
     volumn = 21
-    download_paper_IDM(volumn, f'..\\JMLR_v{volumn}', time_step_in_seconds=1)
+    download_paper(volumn, rf'E:\all_papers\JMLR\JMLR_v{volumn}', time_step_in_seconds=1)
     pass
