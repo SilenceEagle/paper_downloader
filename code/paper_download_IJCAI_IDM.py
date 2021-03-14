@@ -15,6 +15,8 @@ from tqdm import tqdm
 import subprocess
 from slugify import slugify
 import csv
+import lib.IDM as IDM
+import lib.thunder as Thunder
 
 
 def save_csv(year):
@@ -379,22 +381,23 @@ def save_csv(year):
     return paper_index if paper_index is not None else None
 
 
-def download_from_csv(year, save_dir, time_step_in_seconds=5, total_paper_number=None):
+def download_from_csv(
+        year, save_dir, time_step_in_seconds=5, total_paper_number=None,
+        csv_filename=None, downloader='IDM'):
     """
     download all IJCAI paper given year
     :param year: int, IJCAI year, such 2019
     :param save_dir: str, paper and supplement material's save path
     :param time_step_in_seconds: int, the interval time between two downlaod request in seconds
     :param total_paper_number: int, the total number of papers that is going to download
+    :param csv_filename: None or str, the csv file's name, None means to use default setting
+    :param downloader: str, the downloader to download, could be 'IDM' or 'Thunder', default to 'IDM'
     :return: True
     """
-    # use IDM to download everything
-    idm_path = '''"C:\Program Files (x86)\Internet Download Manager\IDMan.exe"'''  # should replace by the local IDM path
-    basic_command = [idm_path, '/d', 'xxxx', '/p', os.getcwd(), '/f', 'xxxx', '/n']
 
     error_log = []
     postfix = f'IJCAI_{year}'
-    with open(f'..\\csv\\IJCAI_{year}.csv', newline='') as csvfile:
+    with open(f'..\\csv\\IJCAI_{year}.csv' if csv_filename is None else f'..\\csv\\{csv_filename}', newline='') as csvfile:
         myreader = csv.DictReader(csvfile, delimiter=',')
         pbar = tqdm(myreader)
         i = 0
@@ -424,11 +427,22 @@ def download_from_csv(year, save_dir, time_step_in_seconds=5, total_paper_number
                             pbar.set_description(f'Downloading paper {i}/{total_paper_number}')
                         else:
                             pbar.set_description(f'Downloading paper {i}')
-                        basic_command[2] = this_paper['link']
-                        basic_command[6] = this_paper_main_path
-                        p = subprocess.Popen(' '.join(basic_command))
-                        p.wait()
-                        time.sleep(time_step_in_seconds)
+                        if 'IDM' == downloader:
+                            IDM.download(
+                                urls=this_paper['link'],
+                                save_path=os.path.join(os.getcwd(), this_paper_main_path),
+                                time_sleep_in_seconds=time_step_in_seconds
+                            )
+                        elif 'Thunder' == downloader:
+                            Thunder.download(
+                                urls=this_paper['link'],
+                                save_path=os.path.join(os.getcwd(), this_paper_main_path),
+                                time_sleep_in_seconds=time_step_in_seconds
+                            )
+                        else:
+                            raise ValueError(
+                                f'''ERROR: Unsupported downloader: {downloader}, we currently only support'''
+                                f''' "IDM" or "Thunder" ''')
                         # while True:
                         #     if os.path.exists(this_paper_main_path):
                         #         break
@@ -450,6 +464,77 @@ def download_from_csv(year, save_dir, time_step_in_seconds=5, total_paper_number
 
                 f.write('\n')
 
+# def download_from_csv(year, save_dir, time_step_in_seconds=5, total_paper_number=None):
+#     """
+#     download all IJCAI paper given year
+#     :param year: int, IJCAI year, such 2019
+#     :param save_dir: str, paper and supplement material's save path
+#     :param time_step_in_seconds: int, the interval time between two downlaod request in seconds
+#     :param total_paper_number: int, the total number of papers that is going to download
+#     :return: True
+#     """
+#     # use IDM to download everything
+#     idm_path = '''"C:\Program Files (x86)\Internet Download Manager\IDMan.exe"'''  # should replace by the local IDM path
+#     basic_command = [idm_path, '/d', 'xxxx', '/p', os.getcwd(), '/f', 'xxxx', '/n']
+#
+#     error_log = []
+#     postfix = f'IJCAI_{year}'
+#     with open(f'..\\csv\\IJCAI_{year}.csv', newline='') as csvfile:
+#         myreader = csv.DictReader(csvfile, delimiter=',')
+#         pbar = tqdm(myreader)
+#         i = 0
+#         for this_paper in pbar:
+#             i += 1
+#             # get title
+#             print('\n')
+#             title = slugify(this_paper['title'])
+#             # print('Downloading paper {}: {}'.format(i, title))
+#
+#             if '' != this_paper['group']:
+#                 this_paper_main_path = os.path.join(save_dir, slugify(this_paper['group']), f'{title}_{postfix}.pdf')
+#             else:
+#                 this_paper_main_path = os.path.join(save_dir, f'{title}_{postfix}.pdf')
+#             if os.path.exists(this_paper_main_path):
+#                 continue
+#             if 'error' == this_paper['link']:
+#                 error_log.append((title, 'no link', f'''gropu:{this_paper['group']}'''))
+#             elif '' != this_paper['link']:
+#                 if '' != this_paper['group']:
+#                     os.makedirs(os.path.join(save_dir, slugify(this_paper['group'])), exist_ok=True)
+#                 try:
+#                     # download paper with IDM
+#                     if not os.path.exists(this_paper_main_path):
+#                         # print('title')
+#                         if total_paper_number is not None:
+#                             pbar.set_description(f'Downloading paper {i}/{total_paper_number}')
+#                         else:
+#                             pbar.set_description(f'Downloading paper {i}')
+#                         basic_command[2] = this_paper['link']
+#                         basic_command[6] = this_paper_main_path
+#                         p = subprocess.Popen(' '.join(basic_command))
+#                         p.wait()
+#                         time.sleep(time_step_in_seconds)
+#                         # while True:
+#                         #     if os.path.exists(this_paper_main_path):
+#                         #         break
+#                 except Exception as e:
+#                     # error_flag = True
+#                     print('Error: ' + title + ' - ' + str(e))
+#                     error_log.append((title, this_paper['link'], 'paper download error', str(e)))
+#
+#         # 2. write error log
+#         print('write error log')
+#         with open('..\\log\\download_err_log.txt', 'w') as f:
+#             for log in tqdm(error_log):
+#                 for e in log:
+#                     if e is not None:
+#                         f.write(e)
+#                     else:
+#                         f.write('None')
+#                     f.write('\n')
+#
+#                 f.write('\n')
+
 
 if __name__ == '__main__':
     # for year in  range(1993, 1968, -2):
@@ -457,12 +542,13 @@ if __name__ == '__main__':
     #     # save_csv(year)
     #     # time.sleep(2)
     #     download_from_csv(year, save_dir=f'..\\IJCAI_{year}', time_step_in_seconds=1)
-    year = 2020
-    total_paper_number = 778
+    # year = 2021
+    # total_paper_number = 778
     # total_paper_number = save_csv(year)
-    download_from_csv(
-        year,
-        save_dir=f'..\\IJCAI_{year}',
-        time_step_in_seconds=5,
-        total_paper_number=total_paper_number)
+    # download_from_csv(
+    #     year,
+    #     save_dir=f'..\\IJCAI_{year}',
+    #     time_step_in_seconds=5,
+    #     total_paper_number=total_paper_number)
+
     pass
