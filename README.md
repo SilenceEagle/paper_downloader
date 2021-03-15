@@ -13,6 +13,7 @@ python3
 bs4 (pip install bs4)  
 tqdm (pip install tqdm)    
 slugify (pip install python-slugify)    
+win32com (pip install pywin32)    
 ****
 ## [AISTATS](https://www.aistats.org/)
 
@@ -117,6 +118,7 @@ python3
 bs4 (pip install bs4)  
 tqdm (pip install tqdm)   
 slugify (pip install python-slugify)  
+win32com (pip install pywin32)    
 ****
 ## [JMLR](http://www.jmlr.org/)
 
