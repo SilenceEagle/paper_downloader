@@ -201,7 +201,7 @@ def save_csv_given_urls(urls, csv_filename='AAAI_tmp.csv'):
                     paper_dict = {'title': title,
                                   'link': 'error',
                                   'group': this_group}
-                    print(f'get link for {title}_{year} failed!')
+                    print(f'get link for {title} failed!')
                     error_log.apend(title, 'no link')
                 writer.writerow(paper_dict)
         #  write error log
