@@ -149,3 +149,8 @@ tqdm (pip install tqdm)
 slugify (pip install python-slugify)  
 win32com (pip install pywin32)  
 html5lib (pip install html5lib)  
+
+## KNOWN ISSUES
+### issue with pywin32
+**ERROR**: After install pywin32, a error will accour: *ImportError: DLL load failed while importing win32api: 找不到指定的模块*.
+**[SOLUTION](https://blog.csdn.net/ljr_123/article/details/104693372)**: Get into the *python interpreter path*/Scripts folder and run this command in CMD: **python pywin32_postinstall.py -install**
