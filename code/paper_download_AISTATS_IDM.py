@@ -27,20 +27,22 @@ def download_paper_and_sup_IDM(year, save_dir, is_download_supplement=True, time
     :param downloader: str, the downloader to download, could be 'IDM' or 'Thunder', default to 'IDM'
     :return: True
     """
-    AISTATS_year_dict = {2020: 108,
-                         2019: 89,
-                         2018: 84,
-                         2017: 54,
-                         2016: 51,
-                         2015: 38,
-                         2014: 33,
-                         2013: 31,
-                         2012: 22,
-                         2011: 15,
-                         2010: 9,
-                         2009: 5,
-                         2007: 2
-                         }
+    AISTATS_year_dict = {
+        2021: 130,
+        2020: 108,
+        2019: 89,
+        2018: 84,
+        2017: 54,
+        2016: 51,
+        2015: 38,
+        2014: 33,
+        2013: 31,
+        2012: 22,
+        2011: 15,
+        2010: 9,
+        2009: 5,
+        2007: 2
+    }
     AISTATS_year_dict_R = {
         1997: 1,
         1999: 2,
@@ -194,12 +196,12 @@ def download_paper_and_sup_IDM(year, save_dir, is_download_supplement=True, time
 
 
 if __name__ == '__main__':
-    year = 2005
+    year = 2021
     download_paper_and_sup_IDM(
         year,
         rf'F:\AISTATS_{year}',
-        is_download_supplement=False,
-        time_step_in_seconds=5,
+        is_download_supplement=True,
+        time_step_in_seconds=2,
         downloader='IDM'
     )
     pass
