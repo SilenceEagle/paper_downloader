@@ -1,16 +1,16 @@
 """paper_download_AISTATS_IDM.py"""
 
 from urllib.request import urlopen
-import time
+# import time
 from bs4 import BeautifulSoup
 import pickle
 # from PyPDF2 import PdfFileMerger
-from PyPDF3 import PdfFileMerger
-import zipfile
+# from PyPDF3 import PdfFileMerger
+# import zipfile
 import os
-import shutil
+# import shutil
 from tqdm import tqdm
-import subprocess
+# import subprocess
 from slugify import slugify
 import lib.IDM as IDM
 import lib.thunder as Thunder
@@ -42,7 +42,11 @@ def download_paper_and_sup_IDM(year, save_dir, is_download_supplement=True, time
                          2007: 2
                          }
     AISTATS_year_dict_R = {
-        1999: 1
+        1997: 1,
+        1999: 2,
+        2001: 3,
+        2005: 5
+
     }
     if year in AISTATS_year_dict.keys():
         init_url = f'http://proceedings.mlr.press/v{AISTATS_year_dict[year]}/'
@@ -190,7 +194,7 @@ def download_paper_and_sup_IDM(year, save_dir, is_download_supplement=True, time
 
 
 if __name__ == '__main__':
-    year = 1999
+    year = 2005
     download_paper_and_sup_IDM(
         year,
         rf'F:\AISTATS_{year}',
