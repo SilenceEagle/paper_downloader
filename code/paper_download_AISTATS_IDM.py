@@ -47,6 +47,7 @@ def download_paper_and_sup_IDM(year, save_dir, is_download_supplement=True, time
         1997: 1,
         1999: 2,
         2001: 3,
+        2003: 4,
         2005: 5
 
     }
