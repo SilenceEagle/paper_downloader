@@ -19,7 +19,7 @@ def download(urls, save_path, time_sleep_in_seconds=5):
     basic_command[4] = head
     basic_command[6] = tail
     p = subprocess.Popen(' '.join(basic_command))
-    p.wait()
+    # p.wait()
     time.sleep(time_sleep_in_seconds)
 
 
