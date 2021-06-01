@@ -178,12 +178,14 @@ def save_csv_given_urls(urls, csv_filename='AAAI_tmp.csv'):
         paper_index = 0
         soup = BeautifulSoup(content, 'html5lib')
         error_log = []
-        pbar = tqdm(soup.find('div', {'class': 'content'}).find_all(['a', 'p']))
+        pbar = tqdm(soup.find('div', {'class': 'content'}).find_all(['a', 'h4', 'p']))
         this_group = ''
         for paper in pbar:
             if 'a' == paper.name:
                 if paper.get('name') is not None:
                     this_group = slugify(paper.text)
+            elif 'h4' == paper.name:
+                this_group = slugify(paper.text)
             else:
                 paper_index += 1
                 all_a = paper.find_all('a')
@@ -309,17 +311,19 @@ if __name__ == '__main__':
     #                       time_step_in_seconds=10,
     #                       total_paper_number=total_paper_number)
     #     time.sleep(2)
-    for i in range(1, 11):
+    for i in range(1, 19):
+        print(f'issue {i}/{18}')
+        year = 2021
         total_paper_number = save_csv_given_urls(
-            urls=f'https://www.aaai.org/Library/AAAI/aaai20contents-issue{i:0>2}.php',
+            urls=f'https://www.aaai.org/Library/AAAI/aaai{year - 2000}-issue{i:0>2}.php',
             csv_filename='AAAI_tmp.csv'
         )
         # total_paper_number = 156
         download_from_csv(
-            year=2020,
+            year=year,
             csv_filename='AAAI_tmp.csv',
-            save_dir=f'..\\..\\AAAI_2020',
-            time_step_in_seconds=5,
+            save_dir=rf'D:\AAAI_{year}',
+            time_step_in_seconds=1,
             total_paper_number=total_paper_number)
 
     pass
