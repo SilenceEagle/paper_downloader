@@ -13,6 +13,10 @@ from tqdm import tqdm
 import subprocess
 from slugify import slugify
 import csv
+import lib.IDM as IDM
+import lib.thunder as Thunder
+from lib.supplement_porcess import merge_main_supplement, move_main_and_supplement_2_one_directory, \
+    move_main_and_supplement_2_one_directory_with_group
 
 
 def save_csv(year):
@@ -26,13 +30,16 @@ def save_csv(year):
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
 
-        init_url = f'http://openaccess.thecvf.com/CVPR{year}.py'
+        if year == 2021:
+            init_url = f'https://openaccess.thecvf.com/CVPR{year}?day=all'
+        else:
+            init_url = f'http://openaccess.thecvf.com/CVPR{year}.py'
         if os.path.exists(f'..\\urls\\init_url_CVPR_{year}.dat'):
             with open(f'..\\urls\\init_url_CVPR_{year}.dat', 'rb') as f:
                 content = pickle.load(f)
         else:
-            # content = urlopen(init_url).read()
-            content = open(f'..\\CVPR_{year}.html', 'rb').read()
+            content = urlopen(init_url).read()
+            # content = open(f'..\\CVPR_{year}.html', 'rb').read()
             with open(f'..\\urls\\init_url_CVPR_{year}.dat', 'wb') as f:
                 pickle.dump(content, f)
         soup = BeautifulSoup(content, 'html5lib')
@@ -143,7 +150,7 @@ def save_csv_workshops(year):
 
 def download_from_csv(
         year, save_dir, is_download_supplement=True, time_step_in_seconds=5, total_paper_number=None,
-        is_workshops=False):
+        is_workshops=False, downloader='IDM'):
     """
     download all CVPR paper and supplement files given year, restore in save_dir/main_paper and save_dir/supplement
     respectively
@@ -153,15 +160,13 @@ def download_from_csv(
     :param time_step_in_seconds: int, the interval time between two downlaod request in seconds
     :param total_paper_number: int, the total number of papers that is going to download
     :param is_workshops: bool, is to download workshops from csv file.
+    :param downloader: str, the downloader to download, could be 'IDM' or 'Thunder', default to 'IDM'.
     :return: True
     """
     main_save_path = os.path.join(save_dir, 'main_paper')
     supplement_save_path = os.path.join(save_dir, 'supplement')
     os.makedirs(main_save_path, exist_ok=True)
     os.makedirs(supplement_save_path, exist_ok=True)
-    # use IDM to download everything
-    idm_path = '''"C:\Program Files (x86)\Internet Download Manager\IDMan.exe"'''  # should replace by the local IDM path
-    basic_command = [idm_path, '/d', 'xxxx', '/p', 'xxx', '/f', 'xxxx', '/n']
 
     error_log = []
     postfix = f'CVPR_{year}'
@@ -210,16 +215,22 @@ def download_from_csv(
                 try:
                     # download paper with IDM
                     if not os.path.exists(this_paper_main_path):
-                        head, tail = os.path.split(this_paper_main_path)
-                        basic_command[2] = this_paper['main link'].replace(' ', '%20')
-                        basic_command[4] = head
-                        basic_command[6] = tail
-                        p = subprocess.Popen(' '.join(basic_command))
-                        p.wait()
-                        time.sleep(time_step_in_seconds)
-                        # while True:
-                        #     if os.path.exists(this_paper_main_path):
-                        #         break
+                        if 'IDM' == downloader:
+                            IDM.download(
+                                urls=this_paper['main link'].replace(' ', '%20'),
+                                save_path=os.path.join(os.getcwd(), this_paper_main_path),
+                                time_sleep_in_seconds=time_step_in_seconds
+                            )
+                        elif 'Thunder' == downloader:
+                            Thunder.download(
+                                urls=this_paper['main link'].replace(' ', '%20'),
+                                save_path=os.path.join(os.getcwd(), this_paper_main_path),
+                                time_sleep_in_seconds=time_step_in_seconds
+                            )
+                        else:
+                            raise ValueError(
+                                f'''ERROR: Unsupported downloader: {downloader}, we currently only support'''
+                                f''' "IDM" or "Thunder" ''')
                 except Exception as e:
                     # error_flag = True
                     print('Error: ' + title + ' - ' + str(e))
@@ -234,13 +245,22 @@ def download_from_csv(
                         elif '' != this_paper['supplemental link']:
                             supp_type = this_paper['supplemental link'].split('.')[-1]
                             try:
-                                head, tail = os.path.split(this_paper_supp_path_no_ext)
-                                basic_command[2] = this_paper['supplemental link']
-                                basic_command[4] = head
-                                basic_command[6] = tail + supp_type
-                                p = subprocess.Popen(' '.join(basic_command))
-                                p.wait()
-                                time.sleep(time_step_in_seconds)
+                                if 'IDM' == downloader:
+                                    IDM.download(
+                                        urls=this_paper['supplemental link'],
+                                        save_path=os.path.join(os.getcwd(), this_paper_supp_path_no_ext+supp_type),
+                                        time_sleep_in_seconds=time_step_in_seconds
+                                    )
+                                elif 'Thunder' == downloader:
+                                    Thunder.download(
+                                        urls=this_paper['supplemental link'],
+                                        save_path=os.path.join(os.getcwd(), this_paper_supp_path_no_ext+supp_type),
+                                        time_sleep_in_seconds=time_step_in_seconds
+                                    )
+                                else:
+                                    raise ValueError(
+                                        f'''ERROR: Unsupported downloader: {downloader}, we currently only support'''
+                                        f''' "IDM" or "Thunder" ''')
                             except Exception as e:
                                 # error_flag = True
                                 print('Error: ' + title + ' - ' + str(e))
@@ -261,232 +281,25 @@ def download_from_csv(
                 f.write('\n')
 
 
-def merge_main_supplement(main_path, supplement_path, save_path, is_delete_ori_files=False):
-    """
-    merge the main paper and supplemental material into one single pdf file
-    :param main_path: str, the main papers' path
-    :param supplement_path: str, the supplemental material 's path
-    :param save_path: str, merged pdf files's save path
-    :param is_delete_ori_files: Bool, True for deleting the original main and supplemental material after merging
-    """
-    if not os.path.exists(main_path):
-        raise ValueError(f'''can not open '{main_path}' !''')
-    if not os.path.exists(supplement_path):
-        raise ValueError(f'''can not open '{supplement_path}' !''')
-    os.makedirs(save_path, exist_ok=True)
-    error_log = []
-    # make temp dir to unzip zip file
-    temp_zip_dir = '..\\temp_zip'
-    if not os.path.exists(temp_zip_dir):
-        os.mkdir(temp_zip_dir)
-    else:
-        # remove all files
-        for unzip_file in os.listdir(temp_zip_dir):
-            if os.path.isfile(os.path.join(temp_zip_dir, unzip_file)):
-                os.remove(os.path.join(temp_zip_dir, unzip_file))
-            if os.path.isdir(os.path.join(temp_zip_dir, unzip_file)):
-                shutil.rmtree(os.path.join(temp_zip_dir, unzip_file))
-            else:
-                print('Cannot Remove - ' + os.path.join(temp_zip_dir, unzip_file))
-    paper_bar = tqdm(os.scandir(main_path))
-    for paper in paper_bar:
-        if paper.is_file():
-            name, extension = os.path.splitext(paper.name)
-            if '.pdf' == extension:
-                paper_bar.set_description(f'''processing {name}''')
-                if os.path.exists(os.path.join(save_path, paper.name)):
-                    continue
-                supp_pdf_path = None
-                # error_floa = False
-                if os.path.exists(os.path.join(supplement_path, f'{name}_supp.pdf')):
-                    supp_pdf_path = os.path.join(supplement_path, f'{name}_supp.pdf')
-                elif os.path.exists(os.path.join(supplement_path, f'{name}_supp.zip')):
-                    try:
-                        zip_ref = zipfile.ZipFile(os.path.join(supplement_path, f'{name}_supp.zip'), 'r')
-                        zip_ref.extractall(temp_zip_dir)
-                        zip_ref.close()
-                    except Exception as e:
-                        print('Error: ' + name + ' - ' + str(e))
-                        error_log.append((paper.path, supp_pdf_path, str(e)))
-                    try:
-                        # find if there is a pdf file (by listing all files in the dir)
-                        supp_pdf_list = [os.path.join(dp, f) for dp, dn, filenames in os.walk(temp_zip_dir) for f in filenames if f.endswith('pdf')]
-                        # rename the first pdf file
-                        if len(supp_pdf_list) >= 1:
-                            # by default, we only deal with the first pdf
-                            supp_pdf_path = os.path.join(supplement_path, name+'_supp.pdf')
-                            if not os.path.exists(supp_pdf_path):
-                                os.rename(supp_pdf_list[0], supp_pdf_path)
-                        # empty the temp_folder (both the dirs and files)
-                        for unzip_file in os.listdir(temp_zip_dir):
-                            if os.path.isfile(os.path.join(temp_zip_dir, unzip_file)):
-                                os.remove(os.path.join(temp_zip_dir, unzip_file))
-                            elif os.path.isdir(os.path.join(temp_zip_dir, unzip_file)):
-                                shutil.rmtree(os.path.join(temp_zip_dir, unzip_file))
-                            else:
-                                print('Cannot Remove - ' + os.path.join(temp_zip_dir, unzip_file))
-                    except Exception as e:
-                        # error_floa = True
-                        print('Error: ' + name + ' - ' + str(e))
-                        error_log.append((paper.path, supp_pdf_path, str(e)))
-                        # empty the temp_folder (both the dirs and files)
-                        for unzip_file in os.listdir(temp_zip_dir):
-                            if os.path.isfile(os.path.join(temp_zip_dir, unzip_file)):
-                                os.remove(os.path.join(temp_zip_dir, unzip_file))
-                            elif os.path.isdir(os.path.join(temp_zip_dir, unzip_file)):
-                                shutil.rmtree(os.path.join(temp_zip_dir, unzip_file))
-                            else:
-                                print('Cannot Remove - ' + os.path.join(temp_zip_dir, unzip_file))
-                        continue
-                if supp_pdf_path is not None:
-                    try:
-                        merger = PdfFileMerger()
-                        f_handle1 = open(paper.path, 'rb')
-                        merger.append(f_handle1)
-                        f_handle2 = open(supp_pdf_path, 'rb')
-                        merger.append(f_handle2)
-                        with open(os.path.join(save_path, paper.name), 'wb') as fout:
-                            merger.write(fout)
-                            print('\tmerged!')
-                        f_handle1.close()
-                        f_handle2.close()
-                        merger.close()
-                        if is_delete_ori_files:
-                            os.remove(paper.path)
-                            if os.path.exists(os.path.join(supplement_path, f'{name}_supp.zip')):
-                                os.remove(os.path.join(supplement_path, f'{name}_supp.zip'))
-                            if os.path.exists(os.path.join(supplement_path, f'{name}_supp.pdf')):
-                                os.remove(os.path.join(supplement_path, f'{name}_supp.pdf'))
-                    except Exception as e:
-                        print('Error: ' + name + ' - ' + str(e))
-                        error_log.append((paper.path, supp_pdf_path, str(e)))
-                        if os.path.exists(os.path.join(save_path, paper.name)):
-                            os.remove(os.path.join(save_path, paper.name))
-
-                else:
-                    if is_delete_ori_files:
-                        os.rename(paper.path, os.path.join(save_path, paper.name))
-                    else:
-                        shutil.copyfile(paper.path, os.path.join(save_path, paper.name))
-
-    # 2. write error log
-    print('write error log')
-    with open('..\\log\\merge_err_log.txt', 'w') as f:
-        for log in tqdm(error_log):
-            for e in log:
-                if e is None:
-                    f.write('None')
-                else:
-                    f.write(e)
-                f.write('\n')
-
-            f.write('\n')
-
-
-def move_main_and_supplement_2_one_directory_WS(main_path, supplement_path):
-    """
-    merge the workshops main and supplemental material into main path
-    :param main_path: str, the main papers' path
-    :param supplement_path: str, the supplemental material 's path
-    """
-    if not os.path.exists(main_path):
-        raise ValueError(f'''can not open '{main_path}' !''')
-    if not os.path.exists(supplement_path):
-        raise ValueError(f'''can not open '{supplement_path}' !''')
-    error_log = []
-    # make temp dir to unzip zip file
-    temp_zip_dir = '..\\temp_zip'
-    if not os.path.exists(temp_zip_dir):
-        os.mkdir(temp_zip_dir)
-    else:
-        # remove all files
-        for unzip_file in os.listdir(temp_zip_dir):
-            if os.path.isfile(os.path.join(temp_zip_dir, unzip_file)):
-                os.remove(os.path.join(temp_zip_dir, unzip_file))
-            if os.path.isdir(os.path.join(temp_zip_dir, unzip_file)):
-                shutil.rmtree(os.path.join(temp_zip_dir, unzip_file))
-            else:
-                print('Cannot Remove - ' + os.path.join(temp_zip_dir, unzip_file))
-    for group in os.scandir(main_path):
-        if group.is_dir():
-            paper_bar = tqdm(os.scandir(group.path))
-            for paper in paper_bar:
-                if paper.is_file():
-                    name, extension = os.path.splitext(paper.name)
-                    if '.pdf' == extension:
-                        paper_bar.set_description(f'''processing {name}''')
-                        supp_pdf_path = None
-                        # error_floa = False
-                        if os.path.exists(os.path.join(supplement_path, group.name, f'{name}_supp.pdf')):
-                            supp_pdf_path = os.path.join(supplement_path, group.name,  f'{name}_supp.pdf')
-                            shutil.move(supp_pdf_path, os.path.join(main_path, group.name,  f'{name}_supp.pdf'))
-                        elif os.path.exists(os.path.join(supplement_path, group.name, f'{name}_supp.zip')):
-                            try:
-                                zip_ref = zipfile.ZipFile(
-                                    os.path.join(supplement_path, group.name, f'{name}_supp.zip'), 'r')
-                                zip_ref.extractall(temp_zip_dir)
-                                zip_ref.close()
-                            except Exception as e:
-                                print('Error: ' + name + ' - ' + str(e))
-                                error_log.append((paper.path, supp_pdf_path, str(e)))
-                            try:
-                                # find if there is a pdf file (by listing all files in the dir)
-                                supp_pdf_list = [os.path.join(dp, f) for dp, dn, filenames in os.walk(temp_zip_dir)
-                                                 for f in filenames if f.endswith('pdf')]
-                                # rename the first pdf file
-                                if len(supp_pdf_list) >= 1:
-                                    # by default, we only deal with the first pdf
-                                    supp_pdf_path = os.path.join(main_path, group.name, name+'_supp.pdf')
-                                    if not os.path.exists(supp_pdf_path):
-                                        os.rename(supp_pdf_list[0], supp_pdf_path)
-                                # empty the temp_folder (both the dirs and files)
-                                for unzip_file in os.listdir(temp_zip_dir):
-                                    if os.path.isfile(os.path.join(temp_zip_dir, unzip_file)):
-                                        os.remove(os.path.join(temp_zip_dir, unzip_file))
-                                    elif os.path.isdir(os.path.join(temp_zip_dir, unzip_file)):
-                                        shutil.rmtree(os.path.join(temp_zip_dir, unzip_file))
-                                    else:
-                                        print('Cannot Remove - ' + os.path.join(temp_zip_dir, unzip_file))
-                            except Exception as e:
-                                print('Error: ' + name + ' - ' + str(e))
-                                error_log.append((paper.path, supp_pdf_path, str(e)))
-
-    # 2. write error log
-    print('write error log')
-    with open('..\\log\\merge_err_log.txt', 'w') as f:
-        for log in tqdm(error_log):
-            for e in log:
-                if e is None:
-                    f.write('None')
-                else:
-                    f.write(e)
-                f.write('\n')
-
-            f.write('\n')
-
-
 if __name__ == '__main__':
-    year = 2020
-    total_paper_number = save_csv_workshops(year)
-    # total_paper_number = 613
+    year = 2021
+    # total_paper_number = save_csv_workshops(year)
+    # total_paper_number = 517
     # total_paper_number = save_csv(year)
-    download_from_csv(year,
-                      save_dir=f'F:\\workspace\\python3_ws\\CVPR_WS_{year}',
-                      is_download_supplement=True,
-                      time_step_in_seconds=5,
-                      total_paper_number=total_paper_number,
-                      is_workshops=True)
-    move_main_and_supplement_2_one_directory_WS(main_path=f'F:\\workspace\\python3_ws\\CVPR_WS_{year}\\main_paper',
-                                                supplement_path=f'F:\\workspace\\python3_ws\\CVPR_WS_{year}\\supplement')
-    # merge_main_supplement(main_path=f'..\\CVPR_{year}\main_paper',
-    #                       supplement_path=f'..\\CVPR_{year}\supplement',
-    #                       save_path=f'..\\CVPR_{year}',
-    #                       is_delete_ori_files=False)
-    # download_from_csv(year, f'..\\CVPR_{year}', is_download_supplement=True)
-    # for year in range(1997, 1986, -1):
-    #     print(year)
-    #     save_csv(year)
-    # for year in range(1996, 1986, -1):
-    #     print(year)
-    #     download_from_csv(year, f'..\\CVPR_{year}', is_download_supplement=True)
+    # download_from_csv(year,
+    #                   save_dir=fr'D:\CVPR_WS_{year}',
+    #                   is_download_supplement=True,
+    #                   time_step_in_seconds=2,
+    #                   total_paper_number=total_paper_number,
+    #                   is_workshops=True)
+    # move_main_and_supplement_2_one_directory(
+    #     main_path=rf'D:\CVPR_{year}\main_paper',
+    #     supplement_path=rf'D:\CVPR_{year}\supplement',
+    #     supp_pdf_save_path=rf'D:\CVPR_{year}\main_paper'
+    # )
+    move_main_and_supplement_2_one_directory_with_group(
+        main_path=rf'D:\CVPR_WS_{year}\main_paper',
+        supplement_path=rf'D:\CVPR_WS_{year}\supplement',
+        supp_pdf_save_path=rf'D:\CVPR_WS_{year}\main_paper'
+    )
     pass
