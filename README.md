@@ -55,7 +55,7 @@ The number of papers that could be downloaded using this repo:
 | **2018/v19** |                            1102                            |                 230                 |                     94                      |                   979+346                    |                 732+262                 |                      --                      |           336            |           466            |               870               |              84              |           1009            |
 | **2019/v20** |                            1343                            |                 403                 |                     127                     |                   1294+612                   |                   --                    |                   1075+498                   |           502            |           773            |               964               |             184              |           1428            |
 | **2020/v21** |                            1864                            |                 796                 |                     126                     |                   1467+517                   |                  1358                   |                      --                      |           687            |           1084           |               776               |             254              |           1899            |
-| **2021/v22** |                            1961                            |                 845                 |                                             |                                              |                                         |                                              |           860            |                          |                                 |             128              |                           |
+| **2021/v22** |                            1961                            |                 845                 |                                             |                   1660+517                   |                                         |                                              |           860            |                          |                                 |             128              |                           |
 
 
 
@@ -242,5 +242,5 @@ html5lib (pip install html5lib)
 
 ### issue with pywin32
 
-**ERROR**: After install pywin32, a error will accour: *ImportError: DLL load failed while importing win32api: 找不到指定的模块*.   
+**ERROR**: After install pywin32, a error will accour: *ImportError: DLL load failed while importing win32api: 找不到指定的模块*.
 **[SOLUTION](https://blog.csdn.net/ljr_123/article/details/104693372)**: Get into the *python interpreter path*/Scripts folder and run this command in CMD: **python pywin32_postinstall.py -install**
