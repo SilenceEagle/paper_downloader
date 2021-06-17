@@ -1,4 +1,4 @@
-"""paper_download_AAAI.py"""
+"""paper_downloader_AAAI.py"""
 
 import urllib
 from urllib.request import urlopen
