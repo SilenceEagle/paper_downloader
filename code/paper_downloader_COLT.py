@@ -1,4 +1,4 @@
-"""paper_download_COLT_IDM.py"""
+"""paper_downloader_COLT.py"""
 
 from urllib.request import urlopen
 import time
