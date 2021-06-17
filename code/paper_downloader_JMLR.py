@@ -1,4 +1,4 @@
-"""paper_download_JMLR_IDM.py"""
+"""paper_downloader_JMLR.py"""
 
 import urllib
 from urllib.request import urlopen
