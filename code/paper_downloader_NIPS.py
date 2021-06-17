@@ -1,4 +1,4 @@
-"""paper_download_NIPS_IDM.py"""
+"""paper_downloader_NIPS.py"""
 
 import urllib
 from urllib.request import urlopen
