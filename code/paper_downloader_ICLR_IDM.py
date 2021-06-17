@@ -1,4 +1,4 @@
-"""paper_download_ICLR_IDM.py"""
+"""paper_downloader_ICLR.py"""
 
 import time
 from tqdm import tqdm
