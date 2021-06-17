@@ -1,4 +1,4 @@
-"""paper_download_AISTATS_IDM.py"""
+"""paper_downloader_AISTATS.py"""
 
 from urllib.request import urlopen
 # import time
