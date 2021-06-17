@@ -154,7 +154,7 @@ def download_paper(
     if is_download_workshops:
         csv_file_path = f'..\\csv\\CVPR_WS_{year}.csv'
         if not os.path.exists(csv_file_path):
-            total_paper_number = save_csv(year=year)
+            total_paper_number = save_csv_workshops(year=year)
         else:
             with open(csv_file_path, newline='') as csvfile:
                 myreader = csv.DictReader(csvfile, delimiter=',')
