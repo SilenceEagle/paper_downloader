@@ -1,4 +1,4 @@
-"""paper_download_CVPR_IDM.py"""
+"""paper_downloader_CVPR.py"""
 
 import urllib
 from urllib.request import urlopen
