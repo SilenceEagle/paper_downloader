@@ -1,4 +1,4 @@
-"""paper_download_ICCV_IDM.py"""
+"""paper_downloader_ICCV_IDM.py"""
 
 import urllib
 from urllib.request import urlopen
