@@ -1,4 +1,4 @@
-"""paper_download_IJCAI_IDM.py"""
+"""paper_downloader_IJCAI.py"""
 
 import urllib
 from urllib.request import urlopen
