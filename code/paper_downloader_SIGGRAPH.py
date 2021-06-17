@@ -1,5 +1,5 @@
 """
-paper_download_SIGGRAPH.py
+paper_downloader_SIGGRAPH.py
 20200817
 use IDM to download all siggraph papers
 """
