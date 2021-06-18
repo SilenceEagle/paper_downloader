@@ -1,0 +1,148 @@
+"""
+pmlr.py
+20210618
+"""
+import urllib
+from urllib.request import urlopen
+# import time
+from bs4 import BeautifulSoup
+import os
+from tqdm import tqdm
+from slugify import slugify
+import lib.IDM as IDM
+import lib.thunder as Thunder
+
+
+def download_paper_given_volume(
+        volume, save_dir, postfix, is_download_supplement=True, time_step_in_seconds=5, downloader='IDM'):
+    """
+    download main and supplement papers from PMLR.
+    :param volume: str, such as 'v1', 'r1'
+    :param save_dir: str, paper and supplement material's save path
+    :param postfix: str, the postfix will be appended to the end of papers' titles
+    :param is_download_supplement: bool, True for downloading supplemental material
+    :param time_step_in_seconds: int, the interval time between two downlaod request in seconds
+    :param downloader: str, the downloader to download, could be 'IDM' or 'Thunder', default to 'IDM'
+    :return: True
+    """
+    init_url = f'http://proceedings.mlr.press/{volume}/'
+
+    if is_download_supplement:
+        main_save_path = os.path.join(save_dir, 'main_paper')
+        supplement_save_path = os.path.join(save_dir, 'supplement')
+        os.makedirs(main_save_path, exist_ok=True)
+        os.makedirs(supplement_save_path, exist_ok=True)
+    else:
+        main_save_path = save_dir
+        os.makedirs(main_save_path, exist_ok=True)
+    headers = {
+        'User-Agent':
+            'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:23.0) Gecko/20100101 Firefox/23.0'}
+    req = urllib.request.Request(url=init_url, headers=headers)
+    content = urllib.request.urlopen(req).read()
+    soup = BeautifulSoup(content, 'html.parser')
+    paper_list = soup.find_all('div', {'class': 'paper'})
+    error_log = []
+    title_list = []
+    num_download = len(paper_list)
+    for paper in tqdm(zip(paper_list, range(num_download))):
+        # get title
+        print('\n')
+        this_paper = paper[0]
+        title = slugify(this_paper.find_all('p', {'class': 'title'})[0].text)
+        try:
+            print('Downloading paper {}/{}: {}'.format(paper[1] + 1, num_download, title))
+        except:
+            print('Downloading paper {}/{}: {}'.format(paper[1] + 1, num_download, title.encode('utf8')))
+        title_list.append(title)
+
+        this_paper_main_path = os.path.join(main_save_path, f'{title}_{postfix}.pdf')
+        if is_download_supplement:
+            this_paper_supp_path = os.path.join(supplement_save_path, f'{title}_{postfix}_supp.pdf')
+            this_paper_supp_path_no_ext = os.path.join(supplement_save_path, f'{title}_{postfix}_supp.')
+
+            if os.path.exists(this_paper_main_path) and os.path.exists(this_paper_supp_path):
+                continue
+        else:
+            if os.path.exists(this_paper_main_path):
+                continue
+
+        # get abstract page url
+        links = this_paper.find_all('p', {'class': 'links'})[0].find_all('a')
+        supp_link = None
+        main_link = None
+        for link in links:
+            if 'Download PDF' == link.text or 'pdf' == link.text:
+                main_link = link.get('href')
+            elif is_download_supplement and (
+                    'Supplementary PDF' == link.text or 'Supplementary Material' == link.text or \
+                    'supplementary' == link.text):
+                supp_link = link.get('href')
+                if supp_link[-3:] != 'pdf':
+                    this_paper_supp_path = this_paper_supp_path_no_ext + supp_link[-3:]
+
+        # try 1 time
+        # error_flag = False
+        for d_iter in range(1):
+            try:
+                # download paper with IDM
+                if not os.path.exists(this_paper_main_path) and main_link is not None:
+                    if 'IDM' == downloader:
+                        IDM.download(
+                            urls=main_link,
+                            save_path=this_paper_main_path,
+                            time_sleep_in_seconds=time_step_in_seconds
+                        )
+                    elif 'Thunder' == downloader:
+                        Thunder.download(
+                            urls=main_link,
+                            save_path=this_paper_main_path,
+                            time_sleep_in_seconds=time_step_in_seconds
+                        )
+                    else:
+                        raise ValueError(
+                            f'''ERROR: Unsupported downloader: {downloader}, we currently only support'''
+                            f''' "IDM" or "Thunder" ''')
+            except Exception as e:
+                # error_flag = True
+                print('Error: ' + title + ' - ' + str(e))
+                error_log.append((title, main_link, 'main paper download error', str(e)))
+            # download supp
+            if is_download_supplement:
+                # check whether the supp can be downloaded
+                if not os.path.exists(this_paper_supp_path) and supp_link is not None:
+                    try:
+                        if 'IDM' == downloader:
+                            IDM.download(
+                                urls=supp_link,
+                                save_path=this_paper_supp_path,
+                                time_sleep_in_seconds=time_step_in_seconds
+                            )
+                        elif 'Thunder' == downloader:
+                            Thunder.download(
+                                urls=supp_link,
+                                save_path=this_paper_supp_path,
+                                time_sleep_in_seconds=time_step_in_seconds
+                            )
+                        else:
+                            raise ValueError(
+                                f'''ERROR: Unsupported downloader: {downloader}, we currently only support'''
+                                f''' "IDM" or "Thunder" ''')
+                    except Exception as e:
+                        # error_flag = True
+                        print('Error: ' + title + ' - ' + str(e))
+                        error_log.append((title, supp_link, 'supplement download error', str(e)))
+
+    # write error log
+    print('writing error log...')
+    with open('..\\log\\download_err_log.txt', 'w') as f:
+        for log in tqdm(error_log):
+            for e in log:
+                if e is not None:
+                    f.write(e)
+                else:
+                    f.write('None')
+                f.write('\n')
+            f.write('\n')
+
+    return True
