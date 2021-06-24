@@ -1,22 +1,15 @@
 """paper_downloader_IJCAI.py"""
 
-import urllib
+# import urllib
 from urllib.request import urlopen
-import time
-import bs4
+# import time
 from bs4 import BeautifulSoup
 import pickle
-# from PyPDF2 import PdfFileMerger
-# from PyPDF3 import PdfFileMerger
-# import zipfile
 import os
-# import shutil
 from tqdm import tqdm
-import subprocess
 from slugify import slugify
 import csv
-import lib.IDM as IDM
-import lib.thunder as Thunder
+from lib.downloader import Downloader
 
 
 def save_csv(year):
@@ -394,7 +387,7 @@ def download_from_csv(
     :param downloader: str, the downloader to download, could be 'IDM' or 'Thunder', default to 'IDM'
     :return: True
     """
-
+    downloader = Downloader(downloader=downloader)
     error_log = []
     postfix = f'IJCAI_{year}'
     with open(f'..\\csv\\IJCAI_{year}.csv' if csv_filename is None else f'..\\csv\\{csv_filename}', newline='') as csvfile:
@@ -427,25 +420,11 @@ def download_from_csv(
                             pbar.set_description(f'Downloading paper {i}/{total_paper_number}')
                         else:
                             pbar.set_description(f'Downloading paper {i}')
-                        if 'IDM' == downloader:
-                            IDM.download(
-                                urls=this_paper['link'],
-                                save_path=os.path.join(os.getcwd(), this_paper_main_path),
-                                time_sleep_in_seconds=time_step_in_seconds
-                            )
-                        elif 'Thunder' == downloader:
-                            Thunder.download(
-                                urls=this_paper['link'],
-                                save_path=os.path.join(os.getcwd(), this_paper_main_path),
-                                time_sleep_in_seconds=time_step_in_seconds
-                            )
-                        else:
-                            raise ValueError(
-                                f'''ERROR: Unsupported downloader: {downloader}, we currently only support'''
-                                f''' "IDM" or "Thunder" ''')
-                        # while True:
-                        #     if os.path.exists(this_paper_main_path):
-                        #         break
+                        downloader.download(
+                            urls=this_paper['link'],
+                            save_path=os.path.join(os.getcwd(), this_paper_main_path),
+                            time_sleep_in_seconds=time_step_in_seconds
+                        )
                 except Exception as e:
                     # error_flag = True
                     print('Error: ' + title + ' - ' + str(e))

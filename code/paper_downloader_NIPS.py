@@ -7,12 +7,10 @@ from bs4 import BeautifulSoup
 import pickle
 import os
 from tqdm import tqdm
-# import subprocess
 from slugify import slugify
 import csv
 from lib.supplement_porcess import move_main_and_supplement_2_one_directory
-import lib.IDM as IDM
-import lib.thunder as Thunder
+from lib.downloader import Downloader
 
 
 # def download_paper_and_sup_IDM(year, save_dir, is_download_supplement=True):
@@ -317,7 +315,7 @@ def save_csv(year):
 
 
 def download_from_csv(
-        year, save_dir, is_download_mainpaper=True,is_download_supplement=True,
+        year, save_dir, is_download_mainpaper=True, is_download_supplement=True,
         time_step_in_seconds=5, total_paper_number=None, downloader='IDM'):
     """
     download all NIPS paper and supplement files given year, restore in save_dir/main_paper and save_dir/supplement
@@ -331,6 +329,7 @@ def download_from_csv(
     :param downloader: str, the downloader to download, could be 'IDM' or 'Thunder', default to 'IDM'
     :return: True
     """
+    downloader = Downloader(downloader=downloader)
     main_save_path = os.path.join(save_dir, 'main_paper')
     supplement_save_path = os.path.join(save_dir, 'supplement')
     os.makedirs(main_save_path, exist_ok=True)
@@ -370,22 +369,11 @@ def download_from_csv(
                 try:
                     # download paper with IDM
                     if is_download_mainpaper and not os.path.exists(this_paper_main_path):
-                        if 'IDM' == downloader:
-                            IDM.download(
-                                urls=this_paper['main link'],
-                                save_path=os.path.join(os.getcwd(), this_paper_main_path),
-                                time_sleep_in_seconds=time_step_in_seconds
-                            )
-                        elif 'Thunder' == downloader:
-                            Thunder.download(
-                                urls=this_paper['main link'],
-                                save_path=os.path.join(os.getcwd(), this_paper_main_path),
-                                time_sleep_in_seconds=time_step_in_seconds
-                            )
-                        else:
-                            raise ValueError(
-                                f'''ERROR: Unsupported downloader: {downloader}, we currently only support'''
-                                f''' "IDM" or "Thunder" ''')
+                        downloader.download(
+                            urls=this_paper['main link'],
+                            save_path=os.path.join(os.getcwd(), this_paper_main_path),
+                            time_sleep_in_seconds=time_step_in_seconds
+                        )
                 except Exception as e:
                     # error_flag = True
                     print('Error: ' + title + ' - ' + str(e))
@@ -400,22 +388,11 @@ def download_from_csv(
                         elif '' != this_paper['supplemental link']:
                             supp_type = this_paper['supplemental link'].split('.')[-1]
                             try:
-                                if 'IDM' == downloader:
-                                    IDM.download(
-                                        urls=this_paper['supplemental link'],
-                                        save_path=os.path.join(os.getcwd(), this_paper_supp_path_no_ext + supp_type),
-                                        time_sleep_in_seconds=time_step_in_seconds
-                                    )
-                                elif 'Thunder' == downloader:
-                                    Thunder.download(
-                                        urls=this_paper['supplemental link'],
-                                        save_path=os.path.join(os.getcwd(), this_paper_supp_path_no_ext + supp_type),
-                                        time_sleep_in_seconds=time_step_in_seconds
-                                    )
-                                else:
-                                    raise ValueError(
-                                        f'''ERROR: Unsupported downloader: {downloader}, we currently only support'''
-                                        f''' "IDM" or "Thunder" ''')
+                                downloader.download(
+                                    urls=this_paper['supplemental link'],
+                                    save_path=os.path.join(os.getcwd(), this_paper_supp_path_no_ext + supp_type),
+                                    time_sleep_in_seconds=time_step_in_seconds
+                                )
                             except Exception as e:
                                 # error_flag = True
                                 print('Error: ' + title + ' - ' + str(e))

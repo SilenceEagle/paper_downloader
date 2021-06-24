@@ -7,8 +7,7 @@ import pickle
 import os
 from tqdm import tqdm
 from slugify import slugify
-import lib.IDM as IDM
-import lib.thunder as Thunder
+from lib.downloader import Downloader
 import lib.pmlr as pmlr
 from lib.supplement_porcess import merge_main_supplement
 
@@ -24,6 +23,7 @@ def download_paper(year, save_dir, is_download_supplement=True, time_step_in_sec
     :param downloader: str, the downloader to download, could be 'IDM' or 'Thunder', default to 'IDM'
     :return: True
     """
+    downloader = Downloader(downloader=downloader)
     ICML_year_dict = {
         2020: 119,
         2019: 97,
@@ -102,22 +102,11 @@ def download_paper(year, save_dir, is_download_supplement=True, time_step_in_sec
                 paper_list_bar.set_description(f'find paper {paper_index}:{title}')
                 if not os.path.exists(this_paper_main_path) :
                     paper_list_bar.set_description(f'downloading paper {paper_index}:{title}')
-                    if 'IDM' == downloader:
-                        IDM.download(
-                            urls=link,
-                            save_path=this_paper_main_path,
-                            time_sleep_in_seconds=time_step_in_seconds
-                        )
-                    elif 'Thunder' == downloader:
-                        Thunder.download(
-                            urls=link,
-                            save_path=this_paper_main_path,
-                            time_sleep_in_seconds=time_step_in_seconds
-                        )
-                    else:
-                        raise ValueError(
-                            f'''ERROR: Unsupported downloader: {downloader}, we currently only support'''
-                            f''' "IDM" or "Thunder" ''')
+                    downloader.download(
+                        urls=link,
+                        save_path=this_paper_main_path,
+                        time_sleep_in_seconds=time_step_in_seconds
+                    )
             else:
                 error_log.append((title, 'no main link error'))
     elif 2011 == year:
@@ -136,22 +125,11 @@ def download_paper(year, save_dir, is_download_supplement=True, time_step_in_sec
                     paper_list_bar.set_description(f'find paper {paper_index}:{title}')
                     if not os.path.exists(this_paper_main_path) :
                         paper_list_bar.set_description(f'downloading paper {paper_index}:{title}')
-                        if 'IDM' == downloader:
-                            IDM.download(
-                                urls=link,
-                                save_path=this_paper_main_path,
-                                time_sleep_in_seconds=time_step_in_seconds
-                            )
-                        elif 'Thunder' == downloader:
-                            Thunder.download(
-                                urls=link,
-                                save_path=this_paper_main_path,
-                                time_sleep_in_seconds=time_step_in_seconds
-                            )
-                        else:
-                            raise ValueError(
-                                f'''ERROR: Unsupported downloader: {downloader}, we currently only support'''
-                                f''' "IDM" or "Thunder" ''')
+                        downloader.download(
+                            urls=link,
+                            save_path=this_paper_main_path,
+                            time_sleep_in_seconds=time_step_in_seconds
+                        )
                 else:
                     error_log.append((title, 'no main link error'))
     elif year in [2009, 2008]:
@@ -173,22 +151,11 @@ def download_paper(year, save_dir, is_download_supplement=True, time_step_in_sec
                     paper_list_bar.set_description(f'find paper {paper_index}:{title}')
                     if not os.path.exists(this_paper_main_path):
                         paper_list_bar.set_description(f'downloading paper {paper_index}:{title}')
-                        if 'IDM' == downloader:
-                            IDM.download(
-                                urls=link,
-                                save_path=this_paper_main_path,
-                                time_sleep_in_seconds=time_step_in_seconds
-                            )
-                        elif 'Thunder' == downloader:
-                            Thunder.download(
-                                urls=link,
-                                save_path=this_paper_main_path,
-                                time_sleep_in_seconds=time_step_in_seconds
-                            )
-                        else:
-                            raise ValueError(
-                                f'''ERROR: Unsupported downloader: {downloader}, we currently only support'''
-                                f''' "IDM" or "Thunder" ''')
+                        downloader.download(
+                            urls=link,
+                            save_path=this_paper_main_path,
+                            time_sleep_in_seconds=time_step_in_seconds
+                        )
                     title = None
                 else:
                     error_log.append((title, 'no main link error'))
@@ -205,22 +172,11 @@ def download_paper(year, save_dir, is_download_supplement=True, time_step_in_sec
                 paper_list_bar.set_description(f'find paper {paper_index}:{title}')
                 if not os.path.exists(this_paper_main_path):
                     paper_list_bar.set_description(f'downloading paper {paper_index}:{title}')
-                    if 'IDM' == downloader:
-                        IDM.download(
-                            urls=link,
-                            save_path=this_paper_main_path,
-                            time_sleep_in_seconds=time_step_in_seconds
-                        )
-                    elif 'Thunder' == downloader:
-                        Thunder.download(
-                            urls=link,
-                            save_path=this_paper_main_path,
-                            time_sleep_in_seconds=time_step_in_seconds
-                        )
-                    else:
-                        raise ValueError(
-                            f'''ERROR: Unsupported downloader: {downloader}, we currently only support'''
-                            f''' "IDM" or "Thunder" ''')
+                    downloader.download(
+                        urls=link,
+                        save_path=this_paper_main_path,
+                        time_sleep_in_seconds=time_step_in_seconds
+                    )
     elif 2004 == year:
         paper_index = 0
         paper_list_bar = tqdm(soup.find('table', {'class': 'proceedings'}).find_all('tr'))
@@ -244,22 +200,11 @@ def download_paper(year, save_dir, is_download_supplement=True, time_step_in_sec
                             paper_list_bar.set_description(f'find paper {paper_index}:{title}')
                             if not os.path.exists(this_paper_main_path):
                                 paper_list_bar.set_description(f'downloading paper {paper_index}:{title}')
-                                if 'IDM' == downloader:
-                                    IDM.download(
-                                        urls=link,
-                                        save_path=this_paper_main_path,
-                                        time_sleep_in_seconds=time_step_in_seconds
-                                    )
-                                elif 'Thunder' == downloader:
-                                    Thunder.download(
-                                        urls=link,
-                                        save_path=this_paper_main_path,
-                                        time_sleep_in_seconds=time_step_in_seconds
-                                    )
-                                else:
-                                    raise ValueError(
-                                        f'''ERROR: Unsupported downloader: {downloader}, we currently only support'''
-                                        f''' "IDM" or "Thunder" ''')
+                                downloader.download(
+                                    urls=link,
+                                    save_path=this_paper_main_path,
+                                    time_sleep_in_seconds=time_step_in_seconds
+                                )
                         break
     elif 2003 == year:
         paper_index = 0
@@ -296,22 +241,11 @@ def download_paper(year, save_dir, is_download_supplement=True, time_step_in_sec
                                     link = urllib.parse.urljoin(abs_link, a.get('href'))
                                     if link is not None:
                                         paper_list_bar.set_description(f'downloading paper {paper_index}:{title}')
-                                        if 'IDM' == downloader:
-                                            IDM.download(
-                                                urls=link,
-                                                save_path=this_paper_main_path,
-                                                time_sleep_in_seconds=time_step_in_seconds
-                                            )
-                                        elif 'Thunder' == downloader:
-                                            Thunder.download(
-                                                urls=link,
-                                                save_path=this_paper_main_path,
-                                                time_sleep_in_seconds=time_step_in_seconds
-                                            )
-                                        else:
-                                            raise ValueError(
-                                                f'''ERROR: Unsupported downloader: {downloader}, we currently only support'''
-                                                f''' "IDM" or "Thunder" ''')
+                                        downloader.download(
+                                            urls=link,
+                                            save_path=this_paper_main_path,
+                                            time_sleep_in_seconds=time_step_in_seconds
+                                        )
                                     break
                             except:
                                 pass

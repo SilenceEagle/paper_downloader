@@ -12,7 +12,7 @@ from slugify import slugify
 import csv
 from lib.supplement_porcess import move_main_and_supplement_2_one_directory
 import lib.springer as springer
-import lib.IDM as IDM
+from lib.downloader import Downloader
 
 def save_csv(year):
     """
@@ -113,7 +113,7 @@ def save_csv(year):
 
 def download_from_csv(
         year, save_dir, is_download_supplement=True, time_step_in_seconds=5, total_paper_number=None,
-        is_workshops=False):
+        is_workshops=False, downloader='IDM'):
     """
     download all ECCV paper and supplement files given year, restore in save_dir/main_paper and save_dir/supplement
     respectively
@@ -123,15 +123,14 @@ def download_from_csv(
     :param time_step_in_seconds: int, the interval time between two downlaod request in seconds
     :param total_paper_number: int, the total number of papers that is going to download
     :param is_workshops: bool, is to download workshops from csv file.
+    :param downloader: str, the downloader to download, could be 'IDM' or 'Thunder', default to 'IDM'
     :return: True
     """
+    downloader = Downloader(downloader=downloader)
     main_save_path = os.path.join(save_dir, 'main_paper')
     supplement_save_path = os.path.join(save_dir, 'supplement')
     os.makedirs(main_save_path, exist_ok=True)
     os.makedirs(supplement_save_path, exist_ok=True)
-    # use IDM to download everything
-    idm_path = '''"C:\Program Files (x86)\Internet Download Manager\IDMan.exe"'''  # should replace by the local IDM path
-    basic_command = [idm_path, '/d', 'xxxx', '/p', 'xxx', '/f', 'xxxx', '/n']
 
     error_log = []
     postfix = f'ECCV_{year}'
@@ -178,18 +177,12 @@ def download_from_csv(
                     if is_download_supplement:
                         os.makedirs(os.path.join(supplement_save_path, group), exist_ok=True)
                 try:
-                    # download paper with IDM
                     if not os.path.exists(this_paper_main_path):
-                        head, tail = os.path.split(this_paper_main_path)
-                        basic_command[2] = this_paper['main link'].replace(' ', '%20')
-                        basic_command[4] = head
-                        basic_command[6] = tail
-                        p = subprocess.Popen(' '.join(basic_command))
-                        p.wait()
-                        time.sleep(time_step_in_seconds)
-                        # while True:
-                        #     if os.path.exists(this_paper_main_path):
-                        #         break
+                        downloader.download(
+                            urls=this_paper['main link'].replace(' ', '%20'),
+                            save_path=this_paper_main_path,
+                            time_sleep_in_seconds=time_step_in_seconds
+                        )
                 except Exception as e:
                     # error_flag = True
                     print('Error: ' + title + ' - ' + str(e))
@@ -204,13 +197,11 @@ def download_from_csv(
                         elif '' != this_paper['supplemental link']:
                             supp_type = this_paper['supplemental link'].split('.')[-1]
                             try:
-                                head, tail = os.path.split(this_paper_supp_path_no_ext)
-                                basic_command[2] = this_paper['supplemental link']
-                                basic_command[4] = head
-                                basic_command[6] = tail + supp_type
-                                p = subprocess.Popen(' '.join(basic_command))
-                                p.wait()
-                                time.sleep(time_step_in_seconds)
+                                downloader.download(
+                                    urls=this_paper['supplemental link'],
+                                    save_path=this_paper_supp_path_no_ext + supp_type,
+                                    time_sleep_in_seconds=time_step_in_seconds
+                                )
                             except Exception as e:
                                 # error_flag = True
                                 print('Error: ' + title + ' - ' + str(e))
