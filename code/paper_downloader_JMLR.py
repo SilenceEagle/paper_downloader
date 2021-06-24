@@ -7,8 +7,7 @@ import pickle
 import os
 from tqdm import tqdm
 from slugify import slugify
-import lib.IDM as IDM
-import lib.thunder as Thunder
+from lib.downloader import Downloader
 import time
 
 
@@ -24,6 +23,7 @@ def download_paper(volumn, save_dir, time_step_in_seconds=5, downloader='IDM', u
     :param is_use_url: bool, if to download papers from 'url'. url couldn't be None when is_use_url is True.
     :return: True
     """
+    downloader = Downloader(downloader=downloader)
     # create current dict
     title_list = []
     # paper_dict = dict()
@@ -90,25 +90,11 @@ def download_paper(volumn, save_dir, time_step_in_seconds=5, downloader='IDM', u
             try:
                 # download paper with IDM
                 if not os.path.exists(this_paper_main_path) and main_link is not None:
-                    if 'IDM' == downloader:
-                        IDM.download(
-                            urls=main_link,
-                            save_path=this_paper_main_path,
-                            time_sleep_in_seconds=time_step_in_seconds
-                        )
-                    elif 'Thunder' == downloader:
-                        Thunder.download(
-                            urls=main_link,
-                            save_path=this_paper_main_path,
-                            time_sleep_in_seconds=time_step_in_seconds
-                        )
-                    else:
-                        raise ValueError(
-                            f'''ERROR: Unsupported downloader: {downloader}, we currently only support'''
-                            f''' "IDM" or "Thunder" ''')
-                    # while True:
-                    #     if os.path.exists(this_paper_main_path):
-                    #         break
+                    downloader.download(
+                        urls=main_link,
+                        save_path=this_paper_main_path,
+                        time_sleep_in_seconds=time_step_in_seconds
+                    )
             except Exception as e:
                 # error_flag = True
                 print('Error: ' + title + ' - ' + str(e))

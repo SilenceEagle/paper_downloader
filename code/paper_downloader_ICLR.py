@@ -2,7 +2,6 @@
 
 import time
 from tqdm import tqdm
-import subprocess
 from selenium import webdriver
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
@@ -15,8 +14,7 @@ from bs4 import BeautifulSoup
 import pickle
 from urllib.request import urlopen
 import urllib
-import lib.IDM as IDM
-import lib.thunder as Thunder
+from lib.downloader import Downloader
 
 
 def download_iclr_oral_papers(save_dir, driver_path, year, base_url=None, time_step_in_seconds=10, downloader='IDM'):
@@ -30,6 +28,7 @@ def download_iclr_oral_papers(save_dir, driver_path, year, base_url=None, time_s
     :param downloader: str, the downloader to download, could be 'IDM' or 'Thunder', default to 'IDM'
     :return:
     """
+    downloader = Downloader(downloader=downloader)
     if base_url is None:
         if year == 2017:
             base_url = 'https://openreview.net/group?id=ICLR.cc/2017/conference'
@@ -87,22 +86,11 @@ def download_iclr_oral_papers(save_dir, driver_path, year, base_url=None, time_s
             success_flag = False
             for d_iter in range(1):
                 try:
-                    if 'IDM' == downloader:
-                        IDM.download(
-                            urls=link,
-                            save_path=os.path.join(save_dir, pdf_name),
-                            time_sleep_in_seconds=time_step_in_seconds
+                    downloader.download(
+                        urls=link,
+                        save_path=os.path.join(save_dir, pdf_name),
+                        time_sleep_in_seconds=time_step_in_seconds
                         )
-                    elif 'Thunder' == downloader:
-                        Thunder.download(
-                            urls=link,
-                            save_path=os.path.join(save_dir, pdf_name),
-                            time_sleep_in_seconds=time_step_in_seconds
-                        )
-                    else:
-                        raise ValueError(
-                            f'''ERROR: Unsupported downloader: {downloader}, we currently only support'''
-                            f''' "IDM" or "Thunder" ''')
                     success_flag = True
                     break
                 except Exception as e:
@@ -131,6 +119,7 @@ def download_iclr_poster_papers(save_dir, driver_path, year, base_url=None, time
     :param downloader: str, the downloader to download, could be 'IDM' or 'Thunder', default to 'IDM'
     :return:
     """
+    downloader = Downloader(downloader=downloader)
     if base_url is None:
         if year == 2017:
             base_url = 'https://openreview.net/group?id=ICLR.cc/2017/conference'
@@ -190,22 +179,11 @@ def download_iclr_poster_papers(save_dir, driver_path, year, base_url=None, time
             success_flag = False
             for d_iter in range(1):
                 try:
-                    if 'IDM' == downloader:
-                        IDM.download(
-                            urls=link,
-                            save_path=os.path.join(save_dir, pdf_name),
-                            time_sleep_in_seconds=time_step_in_seconds
+                    downloader.download(
+                        urls=link,
+                        save_path=os.path.join(save_dir, pdf_name),
+                        time_sleep_in_seconds=time_step_in_seconds
                         )
-                    elif 'Thunder' == downloader:
-                        Thunder.download(
-                            urls=link,
-                            save_path=os.path.join(save_dir, pdf_name),
-                            time_sleep_in_seconds=time_step_in_seconds
-                        )
-                    else:
-                        raise ValueError(
-                            f'''ERROR: Unsupported downloader: {downloader}, we currently only support'''
-                            f''' "IDM" or "Thunder" ''')
                     success_flag = True
                     break
                 except Exception as e:
@@ -234,6 +212,7 @@ def download_iclr_spotlight_papers(save_dir, driver_path, year, base_url=None, t
     :param downloader: str, the downloader to download, could be 'IDM' or 'Thunder', default to 'IDM'
     :return:
     """
+    downloader = Downloader(downloader=downloader)
     if base_url is None:
         if year >= 2021:
             base_url = 'https://openreview.net/group?id=ICLR.cc/2021/Conference#spotlight-presentations'
@@ -283,22 +262,11 @@ def download_iclr_spotlight_papers(save_dir, driver_path, year, base_url=None, t
             success_flag = False
             for d_iter in range(1):
                 try:
-                    if 'IDM' == downloader:
-                        IDM.download(
-                            urls=link,
-                            save_path=os.path.join(save_dir, pdf_name),
-                            time_sleep_in_seconds=time_step_in_seconds
+                    downloader.download(
+                        urls=link,
+                        save_path=os.path.join(save_dir, pdf_name),
+                        time_sleep_in_seconds=time_step_in_seconds
                         )
-                    elif 'Thunder' == downloader:
-                        Thunder.download(
-                            urls=link,
-                            save_path=os.path.join(save_dir, pdf_name),
-                            time_sleep_in_seconds=time_step_in_seconds
-                        )
-                    else:
-                        raise ValueError(
-                            f'''ERROR: Unsupported downloader: {downloader}, we currently only support'''
-                            f''' "IDM" or "Thunder" ''')
                     success_flag = True
                     break
                 except Exception as e:
@@ -316,14 +284,16 @@ def download_iclr_spotlight_papers(save_dir, driver_path, year, base_url=None, t
             f.write('\n')
 
 
-def download_iclr_paper(year, save_dir):
+def download_iclr_paper(year, save_dir, time_step_in_seconds=5, downloader='IDM', is_use_arxiv_mirror=False):
     """
     download iclr conference paper for year 2014, 2015 and 2016
     :param year: int, iclr year
     :param save_dir: str, paper save path
+    :param time_step_in_seconds: int, the interval time between two downlaod request in seconds
+    :param downloader: str, the downloader to download, could be 'IDM' or 'Thunder', default to 'IDM'
     :return: True
     """
-    is_use_arxiv_mirror = True
+    downloader = Downloader(downloader=downloader)
     paper_postfix = f'ICLR_{year}'
     if year == 2016:
         base_url = 'https://iclr.cc/archive/www/doku.php%3Fid=iclr2016:main.html'
@@ -337,13 +307,19 @@ def download_iclr_paper(year, save_dir):
     if year == 2015:  # oral and poster seperated
         oral_save_path = os.path.join(save_dir, 'oral')
         poster_save_path = os.path.join(save_dir, 'poster')
+        workshop_save_path = os.path.join(save_dir, 'ws')
         os.makedirs(oral_save_path, exist_ok=True)
         os.makedirs(poster_save_path, exist_ok=True)
+        os.makedirs(workshop_save_path, exist_ok=True)
     if os.path.exists(f'..\\urls\\init_url_iclr_{year}.dat'):
         with open(f'..\\urls\\init_url_iclr_{year}.dat', 'rb') as f:
             content = pickle.load(f)
     else:
-        content = urlopen(base_url).read()
+        headers = {
+            'User-Agent':
+                'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:23.0) Gecko/20100101 Firefox/23.0'}
+        req = urllib.request.Request(url=base_url, headers=headers)
+        content = urllib.request.urlopen(req).read()
         with open(f'..\\urls\\init_url_iclr_{year}.dat', 'wb') as f:
             pickle.dump(content, f)
     error_log = []
@@ -355,12 +331,16 @@ def download_iclr_paper(year, save_dir):
             link = paper.get('href')
             if link.startswith('http://arxiv'):
                 title = slugify(paper.text)
+                pdf_name = f'{title}_{paper_postfix}.pdf'
                 try:
                     if not os.path.exists(os.path.join(save_dir, title+f'_{paper_postfix}.pdf')):
                         pdf_link = get_pdf_link_from_arxiv(link, is_use_mirror=is_use_arxiv_mirror)
                         print(f'downloading {title}')
-                        download_pdf_idm(pdf_link, os.path.join(save_dir, title+f'_{paper_postfix}.pdf'))
-                        time.sleep(5)
+                        downloader.download(
+                                urls=pdf_link,
+                                save_path=os.path.join(save_dir, pdf_name),
+                                time_sleep_in_seconds=time_step_in_seconds
+                            )
                 except Exception as e:
                     # error_flag = True
                     print('Error: ' + title + ' - ' + str(e))
@@ -372,29 +352,57 @@ def download_iclr_paper(year, save_dir):
             link = paper.get('href')
             if link.startswith('http://arxiv'):
                 title = slugify(paper.text)
+                pdf_name = f'{title}_{paper_postfix}.pdf'
                 try:
                     if not os.path.exists(os.path.join(oral_save_path, title+f'_{paper_postfix}.pdf')):
                         pdf_link = get_pdf_link_from_arxiv(link, is_use_mirror=is_use_arxiv_mirror)
                         print(f'downloading {title}')
-                        download_pdf_idm(pdf_link, os.path.join(oral_save_path, title+f'_{paper_postfix}.pdf'))
-                        time.sleep(5)
+                        downloader.download(
+                            urls=pdf_link,
+                            save_path=os.path.join(oral_save_path, pdf_name),
+                            time_sleep_in_seconds=time_step_in_seconds
+                        )
                 except Exception as e:
                     # error_flag = True
                     print('Error: ' + title + ' - ' + str(e))
                     error_log.append((title, link, 'paper download error', str(e)))
 
+        # workshops papers
+        workshop_papers = soup.find('h3', {'id': 'may_7_workshop_poster_session'}).findNext('div').find_all('a')
+        workshop_papers.append(
+            soup.find('h3', {'id': 'may_8_workshop_poster_session'}).findNext('div').find_all('a'))
+        for paper in tqdm(workshop_papers):
+            link = paper.get('href')
+            if link.startswith('http://arxiv'):
+                title = slugify(paper.text)
+                pdf_name = f'{title}_ICLR_WS_{year}.pdf'
+                try:
+                    if not os.path.exists(os.path.join(workshop_save_path, title + f'_{paper_postfix}.pdf')):
+                        pdf_link = get_pdf_link_from_arxiv(link, is_use_mirror=is_use_arxiv_mirror)
+                        print(f'downloading {title}')
+                        downloader.download(
+                            urls=pdf_link,
+                            save_path=os.path.join(workshop_save_path, pdf_name),
+                            time_sleep_in_seconds=time_step_in_seconds)
+                except Exception as e:
+                    # error_flag = True
+                    print('Error: ' + title + ' - ' + str(e))
+                    error_log.append((title, link, 'paper download error', str(e)))
         # poster papers
         poster_papers = soup.find('h3', {'id': 'may_9_conference_poster_session'}).findNext('div').find_all('a')
         for paper in tqdm(poster_papers):
             link = paper.get('href')
             if link.startswith('http://arxiv'):
                 title = slugify(paper.text)
+                pdf_name = f'{title}_{paper_postfix}.pdf'
                 try:
                     if not os.path.exists(os.path.join(poster_save_path, title + f'_{paper_postfix}.pdf')):
                         pdf_link = get_pdf_link_from_arxiv(link, is_use_mirror=is_use_arxiv_mirror)
                         print(f'downloading {title}')
-                        download_pdf_idm(pdf_link, os.path.join(poster_save_path, title + f'_{paper_postfix}.pdf'))
-                        time.sleep(5)
+                        downloader.download(
+                            urls=pdf_link,
+                            save_path=os.path.join(poster_save_path, pdf_name),
+                            time_sleep_in_seconds=time_step_in_seconds)
                 except Exception as e:
                     # error_flag = True
                     print('Error: ' + title + ' - ' + str(e))
@@ -405,12 +413,45 @@ def download_iclr_paper(year, save_dir):
             link = paper.get('href')
             if link.startswith('http://arxiv'):
                 title = slugify(paper.text)
+                pdf_name = f'{title}_{paper_postfix}.pdf'
                 try:
-                    if not os.path.exists(os.path.join(save_dir, title + f'_{paper_postfix}.pdf')):
+                    if not os.path.exists(os.path.join(save_dir, pdf_name)):
                         pdf_link = get_pdf_link_from_arxiv(link, is_use_mirror=is_use_arxiv_mirror)
                         print(f'downloading {title}')
-                        download_pdf_idm(pdf_link, os.path.join(save_dir, title + f'_{paper_postfix}.pdf'))
-                        time.sleep(5)
+                        downloader.download(
+                            urls=pdf_link,
+                            save_path=os.path.join(save_dir, pdf_name),
+                            time_sleep_in_seconds=time_step_in_seconds)
+                except Exception as e:
+                    # error_flag = True
+                    print('Error: ' + title + ' - ' + str(e))
+                    error_log.append((title, link, 'paper download error', str(e)))
+
+        # workshops
+        paper_postfix = f'ICLR_WS_{year}'
+        base_url = 'https://sites.google.com/site/representationlearning2014/workshop-proceedings'
+        headers = {
+            'User-Agent':
+                'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:23.0) Gecko/20100101 Firefox/23.0'}
+        req = urllib.request.Request(url=base_url, headers=headers)
+        content = urllib.request.urlopen(req).read()
+        soup = BeautifulSoup(content, 'html.parser')
+        workshop_save_path = os.path.join(save_dir, 'WS')
+        os.makedirs(workshop_save_path, exist_ok=True)
+        papers = soup.find('div', {'id': 'sites-canvas-main-content'}).find_all('a')
+        for paper in tqdm(papers):
+            link = paper.get('href')
+            if link.startswith('http://arxiv'):
+                title = slugify(paper.text)
+                pdf_name = f'{title}_{paper_postfix}.pdf'
+                try:
+                    if not os.path.exists(os.path.join(workshop_save_path, pdf_name)):
+                        pdf_link = get_pdf_link_from_arxiv(link, is_use_mirror=is_use_arxiv_mirror)
+                        print(f'downloading {title}')
+                        downloader.download(
+                            urls=pdf_link,
+                            save_path=os.path.join(workshop_save_path, pdf_name),
+                            time_sleep_in_seconds=time_step_in_seconds)
                 except Exception as e:
                     # error_flag = True
                     print('Error: ' + title + ' - ' + str(e))
@@ -431,6 +472,7 @@ def download_iclr_paper(year, save_dir):
             f.write('\n')
     return True
 
+
 def download_iclr_paper_given_html_file(year, html_path, save_dir, time_step_in_seconds=10, downloader='IDM'):
     """
     download iclr conference paper given html file (current only support 2021)
@@ -441,7 +483,7 @@ def download_iclr_paper_given_html_file(year, html_path, save_dir, time_step_in_
     :param downloader: str, the downloader to download, could be 'IDM' or 'Thunder', default to 'IDM'
     :return: True
     """
-
+    downloader = Downloader(downloader=downloader)
     base_url = f'https://openreview.net/group?id=ICLR.cc/{year}'
     content = open(html_path, 'rb').read()
     soup = BeautifulSoup(content, 'html5lib')
@@ -477,22 +519,11 @@ def download_iclr_paper_given_html_file(year, html_path, save_dir, time_step_in_
             success_flag = False
             for d_iter in range(1):
                 try:
-                    if 'IDM' == downloader:
-                        IDM.download(
-                            urls=link,
-                            save_path=os.path.join(oral_save_dir, pdf_name),
-                            time_sleep_in_seconds=time_step_in_seconds
+                    downloader.download(
+                        urls=link,
+                        save_path=os.path.join(oral_save_dir, pdf_name),
+                        time_sleep_in_seconds=time_step_in_seconds
                         )
-                    elif 'Thunder' == downloader:
-                        Thunder.download(
-                            urls=link,
-                            save_path=os.path.join(oral_save_dir, pdf_name),
-                            time_sleep_in_seconds=time_step_in_seconds
-                        )
-                    else:
-                        raise ValueError(
-                            f'''ERROR: Unsupported downloader: {downloader}, we currently only support'''
-                            f''' "IDM" or "Thunder" ''')
                     success_flag = True
                     break
                 except Exception as e:
@@ -517,22 +548,11 @@ def download_iclr_paper_given_html_file(year, html_path, save_dir, time_step_in_
             success_flag = False
             for d_iter in range(1):
                 try:
-                    if 'IDM' == downloader:
-                        IDM.download(
-                            urls=link,
-                            save_path=os.path.join(spotlight_save_dir, pdf_name),
-                            time_sleep_in_seconds=time_step_in_seconds
-                        )
-                    elif 'Thunder' == downloader:
-                        Thunder.download(
-                            urls=link,
-                            save_path=os.path.join(spotlight_save_dir, pdf_name),
-                            time_sleep_in_seconds=time_step_in_seconds
-                        )
-                    else:
-                        raise ValueError(
-                            f'''ERROR: Unsupported downloader: {downloader}, we currently only support'''
-                            f''' "IDM" or "Thunder" ''')
+                    downloader.download(
+                        urls=link,
+                        save_path=os.path.join(spotlight_save_dir, pdf_name),
+                        time_sleep_in_seconds=time_step_in_seconds
+                    )
                     success_flag = True
                     break
                 except Exception as e:
@@ -557,22 +577,11 @@ def download_iclr_paper_given_html_file(year, html_path, save_dir, time_step_in_
             success_flag = False
             for d_iter in range(1):
                 try:
-                    if 'IDM' == downloader:
-                        IDM.download(
-                            urls=link,
-                            save_path=os.path.join(poster_save_dir, pdf_name),
-                            time_sleep_in_seconds=time_step_in_seconds
-                        )
-                    elif 'Thunder' == downloader:
-                        Thunder.download(
-                            urls=link,
-                            save_path=os.path.join(poster_save_dir, pdf_name),
-                            time_sleep_in_seconds=time_step_in_seconds
-                        )
-                    else:
-                        raise ValueError(
-                            f'''ERROR: Unsupported downloader: {downloader}, we currently only support'''
-                            f''' "IDM" or "Thunder" ''')
+                    downloader.download(
+                        urls=link,
+                        save_path=os.path.join(poster_save_dir, pdf_name),
+                        time_sleep_in_seconds=time_step_in_seconds
+                    )
                     success_flag = True
                     break
                 except Exception as e:
@@ -621,28 +630,19 @@ def get_pdf_link_from_arxiv(abs_link, is_use_mirror=True):
     return pdf_link
 
 
-def download_pdf(url, name):
-    r = requests.get(url, stream=True)
-
-    with open('%s.pdf' % name, 'wb') as f:
-        for chunck in r.iter_content(1024):
-            f.write(chunck)
-    r.close()
-
-
 if __name__ == '__main__':
-    year = 2021
-    driver_path = r'c:\chromedriver.exe'
-    save_dir_iclr = rf'F:\ICLR_{year}'
+    year = 2014
+    # driver_path = r'c:\chromedriver.exe'
+    # save_dir_iclr = rf'F:\ICLR_{year}'
 
     # download_iclr_oral_papers(save_dir_iclr, driver_path, year)
     # download_iclr_poster_papers(save_dir_iclr, driver_path, year)
     # download_iclr_spotlight_papers(save_dir_iclr, driver_path, year)
-    # download_iclr_paper(year, save_dir=f'..\\ICLR_{year}')
-    download_iclr_paper_given_html_file(
-        year,
-        html_path=r'F:\oral.html',
-        save_dir=save_dir_iclr,
-        time_step_in_seconds=5)
+    download_iclr_paper(year, save_dir=fr'G:\all_papers\ICLR\ICLR_{year}')
+    # download_iclr_paper_given_html_file(
+    #     year,
+    #     html_path=r'F:\oral.html',
+    #     save_dir=save_dir_iclr,
+    #     time_step_in_seconds=5)
 
 

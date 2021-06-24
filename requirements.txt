@@ -1,0 +1,7 @@
+bs4
+tqdm
+python-slugify
+html5lib
+selenium
+PyPDF3
+pywin32

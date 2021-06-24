@@ -2,21 +2,14 @@
 
 import urllib
 from urllib.request import urlopen
-import time
-import bs4
+# import time
 from bs4 import BeautifulSoup
 import pickle
-# from PyPDF2 import PdfFileMerger
-# from PyPDF3 import PdfFileMerger
-import zipfile
 import os
-import shutil
 from tqdm import tqdm
-import subprocess
 from slugify import slugify
 import csv
-import lib.IDM as IDM
-import lib.thunder as Thunder
+from lib.downloader import Downloader
 
 
 def save_csv(year):
@@ -234,7 +227,7 @@ def download_from_csv(
     :param downloader: str, the downloader to download, could be 'IDM' or 'Thunder', default to 'IDM'
     :return: True
     """
-
+    downloader = Downloader(downloader=downloader)
     error_log = []
     postfix = f'AAAI_{year}'
     with open(f'..\\csv\\AAAI_{year}.csv' if csv_filename is None else f'..\\csv\\{csv_filename}', newline='') as csvfile:
@@ -261,22 +254,11 @@ def download_from_csv(
                 error_log.append((title, 'no link'))
             elif '' != this_paper['link']:
                 try:
-                    if 'IDM' == downloader:
-                        IDM.download(
-                            urls=this_paper['link'],
-                            save_path=os.path.join(os.getcwd(), this_paper_main_path),
-                            time_sleep_in_seconds=time_step_in_seconds
-                        )
-                    elif 'Thunder' == downloader:
-                        Thunder.download(
-                            urls=this_paper['link'],
-                            save_path=os.path.join(os.getcwd(), this_paper_main_path),
-                            time_sleep_in_seconds=time_step_in_seconds
-                        )
-                    else:
-                        raise ValueError(
-                            f'''ERROR: Unsupported downloader: {downloader}, we currently only support'''
-                            f''' "IDM" or "Thunder" ''')
+                    downloader.download(
+                        urls=this_paper['link'],
+                        save_path=os.path.join(os.getcwd(), this_paper_main_path),
+                        time_sleep_in_seconds=time_step_in_seconds
+                    )
                 except Exception as e:
                     # error_flag = True
                     print('Error: ' + title + ' - ' + str(e))
