@@ -8,8 +8,7 @@ import os
 from tqdm import tqdm
 from slugify import slugify
 import csv
-import lib.IDM as IDM
-import lib.thunder as Thunder
+from lib.downloader import Downloader
 
 
 def download_from_csv(
@@ -27,6 +26,7 @@ def download_from_csv(
     :param downloader: str, the downloader to download, could be 'IDM' or 'Thunder', default to 'IDM'.
     :return: True
     """
+    downloader = Downloader(downloader=downloader)
     if not os.path.exists(csv_file_path):
         raise ValueError(f'ERROR: file not found in {csv_file_path}!!!')
     main_save_path = os.path.join(save_dir, 'main_paper')
@@ -78,22 +78,11 @@ def download_from_csv(
                 try:
                     # download paper with IDM
                     if not os.path.exists(this_paper_main_path):
-                        if 'IDM' == downloader:
-                            IDM.download(
-                                urls=this_paper['main link'].replace(' ', '%20'),
-                                save_path=os.path.join(os.getcwd(), this_paper_main_path),
-                                time_sleep_in_seconds=time_step_in_seconds
-                            )
-                        elif 'Thunder' == downloader:
-                            Thunder.download(
-                                urls=this_paper['main link'].replace(' ', '%20'),
-                                save_path=os.path.join(os.getcwd(), this_paper_main_path),
-                                time_sleep_in_seconds=time_step_in_seconds
-                            )
-                        else:
-                            raise ValueError(
-                                f'''ERROR: Unsupported downloader: {downloader}, we currently only support'''
-                                f''' "IDM" or "Thunder" ''')
+                        downloader.download(
+                            urls=this_paper['main link'].replace(' ', '%20'),
+                            save_path=os.path.join(os.getcwd(), this_paper_main_path),
+                            time_sleep_in_seconds=time_step_in_seconds
+                        )
                 except Exception as e:
                     # error_flag = True
                     print('Error: ' + title + ' - ' + str(e))
@@ -108,22 +97,11 @@ def download_from_csv(
                         elif '' != this_paper['supplemental link']:
                             supp_type = this_paper['supplemental link'].split('.')[-1]
                             try:
-                                if 'IDM' == downloader:
-                                    IDM.download(
-                                        urls=this_paper['supplemental link'],
-                                        save_path=os.path.join(os.getcwd(), this_paper_supp_path_no_ext+supp_type),
-                                        time_sleep_in_seconds=time_step_in_seconds
-                                    )
-                                elif 'Thunder' == downloader:
-                                    Thunder.download(
-                                        urls=this_paper['supplemental link'],
-                                        save_path=os.path.join(os.getcwd(), this_paper_supp_path_no_ext+supp_type),
-                                        time_sleep_in_seconds=time_step_in_seconds
-                                    )
-                                else:
-                                    raise ValueError(
-                                        f'''ERROR: Unsupported downloader: {downloader}, we currently only support'''
-                                        f''' "IDM" or "Thunder" ''')
+                                downloader.download(
+                                    urls=this_paper['supplemental link'],
+                                    save_path=os.path.join(os.getcwd(), this_paper_supp_path_no_ext+supp_type),
+                                    time_sleep_in_seconds=time_step_in_seconds
+                                )
                             except Exception as e:
                                 # error_flag = True
                                 print('Error: ' + title + ' - ' + str(e))

@@ -9,8 +9,7 @@ from bs4 import BeautifulSoup
 import os
 from tqdm import tqdm
 from slugify import slugify
-import lib.IDM as IDM
-import lib.thunder as Thunder
+from lib.downloader import Downloader
 
 
 def download_paper_given_volume(
@@ -25,6 +24,7 @@ def download_paper_given_volume(
     :param downloader: str, the downloader to download, could be 'IDM' or 'Thunder', default to 'IDM'
     :return: True
     """
+    downloader = Downloader(downloader=downloader)
     init_url = f'http://proceedings.mlr.press/{volume}/'
 
     if is_download_supplement:
@@ -87,22 +87,11 @@ def download_paper_given_volume(
             try:
                 # download paper with IDM
                 if not os.path.exists(this_paper_main_path) and main_link is not None:
-                    if 'IDM' == downloader:
-                        IDM.download(
-                            urls=main_link,
-                            save_path=this_paper_main_path,
-                            time_sleep_in_seconds=time_step_in_seconds
-                        )
-                    elif 'Thunder' == downloader:
-                        Thunder.download(
-                            urls=main_link,
-                            save_path=this_paper_main_path,
-                            time_sleep_in_seconds=time_step_in_seconds
-                        )
-                    else:
-                        raise ValueError(
-                            f'''ERROR: Unsupported downloader: {downloader}, we currently only support'''
-                            f''' "IDM" or "Thunder" ''')
+                    downloader.download(
+                        urls=main_link,
+                        save_path=this_paper_main_path,
+                        time_sleep_in_seconds=time_step_in_seconds
+                    )
             except Exception as e:
                 # error_flag = True
                 print('Error: ' + title + ' - ' + str(e))
@@ -112,22 +101,11 @@ def download_paper_given_volume(
                 # check whether the supp can be downloaded
                 if not os.path.exists(this_paper_supp_path) and supp_link is not None:
                     try:
-                        if 'IDM' == downloader:
-                            IDM.download(
-                                urls=supp_link,
-                                save_path=this_paper_supp_path,
-                                time_sleep_in_seconds=time_step_in_seconds
-                            )
-                        elif 'Thunder' == downloader:
-                            Thunder.download(
-                                urls=supp_link,
-                                save_path=this_paper_supp_path,
-                                time_sleep_in_seconds=time_step_in_seconds
-                            )
-                        else:
-                            raise ValueError(
-                                f'''ERROR: Unsupported downloader: {downloader}, we currently only support'''
-                                f''' "IDM" or "Thunder" ''')
+                        downloader.download(
+                            urls=supp_link,
+                            save_path=this_paper_supp_path,
+                            time_sleep_in_seconds=time_step_in_seconds
+                        )
                     except Exception as e:
                         # error_flag = True
                         print('Error: ' + title + ' - ' + str(e))
