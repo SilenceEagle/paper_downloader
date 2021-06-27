@@ -10,6 +10,7 @@ from tqdm import tqdm
 from slugify import slugify
 import csv
 from lib.downloader import Downloader
+from lib import csv_process
 
 
 def save_csv(year):
@@ -19,7 +20,7 @@ def save_csv(year):
     :return: peper_index: int, the total number of papers
     """
     with open(f'..\\csv\\IJCAI_{year}.csv', 'w', newline='') as csvfile:
-        fieldnames = ['title', 'link', 'group']
+        fieldnames = ['title', 'main link', 'group']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
         if year >= 2003:
@@ -79,11 +80,11 @@ def save_csv(year):
                                 break
                         if is_get_link:
                             paper_dict = {'title': title,
-                                          'link': link,
+                                          'main link': link,
                                           'group': this_group}
                         else:
                             paper_dict = {'title': title,
-                                          'link': 'error',
+                                          'main link': 'error',
                                           'group': this_group}
                             print(f'get link for {title}_{year} failed!')
                             error_log.apend(title, 'no link')
@@ -104,11 +105,11 @@ def save_csv(year):
                                 break
                         if is_get_link:
                             paper_dict = {'title': title,
-                                          'link': link,
+                                          'main link': link,
                                           'group': ''}
                         else:
                             paper_dict = {'title': title,
-                                          'link': 'error',
+                                          'main link': 'error',
                                           'group': ''}
                             print(f'get link for {title}_{year} failed!')
                             error_log.apend(title, 'no link')
@@ -140,11 +141,11 @@ def save_csv(year):
                                         break
                                 if is_get_link:
                                     paper_dict = {'title': title,
-                                                  'link': link,
+                                                  'main link': link,
                                                   'group': this_group}
                                 else:
                                     paper_dict = {'title': title,
-                                                  'link': 'error',
+                                                  'main link': 'error',
                                                   'group': this_group}
                                     print(f'get link for {title}_{year} failed!')
                                     error_log.apend(title, 'no link')
@@ -187,11 +188,11 @@ def save_csv(year):
                                         break
                                 if is_get_link:
                                     paper_dict = {'title': title,
-                                                  'link': link,
+                                                  'main link': link,
                                                   'group': this_group}
                                 else:
                                     paper_dict = {'title': title,
-                                                  'link': 'error',
+                                                  'main link': 'error',
                                                   'group': this_group}
                                     print(f'get link for {title}_{year} failed!')
                                     error_log.append((title, 'no link'))
@@ -214,7 +215,7 @@ def save_csv(year):
                         link = paper.a.get('href')
                         papers_bar.set_description(f'downloading paper {paper_index}: {title}')
                         paper_dict = {'title': title,
-                                      'link': link,
+                                      'main link': link,
                                       'group': this_group}
                         writer.writerow(paper_dict)
             elif year in [2003]:
@@ -233,7 +234,7 @@ def save_csv(year):
                         paper_index += 1
                         papers_bar.set_description(f'downloading paper {paper_index}: {title}')
                         paper_dict = {'title': title,
-                                      'link': link,
+                                      'main link': link,
                                       'group': this_group}
                         writer.writerow(paper_dict)
                     except:
@@ -249,7 +250,7 @@ def save_csv(year):
                         paper_index += 1
                         papers_bar.set_description(f'downloading paper {paper_index}: {title}')
                         paper_dict = {'title': title,
-                                      'link': link,
+                                      'main link': link,
                                       'group': this_group}
                         writer.writerow(paper_dict)
                     except:
@@ -273,7 +274,7 @@ def save_csv(year):
                                 paper_index += 1
                                 papers_bar.set_description(f'downloading paper {paper_index}: {title}')
                                 paper_dict = {'title': title,
-                                              'link': link,
+                                              'main link': link,
                                               'group': this_group}
                                 writer.writerow(paper_dict)
                                 break
@@ -295,7 +296,7 @@ def save_csv(year):
                                 paper_index += 1
                                 papers_bar.set_description(f'downloading paper {paper_index}: {title}')
                                 paper_dict = {'title': title,
-                                              'link': link,
+                                              'main link': link,
                                               'group': this_group}
                                 writer.writerow(paper_dict)
                                 break
@@ -322,7 +323,7 @@ def save_csv(year):
                                 paper_index += 1
                                 papers_bar.set_description(f'downloading paper {paper_index}: {title}')
                                 paper_dict = {'title': title,
-                                              'link': link,
+                                              'main link': link,
                                               'group': this_group}
                                 writer.writerow(paper_dict)
                                 break
@@ -349,7 +350,7 @@ def save_csv(year):
                                 paper_index += 1
                                 papers_bar.set_description(f'downloading paper {paper_index}: {title}')
                                 paper_dict = {'title': title,
-                                              'link': link,
+                                              'main link': link,
                                               'group': this_group}
                                 writer.writerow(paper_dict)
                                 break
@@ -375,144 +376,28 @@ def save_csv(year):
 
 
 def download_from_csv(
-        year, save_dir, time_step_in_seconds=5, total_paper_number=None,
-        csv_filename=None, downloader='IDM'):
+        year, save_dir, time_step_in_seconds=5, total_paper_number=None, downloader='IDM'):
     """
     download all IJCAI paper given year
     :param year: int, IJCAI year, such 2019
     :param save_dir: str, paper and supplement material's save path
     :param time_step_in_seconds: int, the interval time between two downlaod request in seconds
     :param total_paper_number: int, the total number of papers that is going to download
-    :param csv_filename: None or str, the csv file's name, None means to use default setting
     :param downloader: str, the downloader to download, could be 'IDM' or 'Thunder', default to 'IDM'
     :return: True
     """
-    downloader = Downloader(downloader=downloader)
-    error_log = []
     postfix = f'IJCAI_{year}'
-    with open(f'..\\csv\\IJCAI_{year}.csv' if csv_filename is None else f'..\\csv\\{csv_filename}', newline='') as csvfile:
-        myreader = csv.DictReader(csvfile, delimiter=',')
-        pbar = tqdm(myreader)
-        i = 0
-        for this_paper in pbar:
-            i += 1
-            # get title
-            print('\n')
-            title = slugify(this_paper['title'])
-            # print('Downloading paper {}: {}'.format(i, title))
-
-            if '' != this_paper['group']:
-                this_paper_main_path = os.path.join(save_dir, slugify(this_paper['group']), f'{title}_{postfix}.pdf')
-            else:
-                this_paper_main_path = os.path.join(save_dir, f'{title}_{postfix}.pdf')
-            if os.path.exists(this_paper_main_path):
-                continue
-            if 'error' == this_paper['link']:
-                error_log.append((title, 'no link', f'''gropu:{this_paper['group']}'''))
-            elif '' != this_paper['link']:
-                if '' != this_paper['group']:
-                    os.makedirs(os.path.join(save_dir, slugify(this_paper['group'])), exist_ok=True)
-                try:
-                    # download paper with IDM
-                    if not os.path.exists(this_paper_main_path):
-                        # print('title')
-                        if total_paper_number is not None:
-                            pbar.set_description(f'Downloading paper {i}/{total_paper_number}')
-                        else:
-                            pbar.set_description(f'Downloading paper {i}')
-                        downloader.download(
-                            urls=this_paper['link'],
-                            save_path=os.path.join(os.getcwd(), this_paper_main_path),
-                            time_sleep_in_seconds=time_step_in_seconds
-                        )
-                except Exception as e:
-                    # error_flag = True
-                    print('Error: ' + title + ' - ' + str(e))
-                    error_log.append((title, this_paper['link'], 'paper download error', str(e)))
-
-        # 2. write error log
-        print('write error log')
-        with open('..\\log\\download_err_log.txt', 'w') as f:
-            for log in tqdm(error_log):
-                for e in log:
-                    if e is not None:
-                        f.write(e)
-                    else:
-                        f.write('None')
-                    f.write('\n')
-
-                f.write('\n')
-
-# def download_from_csv(year, save_dir, time_step_in_seconds=5, total_paper_number=None):
-#     """
-#     download all IJCAI paper given year
-#     :param year: int, IJCAI year, such 2019
-#     :param save_dir: str, paper and supplement material's save path
-#     :param time_step_in_seconds: int, the interval time between two downlaod request in seconds
-#     :param total_paper_number: int, the total number of papers that is going to download
-#     :return: True
-#     """
-#     # use IDM to download everything
-#     idm_path = '''"C:\Program Files (x86)\Internet Download Manager\IDMan.exe"'''  # should replace by the local IDM path
-#     basic_command = [idm_path, '/d', 'xxxx', '/p', os.getcwd(), '/f', 'xxxx', '/n']
-#
-#     error_log = []
-#     postfix = f'IJCAI_{year}'
-#     with open(f'..\\csv\\IJCAI_{year}.csv', newline='') as csvfile:
-#         myreader = csv.DictReader(csvfile, delimiter=',')
-#         pbar = tqdm(myreader)
-#         i = 0
-#         for this_paper in pbar:
-#             i += 1
-#             # get title
-#             print('\n')
-#             title = slugify(this_paper['title'])
-#             # print('Downloading paper {}: {}'.format(i, title))
-#
-#             if '' != this_paper['group']:
-#                 this_paper_main_path = os.path.join(save_dir, slugify(this_paper['group']), f'{title}_{postfix}.pdf')
-#             else:
-#                 this_paper_main_path = os.path.join(save_dir, f'{title}_{postfix}.pdf')
-#             if os.path.exists(this_paper_main_path):
-#                 continue
-#             if 'error' == this_paper['link']:
-#                 error_log.append((title, 'no link', f'''gropu:{this_paper['group']}'''))
-#             elif '' != this_paper['link']:
-#                 if '' != this_paper['group']:
-#                     os.makedirs(os.path.join(save_dir, slugify(this_paper['group'])), exist_ok=True)
-#                 try:
-#                     # download paper with IDM
-#                     if not os.path.exists(this_paper_main_path):
-#                         # print('title')
-#                         if total_paper_number is not None:
-#                             pbar.set_description(f'Downloading paper {i}/{total_paper_number}')
-#                         else:
-#                             pbar.set_description(f'Downloading paper {i}')
-#                         basic_command[2] = this_paper['link']
-#                         basic_command[6] = this_paper_main_path
-#                         p = subprocess.Popen(' '.join(basic_command))
-#                         p.wait()
-#                         time.sleep(time_step_in_seconds)
-#                         # while True:
-#                         #     if os.path.exists(this_paper_main_path):
-#                         #         break
-#                 except Exception as e:
-#                     # error_flag = True
-#                     print('Error: ' + title + ' - ' + str(e))
-#                     error_log.append((title, this_paper['link'], 'paper download error', str(e)))
-#
-#         # 2. write error log
-#         print('write error log')
-#         with open('..\\log\\download_err_log.txt', 'w') as f:
-#             for log in tqdm(error_log):
-#                 for e in log:
-#                     if e is not None:
-#                         f.write(e)
-#                     else:
-#                         f.write('None')
-#                     f.write('\n')
-#
-#                 f.write('\n')
+    csv_filename = f'..\\csv\\IJCAI_{year}.csv'
+    csv_filename = os.path.join(os.getcwd(), csv_filename)
+    csv_process.download_from_csv(
+        postfix=postfix,
+        save_dir=save_dir,
+        csv_file_path=csv_filename,
+        is_download_supplement=False,
+        time_step_in_seconds=time_step_in_seconds,
+        total_paper_number=total_paper_number,
+        downloader=downloader
+    )
 
 
 if __name__ == '__main__':

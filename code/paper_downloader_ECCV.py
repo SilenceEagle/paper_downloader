@@ -12,6 +12,7 @@ from slugify import slugify
 import csv
 from lib.supplement_porcess import move_main_and_supplement_2_one_directory
 import lib.springer as springer
+from lib import csv_process
 from lib.downloader import Downloader
 
 def save_csv(year):
@@ -126,104 +127,24 @@ def download_from_csv(
     :param downloader: str, the downloader to download, could be 'IDM' or 'Thunder', default to 'IDM'
     :return: True
     """
-    downloader = Downloader(downloader=downloader)
-    main_save_path = os.path.join(save_dir, 'main_paper')
-    supplement_save_path = os.path.join(save_dir, 'supplement')
-    os.makedirs(main_save_path, exist_ok=True)
-    os.makedirs(supplement_save_path, exist_ok=True)
-
-    error_log = []
     postfix = f'ECCV_{year}'
     if is_workshops:
         postfix = f'ECCV_WS_{year}'
     csv_file_name = f'..\\csv\\ECCV_{year}.csv' if not is_workshops else f'..\\csv\\ECCV_WS_{year}.csv'
-    with open(csv_file_name, newline='') as csvfile:
-        myreader = csv.DictReader(csvfile, delimiter=',')
-        pbar = tqdm(myreader)
-        i = 0
-        for this_paper in pbar:
-            i += 1
-            # get title
-            if is_workshops:
-                group = slugify(this_paper['group'])
-            title = slugify(this_paper['title'])
-            if total_paper_number is not None:
-                pbar.set_description(f'Downloading paper {i}/{total_paper_number}')
-
-            else:
-                pbar.set_description(f'Downloading paper {i}')
-
-            this_paper_main_path = os.path.join(main_save_path, f'{title}_{postfix}.pdf')
-            if is_workshops:
-                this_paper_main_path = os.path.join(main_save_path, group, f'{title}_{postfix}.pdf')
-            this_paper_supp_path_no_ext = os.path.join(supplement_save_path, f'{title}_{postfix}_supp.')
-            if is_workshops:
-                this_paper_supp_path_no_ext = os.path.join(supplement_save_path, group, f'{title}_{postfix}_supp.')
-            if is_download_supplement:
-                if '' != this_paper['supplemental link'] and os.path.exists(this_paper_main_path) and \
-                        (os.path.exists(this_paper_supp_path_no_ext + 'zip') or os.path.exists(
-                            this_paper_supp_path_no_ext + 'pdf')):
-                    continue
-                elif '' == this_paper['supplemental link'] and os.path.exists(this_paper_main_path):
-                    continue
-            else:
-                if os.path.exists(this_paper_main_path):
-                    continue
-            if 'error' == this_paper['main link']:
-                error_log.append((title, 'no MAIN link'))
-            elif '' != this_paper['main link']:
-                if is_workshops:
-                    os.makedirs(os.path.join(main_save_path, group), exist_ok=True)
-                    if is_download_supplement:
-                        os.makedirs(os.path.join(supplement_save_path, group), exist_ok=True)
-                try:
-                    if not os.path.exists(this_paper_main_path):
-                        downloader.download(
-                            urls=this_paper['main link'].replace(' ', '%20'),
-                            save_path=this_paper_main_path,
-                            time_sleep_in_seconds=time_step_in_seconds
-                        )
-                except Exception as e:
-                    # error_flag = True
-                    print('Error: ' + title + ' - ' + str(e))
-                    error_log.append((title, this_paper['main link'], 'main paper download error', str(e)))
-                # download supp
-                if is_download_supplement:
-                    # check whether the supp can be downloaded
-                    if not (os.path.exists(this_paper_supp_path_no_ext + 'zip') or
-                            os.path.exists(this_paper_supp_path_no_ext + 'pdf')):
-                        if 'error' == this_paper['supplemental link']:
-                            error_log.append((title, 'no SUPPLEMENTAL link'))
-                        elif '' != this_paper['supplemental link']:
-                            supp_type = this_paper['supplemental link'].split('.')[-1]
-                            try:
-                                downloader.download(
-                                    urls=this_paper['supplemental link'],
-                                    save_path=this_paper_supp_path_no_ext + supp_type,
-                                    time_sleep_in_seconds=time_step_in_seconds
-                                )
-                            except Exception as e:
-                                # error_flag = True
-                                print('Error: ' + title + ' - ' + str(e))
-                                error_log.append((title, this_paper['supplemental link'], 'supplement download error',
-                                                  str(e)))
-
-        # 2. write error log
-        print('write error log')
-        with open('..\\log\\download_err_log.txt', 'w') as f:
-            for log in tqdm(error_log):
-                for e in log:
-                    if e is not None:
-                        f.write(e)
-                    else:
-                        f.write('None')
-                    f.write('\n')
-
-                f.write('\n')
+    csv_file_name = os.path.join(os.getcwd(), csv_file_name)
+    csv_process.download_from_csv(
+        postfix=postfix,
+        save_dir=save_dir,
+        csv_file_path=csv_file_name,
+        is_download_supplement=is_download_supplement,
+        time_step_in_seconds=time_step_in_seconds,
+        total_paper_number=total_paper_number,
+        downloader=downloader
+    )
 
 
 def download_from_springer(
-        year, save_dir,  is_workshops=False, time_sleep_in_seconds=5):
+        year, save_dir,  is_workshops=False, time_sleep_in_seconds=5, downloader='IDM'):
     os.makedirs(save_dir, exist_ok=True)
     if 2018 == year:
         if not is_workshops:
@@ -426,12 +347,17 @@ def download_from_springer(
             urls_list = [
 
             ]
+    else:
+        raise ValueError(f'ECCV {year} is current not available!')
     for url in urls_list:
         __download_from_springer(
-            url, save_dir, year, is_workshops=is_workshops, time_sleep_in_seconds=time_sleep_in_seconds)
+            url, save_dir, year, is_workshops=is_workshops, time_sleep_in_seconds=time_sleep_in_seconds,
+            downloader=downloader)
+
 
 def __download_from_springer(
-        url, save_dir, year, is_workshops=False, time_sleep_in_seconds=5):
+        url, save_dir, year, is_workshops=False, time_sleep_in_seconds=5, downloader='IDM'):
+    downloader = Downloader(downloader)
     for i in range(3):
         try:
             papers_dict = springer.get_paper_name_link_from_url(url)
@@ -447,7 +373,7 @@ def __download_from_springer(
     for name in pbar:
         pbar.set_description(f'Downloading paper {name}')
         if not os.path.exists(os.path.join(save_dir, f'{name}_{postfix}.pdf')):
-            IDM.download(
+            downloader.download(
                 papers_dict[name],
                 os.path.join(save_dir, f'{name}_{postfix}.pdf'),
                 time_sleep_in_seconds)

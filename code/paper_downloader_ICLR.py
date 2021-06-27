@@ -6,7 +6,6 @@ from selenium import webdriver
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
-import requests
 import os
 #https://stackoverflow.com/questions/295135/turn-a-string-into-a-valid-filename
 from slugify import slugify
@@ -345,6 +344,45 @@ def download_iclr_paper(year, save_dir, time_step_in_seconds=5, downloader='IDM'
                     # error_flag = True
                     print('Error: ' + title + ' - ' + str(e))
                     error_log.append((title, link, 'paper download error', str(e)))
+        # workshops
+        papers = soup.find('h3', {'id': 'workshop_track_posters_may_2nd'}).findNext('div').find_all('a')
+        for paper in tqdm(papers):
+            link = paper.get('href')
+            if link.startswith('http://beta.openreview'):
+                title = slugify(paper.text)
+                pdf_name = f'{title}_ICLR_WS_{year}.pdf'
+                try:
+                    if not os.path.exists(os.path.join(save_dir, 'ws', pdf_name)):
+                        pdf_link = get_pdf_link_from_openreview(link)
+                        print(f'downloading {title}')
+                        downloader.download(
+                            urls=pdf_link,
+                            save_path=os.path.join(save_dir, 'ws', pdf_name),
+                            time_sleep_in_seconds=time_step_in_seconds
+                        )
+                except Exception as e:
+                    # error_flag = True
+                    print('Error: ' + title + ' - ' + str(e))
+                    error_log.append((title, link, 'paper download error', str(e)))
+        papers = soup.find('h3', {'id': 'workshop_track_posters_may_3rd'}).findNext('div').find_all('a')
+        for paper in tqdm(papers):
+            link = paper.get('href')
+            if link.startswith('http://beta.openreview'):
+                title = slugify(paper.text)
+                pdf_name = f'{title}_ICLR_WS_{year}.pdf'
+                try:
+                    if not os.path.exists(os.path.join(save_dir, 'ws', pdf_name)):
+                        pdf_link = get_pdf_link_from_openreview(link)
+                        print(f'downloading {title}')
+                        downloader.download(
+                            urls=pdf_link,
+                            save_path=os.path.join(save_dir, 'ws', pdf_name),
+                            time_sleep_in_seconds=time_step_in_seconds
+                        )
+                except Exception as e:
+                    # error_flag = True
+                    print('Error: ' + title + ' - ' + str(e))
+                    error_log.append((title, link, 'paper download error', str(e)))
     elif year == 2015:
         # oral papers
         oral_papers = soup.find('h3', {'id': 'conference_oral_presentations'}).findNext('div').find_all('a')
@@ -602,6 +640,10 @@ def download_iclr_paper_given_html_file(year, html_path, save_dir, time_step_in_
             f.write('\n')
 
 
+def get_pdf_link_from_openreview(abs_link):
+    return abs_link.replace('beta.', '').replace('forum', 'pdf')
+
+
 def get_pdf_link_from_arxiv(abs_link, is_use_mirror=True):
     if is_use_mirror:
         # abs_link = abs_link.replace('arxiv.org', 'xxx.itp.ac.cn')
@@ -631,7 +673,7 @@ def get_pdf_link_from_arxiv(abs_link, is_use_mirror=True):
 
 
 if __name__ == '__main__':
-    year = 2014
+    year = 2016
     # driver_path = r'c:\chromedriver.exe'
     # save_dir_iclr = rf'F:\ICLR_{year}'
 
