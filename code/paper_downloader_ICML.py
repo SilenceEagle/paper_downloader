@@ -25,6 +25,7 @@ def download_paper(year, save_dir, is_download_supplement=True, time_step_in_sec
     """
     downloader = Downloader(downloader=downloader)
     ICML_year_dict = {
+        2021: 139,
         2020: 119,
         2019: 97,
         2018: 80,
@@ -82,7 +83,7 @@ def download_paper(year, save_dir, is_download_supplement=True, time_step_in_sec
             postfix=postfix,
             is_download_supplement=is_download_supplement,
             time_step_in_seconds=time_step_in_seconds,
-            downloader=downloader
+            downloader=downloader.downloader
         )
     elif 2012 == year:  # 2012
         # base_url = f'https://icml.cc/{year}/'
@@ -304,7 +305,7 @@ def rename_downloaded_paper(year, source_path):
 
 
 if __name__ == '__main__':
-    year = 2011
+    year = 2021
     download_paper(
         year,
         rf'D:\ICML_{year}',
