@@ -45,15 +45,15 @@ def download_paper_given_volume(
     error_log = []
     title_list = []
     num_download = len(paper_list)
-    for paper in tqdm(zip(paper_list, range(num_download))):
+    pbar = tqdm(zip(paper_list, range(num_download)))
+    for paper in pbar:
         # get title
-        print('\n')
         this_paper = paper[0]
         title = slugify(this_paper.find_all('p', {'class': 'title'})[0].text)
         try:
-            print('Downloading paper {}/{}: {}'.format(paper[1] + 1, num_download, title))
+            pbar.set_description(f'Downloading paper {paper[1] + 1}/{num_download}: {title}')
         except:
-            print('Downloading paper {}/{}: {}'.format(paper[1] + 1, num_download, title.encode('utf8')))
+            pbar.set_description(f'''Downloading paper {paper[1] + 1}/{num_download}: {title.encode('utf8')}''')
         title_list.append(title)
 
         this_paper_main_path = os.path.join(main_save_path, f'{title}_{postfix}.pdf')
