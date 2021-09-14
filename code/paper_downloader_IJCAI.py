@@ -1,7 +1,8 @@
 """paper_downloader_IJCAI.py"""
 
-# import urllib
+import urllib
 from urllib.request import urlopen
+import http
 # import time
 from bs4 import BeautifulSoup
 import pickle
@@ -33,12 +34,39 @@ def save_csv(year):
         else:
             raise ValueError('invalid year!')
         error_log = []
+        user_agents = [
+            'Mozilla/5.0 (Windows; U; Windows NT 5.1; it; rv:1.8.1.11) Gecko/20071127 Firefox/2.0.0.11',
+            'Opera/9.25 (Windows NT 5.1; U; en)',
+            'Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1; .NET CLR 1.1.4322; .NET CLR 2.0.50727)',
+            'Mozilla/5.0 (compatible; Konqueror/3.5; Linux) KHTML/3.5.5 (like Gecko) (Kubuntu)',
+            'Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.8.0.12) Gecko/20070731 Ubuntu/dapper-security Firefox/1.5.0.12',
+            'Lynx/2.8.5rel.1 libwww-FM/2.14 SSL-MM/1.4.1 GNUTLS/1.2.9',
+            "Mozilla/5.0 (X11; Linux i686) AppleWebKit/535.7 (KHTML, like Gecko) Ubuntu/11.04 Chromium/16.0.912.77 Chrome/16.0.912.77 Safari/535.7",
+            "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:10.0) Gecko/20100101 Firefox/10.0 ",
+            'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.137 Safari/537.36 LBBROWSER'
+
+        ]
+        headers = {
+            'User-Agent': user_agents[-1],
+            'Host': 'www.ijcai.org',
+            'Referer': "https://www.ijcai.org",
+            'GET': init_urls[0]
+        }
         if len(init_urls) == 1:
             if os.path.exists(f'..\\urls\\init_url_IJCAI_{year}.dat'):
                 with open(f'..\\urls\\init_url_IJCAI_{year}.dat', 'rb') as f:
                     content = pickle.load(f)
             else:
-                content = urlopen(init_urls[0]).read()
+                req = urllib.request.Request(url=init_urls[0], headers=headers)
+                content = urllib.request.urlopen(req).read()
+                # html_path = r'D:\IJCAI2021.html'
+                # content = open(html_path, 'rb').read()
+                # cookie = http.cookiejar.CookieJar()  # 声明一个CookieJar对象实例来保存cookie
+                # handler = urllib.request.HTTPCookieProcessor(cookie)  # 利用urllib2库的HTTPCookieProcessor对象来创建cookie处理器
+                # opener = urllib.request.build_opener(handler)  # 通过handler来构建opener
+                # urllib.request.install_opener(opener)
+                # request = urllib.request.Request(url=init_urls[0], headers=headers, method='POST')
+                # content = urllib.request.urlopen(request).read()
                 with open(f'..\\urls\\init_url_IJCAI_{year}.dat', 'wb') as f:
                     pickle.dump(content, f)
             contents = [content]
@@ -48,7 +76,9 @@ def save_csv(year):
                 with open(f'..\\urls\\init_url_IJCAI_0_{year}.dat', 'rb') as f:
                     content = pickle.load(f)
             else:
-                content = urlopen(init_urls[0]).read()
+                # content = urlopen(init_urls[0]).read()
+                req = urllib.request.Request(url=init_urls[0], headers=headers)
+                content = urllib.request.urlopen(req).read()
                 with open(f'..\\urls\\init_url_IJCAI_0_{year}.dat', 'wb') as f:
                     pickle.dump(content, f)
             contents.append(content)
@@ -56,7 +86,9 @@ def save_csv(year):
                 with open(f'..\\urls\\init_url_IJCAI_1_{year}.dat', 'rb') as f:
                     content = pickle.load(f)
             else:
-                content = urlopen(init_urls[1]).read()
+                # content = urlopen(init_urls[1]).read()
+                req = urllib.request.Request(url=init_urls[1], headers=headers)
+                content = urllib.request.urlopen(req).read()
                 with open(f'..\\urls\\init_url_IJCAI_1_{year}.dat', 'wb') as f:
                     pickle.dump(content, f)
             contents.append(content)
@@ -67,25 +99,29 @@ def save_csv(year):
                 pbar = tqdm(soup.find_all('div', {'class': 'section_title'}))
                 for section in pbar:
                     this_group = slugify(section.text)
-                    papers = section.parent.find_all('div', {'class': 'paper_wrapper'})
+                    papers = section.parent.find_all('div', {'class': ['paper_wrapper', 'subsection_title']})
+                    sub_group = ''
                     for paper in papers:
+                        if 'subsection_title' == paper.get('class')[0]:
+                            sub_group = slugify(paper.text)
+                            continue
                         paper_index += 1
                         is_get_link = False
                         title = slugify(paper.find('div', {'class': 'title'}).text)
                         pbar.set_description(f'downloading paper {paper_index}: {title}')
                         for a in paper.find('div', {'class': 'details'}).find_all('a'):
                             if 'PDF' == a.text:
-                                link = init_urls[0] + a.get('href')
+                                link = urllib.parse.urljoin(init_urls[0], a.get('href'))
                                 is_get_link = True
                                 break
                         if is_get_link:
                             paper_dict = {'title': title,
                                           'main link': link,
-                                          'group': this_group}
+                                          'group': this_group + '--' + sub_group if sub_group != '' else this_group}
                         else:
                             paper_dict = {'title': title,
                                           'main link': 'error',
-                                          'group': this_group}
+                                          'group': this_group + '--' + sub_group if sub_group != '' else this_group}
                             print(f'get link for {title}_{year} failed!')
                             error_log.apend(title, 'no link')
                         writer.writerow(paper_dict)
@@ -406,13 +442,13 @@ if __name__ == '__main__':
     #     # save_csv(year)
     #     # time.sleep(2)
     #     download_from_csv(year, save_dir=f'..\\IJCAI_{year}', time_step_in_seconds=1)
-    # year = 2021
-    # total_paper_number = 778
-    # total_paper_number = save_csv(year)
-    # download_from_csv(
-    #     year,
-    #     save_dir=f'..\\IJCAI_{year}',
-    #     time_step_in_seconds=5,
-    #     total_paper_number=total_paper_number)
+    year = 2021
+    # total_paper_number = 723
+    total_paper_number = save_csv(year)
+    download_from_csv(
+        year,
+        save_dir=fr'D:\IJCAI_{year}',
+        time_step_in_seconds=5,
+        total_paper_number=total_paper_number)
 
     pass
