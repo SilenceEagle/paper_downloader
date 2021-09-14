@@ -2,7 +2,7 @@
 import lib.pmlr as pmlr
 
 
-def download_paper(year, save_dir, is_download_supplement=True, time_step_in_seconds=5, downloader='IDM'):
+def download_paper(year, save_dir, is_download_supplement=False, time_step_in_seconds=5, downloader='IDM'):
     """
     download all COLT paper and supplement files given year, restore in save_dir/main_paper and save_dir/supplement
     respectively
@@ -13,16 +13,18 @@ def download_paper(year, save_dir, is_download_supplement=True, time_step_in_sec
     :param downloader: str, the downloader to download, could be 'IDM' or 'Thunder', default to 'IDM'
     :return: True
     """
-    COLT_year_dict = {2020: 125,
-                      2019: 99,
-                      2018: 75,
-                      2017: 65,
-                      2016: 49,
-                      2015: 40,
-                      2014: 35,
-                      2013: 30,
-                      2012: 23,
-                      2011: 19
+    COLT_year_dict = {
+        2021: 134,
+        2020: 125,
+        2019: 99,
+        2018: 75,
+        2017: 65,
+        2016: 49,
+        2015: 40,
+        2014: 35,
+        2013: 30,
+        2012: 23,
+        2011: 19
                       }
     if year in COLT_year_dict.keys():
         volume = f'v{COLT_year_dict[year]}'
@@ -41,12 +43,12 @@ def download_paper(year, save_dir, is_download_supplement=True, time_step_in_sec
 
 
 if __name__ == '__main__':
-    year = 2011
+    year = 2021
     download_paper(
         year,
         rf'D:\COLT_{year}',
-        is_download_supplement=True,
-        time_step_in_seconds=5,
+        is_download_supplement=False,
+        time_step_in_seconds=3,
         downloader='IDM'
     )
     pass
