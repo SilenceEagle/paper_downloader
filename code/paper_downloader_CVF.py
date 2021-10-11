@@ -27,6 +27,8 @@ def save_csv(year, conference):
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
         init_url = f'http://openaccess.thecvf.com/{conference}{year}'
+        if conference == 'ICCV' and year == 2021:
+            init_url = 'https://openaccess.thecvf.com/ICCV2021?day=all'
         content = None
         if os.path.exists(f'..\\urls\\init_url_{conference}_{year}.dat'):
             with open(f'..\\urls\\init_url_{conference}_{year}.dat', 'rb') as f:
@@ -202,12 +204,12 @@ def download_paper(
 
 
 if __name__ == '__main__':
-    year = 2020
-    conference = 'WACV'
+    year = 2021
+    conference = 'ICCV'
     download_paper(
         year,
         conference=conference,
-        save_dir=fr'D:\{conference}',
+        save_dir=fr'E:\{conference}',
         is_download_supplement=True,
         time_step_in_seconds=2,
         is_download_main_conference=True,
@@ -215,13 +217,13 @@ if __name__ == '__main__':
     )
 
     move_main_and_supplement_2_one_directory(
-        main_path=rf'D:\{conference}\{conference}_{year}\main_paper',
-        supplement_path=rf'D:\{conference}\{conference}_{year}\supplement',
-        supp_pdf_save_path=rf'D:\{conference}\{conference}_{year}\main_paper'
+        main_path=rf'E:\{conference}\{conference}_{year}\main_paper',
+        supplement_path=rf'E:\{conference}\{conference}_{year}\supplement',
+        supp_pdf_save_path=rf'E:\{conference}\{conference}_{year}\main_paper'
     )
     move_main_and_supplement_2_one_directory_with_group(
-        main_path=rf'D:\{conference}\{conference}_WS_{year}\main_paper',
-        supplement_path=rf'D:\{conference}\{conference}_WS_{year}\supplement',
-        supp_pdf_save_path=rf'D:\{conference}\{conference}_WS_{year}\main_paper'
+        main_path=rf'E:\{conference}\{conference}_WS_{year}\main_paper',
+        supplement_path=rf'E:\{conference}\{conference}_WS_{year}\supplement',
+        supp_pdf_save_path=rf'E:\{conference}\{conference}_WS_{year}\main_paper'
     )
     pass
