@@ -116,7 +116,8 @@ def save_csv_workshops(year, conference):
 
 
 def download_from_csv(
-        year, conference, save_dir, is_download_supplement=True, time_step_in_seconds=5, total_paper_number=None,
+        year, conference, save_dir, is_download_main_paper=True,
+        is_download_supplement=True, time_step_in_seconds=5, total_paper_number=None,
         is_workshops=False, downloader='IDM'):
     """
     download all CVF paper and supplement files given year, restore in save_dir/main_paper and save_dir/supplement
@@ -124,6 +125,7 @@ def download_from_csv(
     :param year: int, CVF year, such 2019
     :param conference: str, one of ['CVPR', 'ICCV', 'WACV']
     :param save_dir: str, paper and supplement material's save path
+    :param is_download_main_paper: bool, True for downloading main paper
     :param is_download_supplement: bool, True for downloading supplemental material
     :param time_step_in_seconds: int, the interval time between two downloading request in seconds
     :param total_paper_number: int, the total number of papers that is going to download
@@ -140,6 +142,7 @@ def download_from_csv(
         postfix=postfix,
         save_dir=save_dir,
         csv_file_path=csv_file_path,
+        is_download_main_paper=is_download_main_paper,
         is_download_supplement=is_download_supplement,
         time_step_in_seconds=time_step_in_seconds,
         total_paper_number=total_paper_number,
@@ -149,15 +152,23 @@ def download_from_csv(
 
 
 def download_paper(
-        year, conference, save_dir, is_download_supplement=True, time_step_in_seconds=5,
+        year, conference, save_dir, is_download_main_paper=True,
+        is_download_supplement=True, time_step_in_seconds=5,
         is_download_main_conference=True, is_download_workshops=True, downloader='IDM'):
     """
-    download all CVF pepers in given year, support downloading main conference and workshops.
-    :param year: int, CVF year, such 2019
-    :param conference: str, one of ['CVPR', 'ICCV', 'WACV']
-    :param save_dir: str, paper and supplement material's save path
-    :param is_download_supplement: bool, True for downloading supplemental material
-    :param time_step_in_seconds: int, the interval time between two downloading request in seconds
+    download all CVF papers in given year, support downloading main conference and workshops.
+    :param year: int, CVF year, such 2019.
+    :param conference: str, one of {'CVPR', 'ICCV', 'WACV'}.
+    :param save_dir: str, paper and supplement material's save path.
+    :param is_download_main_paper: bool, True for downloading main paper.
+    :param is_download_supplement: bool, True for downloading supplemental material.
+    :param time_step_in_seconds: int, the interval time between two downloading request in seconds.
+    :param is_download_main_conference: bool, this parameter controls whether to download main conference papers,
+        it is a upper level control flag of parameters is_download_main_paper and is_download_supplement.
+        eg. After setting is_download_main_conference=True, is_download_main_paper=False, is_download_supplement=False,
+        the only the supplement materials of the conference (vs. workshops) will be downloaded.
+    :param is_download_workshops: bool, True for downloading workshops paper and is similar with
+        is_download_main_conference.
     :param downloader: str, the downloader to download, could be 'IDM' or 'Thunder', default to 'IDM'.
     :return:
     """
@@ -175,6 +186,7 @@ def download_paper(
             year=year,
             conference=conference,
             save_dir=os.path.join(save_dir, f'{conference}_{year}'),
+            is_download_main_paper=is_download_main_paper,
             is_download_supplement=is_download_supplement,
             time_step_in_seconds=time_step_in_seconds,
             total_paper_number=total_paper_number,
@@ -195,6 +207,7 @@ def download_paper(
             year=year,
             conference=conference,
             save_dir=os.path.join(save_dir, f'{conference}_WS_{year}'),
+            is_download_main_paper=is_download_main_paper,
             is_download_supplement=is_download_supplement,
             time_step_in_seconds=time_step_in_seconds,
             total_paper_number=total_paper_number,
@@ -204,26 +217,27 @@ def download_paper(
 
 
 if __name__ == '__main__':
-    year = 2021
-    conference = 'ICCV'
+    year = 2020
+    conference = 'CVPR'
     download_paper(
         year,
         conference=conference,
         save_dir=fr'E:\{conference}',
+        is_download_main_paper=False,
         is_download_supplement=True,
         time_step_in_seconds=2,
         is_download_main_conference=True,
-        is_download_workshops=True
+        is_download_workshops=False
     )
-
+    #
     move_main_and_supplement_2_one_directory(
         main_path=rf'E:\{conference}\{conference}_{year}\main_paper',
         supplement_path=rf'E:\{conference}\{conference}_{year}\supplement',
         supp_pdf_save_path=rf'E:\{conference}\{conference}_{year}\main_paper'
     )
-    move_main_and_supplement_2_one_directory_with_group(
-        main_path=rf'E:\{conference}\{conference}_WS_{year}\main_paper',
-        supplement_path=rf'E:\{conference}\{conference}_WS_{year}\supplement',
-        supp_pdf_save_path=rf'E:\{conference}\{conference}_WS_{year}\main_paper'
-    )
+    # move_main_and_supplement_2_one_directory_with_group(
+    #     main_path=rf'E:\{conference}\{conference}_WS_{year}\main_paper',
+    #     supplement_path=rf'E:\{conference}\{conference}_WS_{year}\supplement',
+    #     supp_pdf_save_path=rf'E:\{conference}\{conference}_WS_{year}\main_paper'
+    # )
     pass
