@@ -16,6 +16,50 @@ import urllib
 from lib.downloader import Downloader
 
 
+def __download_papers_given_divs(divs, save_dir, paper_postfix, time_step_in_seconds=10, downloader='IDM'):
+    error_log = []
+    downloader = Downloader(downloader=downloader)
+    num_papers = len(divs)
+    print('found number of papers:', num_papers)
+    for index, paper in enumerate(divs):
+        a_hrefs = paper.find_elements_by_tag_name("a")
+        if year >= 2018:
+            name = slugify(a_hrefs[0].text.strip())
+            link = a_hrefs[1].get_attribute('href')
+        else:
+            name = slugify(paper.find_element_by_class_name('note_content_title').text)
+            link = paper.find_element_by_class_name('note_content_pdf').get_attribute('href')
+        print('Downloading paper {}/{}: {}'.format(index + 1, num_papers, name))
+        pdf_name = name + '_' + paper_postfix + '.pdf'
+        if not os.path.exists(os.path.join(save_dir, pdf_name)):
+            # try 1 times
+            success_flag = False
+            for d_iter in range(1):
+                try:
+                    downloader.download(
+                        urls=link,
+                        save_path=os.path.join(save_dir, pdf_name),
+                        time_sleep_in_seconds=time_step_in_seconds
+                    )
+                    success_flag = True
+                    break
+                except Exception as e:
+                    print('Error: ' + name + ' - ' + str(e))
+            if not success_flag:
+                error_log.append((name, link))
+    return error_log
+
+
+def __find_pages_given_number(page_number, pages):
+    for page in pages:
+        try:
+            if page.text.isnumeric() and int(page.text) == page_number:
+                return page
+        except Exception as e:
+            pass
+    return None
+
+
 def download_iclr_oral_papers(save_dir, driver_path, year, base_url=None, time_step_in_seconds=10, downloader='IDM'):
     """
 
@@ -27,7 +71,6 @@ def download_iclr_oral_papers(save_dir, driver_path, year, base_url=None, time_s
     :param downloader: str, the downloader to download, could be 'IDM' or 'Thunder', default to 'IDM'
     :return:
     """
-    downloader = Downloader(downloader=downloader)
     if base_url is None:
         if year == 2017:
             base_url = 'https://openreview.net/group?id=ICLR.cc/2017/conference'
@@ -39,6 +82,8 @@ def download_iclr_oral_papers(save_dir, driver_path, year, base_url=None, time_s
             base_url = 'https://openreview.net/group?id=ICLR.cc/2020/Conference#accept-talk'
         elif year == 2021:
             base_url = 'https://openreview.net/group?id=ICLR.cc/2021/Conference#oral-presentations'
+        elif year == 2022:
+            base_url = 'https://openreview.net/group?id=ICLR.cc/2022/Conference#oral-submissions'
         else:
             raise ValueError('the website url is not given for this year!')
     first_poster_index = {'2017': 15}
@@ -51,16 +96,56 @@ def download_iclr_oral_papers(save_dir, driver_path, year, base_url=None, time_s
         os.makedirs(save_dir)
 
     # wait for the select element to become visible
-    print('Starting web driver wait...')
+    # print('Starting web driver wait...')
     wait = WebDriverWait(driver, 20)
-    print('Starting web driver wait... finished')
+    # print('Starting web driver wait... finished')
     res = wait.until(EC.presence_of_element_located((By.ID, "notes")))
-    print("Successful load the website!->",res)
+    # print("Successful load the website!->", res)
     res = wait.until(EC.presence_of_element_located((By.CLASS_NAME, "note")))
-    print("Successful load the website notes!->",res)
+    # print("Successful load the website notes!->", res)
+    res = wait.until(EC.presence_of_element_located((By.CLASS_NAME, "pagination")))
+    # print("Successful load the website pagination!->", res)
     # parse the results
 
-    if year >= 2021:
+    if year == 2022:
+        pages = driver.find_elements_by_xpath('//*[@id="oral-submissions"]/nav/ul/li')
+        current_page = 1
+        ind_page = 2  # 0 << ; 1 <
+        total_pages_number = int(pages[-3].text)  # << | < | 1, 2, 3, ... | > | >>
+        while current_page <= total_pages_number:
+            page = __find_pages_given_number(page_number=current_page, pages=pages)
+            if pages is None:
+                break
+            print(f'downloading papers in page: {current_page}')
+            page.find_element_by_tag_name("a").click()
+            time.sleep(5)
+            # wait for the select element to become visible
+            # print('Starting web driver wait...')
+            wait = WebDriverWait(driver, 20)
+            # print('Starting web driver wait... finished')
+            res = wait.until(EC.presence_of_element_located((By.ID, "notes")))
+            # print("Successful load the website!->", res)
+            res = wait.until(EC.presence_of_element_located((By.CLASS_NAME, "note")))
+            # print("Successful load the website notes!->", res)
+            res = wait.until(EC.presence_of_element_located((By.CLASS_NAME, "pagination")))
+            # print("Successful load the website pagination!->", res)
+            pages = driver.find_elements_by_xpath('//*[@id="oral-submissions"]/nav/ul/li')
+            current_page += 1
+            total_pages_number = int(pages[-3].text)
+            # if we do not reread the pages, all the pages will be not available with an exception:
+            # selenium.common.exceptions.StaleElementReferenceException:
+            # Message: stale element reference: element is not attached to the page document
+            divs = driver.find_elements_by_xpath('//*[@id="oral-submissions"]/ul/li')
+            this_error_log = __download_papers_given_divs(
+                divs=divs,
+                save_dir=save_dir,
+                paper_postfix=paper_postfix,
+                time_step_in_seconds=time_step_in_seconds,
+                downloader=downloader
+            )
+            for e in this_error_log:
+                error_log.append(e)
+    elif year == 2021:
         divs = driver.find_elements_by_xpath('//*[@id="oral-presentations"]/ul/li')
     elif year == 2020:
         divs = driver.find_elements_by_xpath('//*[@id="accept-talk"]/ul/li')
@@ -68,34 +153,16 @@ def download_iclr_oral_papers(save_dir, driver_path, year, base_url=None, time_s
         divs = driver.find_elements_by_xpath('//*[@id="accepted-poster-papers"]/ul/li')
     else:
         divs = driver.find_elements_by_class_name('note')[:first_poster_index[str(year)]]
-    num_papers = len(divs)
-    print('found number of papers:',num_papers)
-    for index, paper in enumerate(divs):
-        a_hrefs = paper.find_elements_by_tag_name("a")
-        if year >= 2018:
-            name = slugify(a_hrefs[0].text.strip())
-            link = a_hrefs[1].get_attribute('href')
-        else:
-            name = slugify(paper.find_element_by_class_name('note_content_title').text)
-            link = paper.find_element_by_class_name('note_content_pdf').get_attribute('href')
-        print('Downloading paper {}/{}: {}'.format(index+1, num_papers, name))
-        pdf_name = name + '_' + paper_postfix + '.pdf'
-        if not os.path.exists(os.path.join(save_dir, pdf_name)):
-            # try 1 times
-            success_flag = False
-            for d_iter in range(1):
-                try:
-                    downloader.download(
-                        urls=link,
-                        save_path=os.path.join(save_dir, pdf_name),
-                        time_sleep_in_seconds=time_step_in_seconds
-                        )
-                    success_flag = True
-                    break
-                except Exception as e:
-                    print('Error: ' + name + ' - ' + str(e))
-            if not success_flag:
-                error_log.append((name, link))
+    if year < 2022:
+        this_error_log = __download_papers_given_divs(
+            divs=divs,
+            save_dir=save_dir,
+            paper_postfix=paper_postfix,
+            time_step_in_seconds=time_step_in_seconds,
+            downloader=downloader
+        )
+        for e in this_error_log:
+            error_log.append(e)
     driver.close()
     # 2. write error log
     print('write error log')
@@ -118,7 +185,6 @@ def download_iclr_poster_papers(save_dir, driver_path, year, base_url=None, time
     :param downloader: str, the downloader to download, could be 'IDM' or 'Thunder', default to 'IDM'
     :return:
     """
-    downloader = Downloader(downloader=downloader)
     if base_url is None:
         if year == 2017:
             base_url = 'https://openreview.net/group?id=ICLR.cc/2017/conference'
@@ -130,6 +196,8 @@ def download_iclr_poster_papers(save_dir, driver_path, year, base_url=None, time
             base_url = 'https://openreview.net/group?id=ICLR.cc/2020/Conference#accept-poster'
         elif year == 2021:
             base_url = 'https://openreview.net/group?id=ICLR.cc/2021/Conference#poster-presentations'
+        elif year == 2022:
+            base_url = 'https://openreview.net/group?id=ICLR.cc/2022/Conference#poster-submissions'
         else:
             raise ValueError('the website url is not given for this year!')
     first_poster_index={'2017': 15}
@@ -143,15 +211,55 @@ def download_iclr_poster_papers(save_dir, driver_path, year, base_url=None, time
         os.makedirs(save_dir)
 
     # wait for the select element to become visible
-    print('Starting web driver wait...')
+    # print('Starting web driver wait...')
     wait = WebDriverWait(driver, 20)
-    print('Starting web driver wait... finished')
+    # print('Starting web driver wait... finished')
     res = wait.until(EC.presence_of_element_located((By.ID, "notes")))
-    print("Successful load the website!->",res)
+    # print("Successful load the website!->", res)
     res = wait.until(EC.presence_of_element_located((By.CLASS_NAME, "note")))
-    print("Successful load the website notes!->",res)
+    # print("Successful load the website notes!->", res)
+    res = wait.until(EC.presence_of_element_located((By.CLASS_NAME, "pagination")))
+    # print("Successful load the website pagination!->", res)
     # parse the results
-    if year >= 2021:
+    if year == 2022:
+        pages = driver.find_elements_by_xpath('//*[@id="poster-submissions"]/nav/ul/li')
+        current_page = 1
+        ind_page = 2 # 0 << ; 1 <
+        total_pages_number = int(pages[-3].text)  # << | < | 1, 2, 3, ... | > | >>
+        while current_page <= total_pages_number:
+            page = __find_pages_given_number(page_number=current_page, pages=pages)
+            if pages is None:
+                break
+            print(f'downloading papers in page: {current_page}')
+            page.find_element_by_tag_name("a").click()
+            time.sleep(5)
+            # wait for the select element to become visible
+            # print('Starting web driver wait...')
+            wait = WebDriverWait(driver, 20)
+            # print('Starting web driver wait... finished')
+            res = wait.until(EC.presence_of_element_located((By.ID, "notes")))
+            # print("Successful load the website!->", res)
+            res = wait.until(EC.presence_of_element_located((By.CLASS_NAME, "note")))
+            # print("Successful load the website notes!->", res)
+            res = wait.until(EC.presence_of_element_located((By.CLASS_NAME, "pagination")))
+            # print("Successful load the website pagination!->", res)
+            pages = driver.find_elements_by_xpath('//*[@id="poster-submissions"]/nav/ul/li')
+            current_page += 1
+            total_pages_number = int(pages[-3].text)
+            # if we do not reread the pages, all the pages will be not available with an exception:
+            # selenium.common.exceptions.StaleElementReferenceException:
+            # Message: stale element reference: element is not attached to the page document
+            divs = driver.find_elements_by_xpath('//*[@id="poster-submissions"]/ul/li')
+            this_error_log = __download_papers_given_divs(
+                divs=divs,
+                save_dir=save_dir,
+                paper_postfix=paper_postfix,
+                time_step_in_seconds=time_step_in_seconds,
+                downloader=downloader
+            )
+            for e in this_error_log:
+                error_log.append(e)
+    elif year == 2021:
         divs = driver.find_elements_by_xpath('//*[@id="poster-presentations"]/ul/li')
     elif year == 2020:
         divs = driver.find_elements_by_xpath('//*[@id="accept-poster"]/ul/li')
@@ -159,36 +267,16 @@ def download_iclr_poster_papers(save_dir, driver_path, year, base_url=None, time
         divs = driver.find_elements_by_xpath('//*[@id="accepted-poster-papers"]/ul/li')
     else:
         divs = driver.find_elements_by_class_name('note')[first_poster_index[str(year)]:]
-    num_papers = len(divs)
-    print('found number of papers:',num_papers)
-    for index, paper in enumerate(divs):
-        a_hrefs = paper.find_elements_by_tag_name("a")
-        if year >= 2018:
-            name = slugify(a_hrefs[0].text.strip())
-            link = a_hrefs[1].get_attribute('href')
-        else:
-            name = slugify(paper.find_element_by_class_name('note_content_title').text)
-            link = paper.find_element_by_class_name('note_content_pdf').get_attribute('href')
-            if name == slugify(first_workshop_title[str(year)]):  # all the poster paper has been downloaded
-                break
-        print('Downloading paper {}/{}: {}'.format(index+1, num_papers, name))
-        pdf_name = name + '_' + paper_postfix + '.pdf'
-        if not os.path.exists(os.path.join(save_dir, pdf_name)):
-            # try 1 times
-            success_flag = False
-            for d_iter in range(1):
-                try:
-                    downloader.download(
-                        urls=link,
-                        save_path=os.path.join(save_dir, pdf_name),
-                        time_sleep_in_seconds=time_step_in_seconds
-                        )
-                    success_flag = True
-                    break
-                except Exception as e:
-                    print('Error: ' + name + ' - ' + str(e))
-            if not success_flag:
-                error_log.append((name, link))
+    if year < 2022:
+        this_error_log = __download_papers_given_divs(
+            divs=divs,
+            save_dir=save_dir,
+            paper_postfix=paper_postfix,
+            time_step_in_seconds=time_step_in_seconds,
+            downloader=downloader
+        )
+        for e in this_error_log:
+            error_log.append(e)
     driver.close()
     # 2. write error log
     print('write error log')
@@ -211,9 +299,10 @@ def download_iclr_spotlight_papers(save_dir, driver_path, year, base_url=None, t
     :param downloader: str, the downloader to download, could be 'IDM' or 'Thunder', default to 'IDM'
     :return:
     """
-    downloader = Downloader(downloader=downloader)
     if base_url is None:
-        if year >= 2021:
+        if year == 2022:
+            base_url = 'https://openreview.net/group?id=ICLR.cc/2022/Conference#spotlight-submissions'
+        elif year == 2021:
             base_url = 'https://openreview.net/group?id=ICLR.cc/2021/Conference#spotlight-presentations'
         elif year == 2020:
             base_url = 'https://openreview.net/group?id=ICLR.cc/2020/Conference#accept-spotlight'
@@ -229,49 +318,71 @@ def download_iclr_spotlight_papers(save_dir, driver_path, year, base_url=None, t
         os.makedirs(save_dir)
 
     # wait for the select element to become visible
-    print('Starting web driver wait...')
+    # print('Starting web driver wait...')
     wait = WebDriverWait(driver, 20)
-    print('Starting web driver wait... finished')
+    # print('Starting web driver wait... finished')
     res = wait.until(EC.presence_of_element_located((By.ID, "notes")))
-    print("Successful load the website!->",res)
+    # print("Successful load the website!->", res)
     res = wait.until(EC.presence_of_element_located((By.CLASS_NAME, "note")))
-    print("Successful load the website notes!->",res)
+    # print("Successful load the website notes!->", res)
+    res = wait.until(EC.presence_of_element_located((By.CLASS_NAME, "pagination")))
+    # print("Successful load the website pagination!->", res)
     # parse the results
 
-    if year >= 2021:
+    if year == 2022:
+        pages = driver.find_elements_by_xpath('//*[@id="spotlight-submissions"]/nav/ul/li')
+        current_page = 1
+        ind_page = 2  # 0 << ; 1 <
+        total_pages_number = int(pages[-3].text)  # << | < | 1, 2, 3, ... | > | >>
+        while current_page <= total_pages_number:
+            page = __find_pages_given_number(page_number=current_page, pages=pages)
+            if pages is None:
+                break
+            print(f'downloading papers in page: {current_page}')
+            page.find_element_by_tag_name("a").click()
+            time.sleep(5)
+            # wait for the select element to become visible
+            # print('Starting web driver wait...')
+            wait = WebDriverWait(driver, 20)
+            # print('Starting web driver wait... finished')
+            res = wait.until(EC.presence_of_element_located((By.ID, "notes")))
+            # print("Successful load the website!->", res)
+            res = wait.until(EC.presence_of_element_located((By.CLASS_NAME, "note")))
+            # print("Successful load the website notes!->", res)
+            res = wait.until(EC.presence_of_element_located((By.CLASS_NAME, "pagination")))
+            # print("Successful load the website pagination!->", res)
+            pages = driver.find_elements_by_xpath('//*[@id="spotlight-submissions"]/nav/ul/li')
+            current_page += 1
+            total_pages_number = int(pages[-3].text)
+            # if we do not reread the pages, all the pages will be not available with an exception:
+            # selenium.common.exceptions.StaleElementReferenceException:
+            # Message: stale element reference: element is not attached to the page document
+            divs = driver.find_elements_by_xpath('//*[@id="spotlight-submissions"]/ul/li')
+            this_error_log = __download_papers_given_divs(
+                divs=divs,
+                save_dir=save_dir,
+                paper_postfix=paper_postfix,
+                time_step_in_seconds=time_step_in_seconds,
+                downloader=downloader
+            )
+            for e in this_error_log:
+                error_log.append(e)
+    elif year == 2021:
         divs = driver.find_elements_by_xpath('//*[@id="spotlight-presentations"]/ul/li')
     elif year == 2020:
         divs = driver.find_elements_by_xpath('//*[@id="accept-spotlight"]/ul/li')
     else:
         divs = driver.find_elements_by_class_name('note')[:first_poster_index[str(year)]]
-    num_papers = len(divs)
-    print('found number of papers:',num_papers)
-    for index, paper in enumerate(divs):
-        a_hrefs = paper.find_elements_by_tag_name("a")
-        if year >= 2018:
-            name = slugify(a_hrefs[0].text.strip())
-            link = a_hrefs[1].get_attribute('href')
-        else:
-            name = slugify(paper.find_element_by_class_name('note_content_title').text)
-            link = paper.find_element_by_class_name('note_content_pdf').get_attribute('href')
-        print('Downloading paper {}/{}: {}'.format(index+1, num_papers, name))
-        pdf_name = name + '_' + paper_postfix + '.pdf'
-        if not os.path.exists(os.path.join(save_dir, pdf_name)):
-            # try 1 times
-            success_flag = False
-            for d_iter in range(1):
-                try:
-                    downloader.download(
-                        urls=link,
-                        save_path=os.path.join(save_dir, pdf_name),
-                        time_sleep_in_seconds=time_step_in_seconds
-                        )
-                    success_flag = True
-                    break
-                except Exception as e:
-                    print('Error: ' + name + ' - ' + str(e))
-            if not success_flag:
-                error_log.append((name, link))
+    if year < 2022:
+        this_error_log = __download_papers_given_divs(
+            divs=divs,
+            save_dir=save_dir,
+            paper_postfix=paper_postfix,
+            time_step_in_seconds=time_step_in_seconds,
+            downloader=downloader
+        )
+        for e in this_error_log:
+            error_log.append(e)
     driver.close()
     # 2. write error log
     print('write error log')
@@ -673,14 +784,16 @@ def get_pdf_link_from_arxiv(abs_link, is_use_mirror=True):
 
 
 if __name__ == '__main__':
-    year = 2016
-    # driver_path = r'c:\chromedriver.exe'
-    # save_dir_iclr = rf'F:\ICLR_{year}'
-
-    # download_iclr_oral_papers(save_dir_iclr, driver_path, year)
-    # download_iclr_poster_papers(save_dir_iclr, driver_path, year)
-    # download_iclr_spotlight_papers(save_dir_iclr, driver_path, year)
-    download_iclr_paper(year, save_dir=fr'G:\all_papers\ICLR\ICLR_{year}')
+    year = 2022
+    driver_path = r'c:\chromedriver.exe'
+    save_dir_iclr = rf'E:\ICLR_{year}'
+    save_dir_iclr_oral = os.path.join(save_dir_iclr, 'oral')
+    save_dir_iclr_spotlight = os.path.join(save_dir_iclr, 'spotlight')
+    save_dir_iclr_poster = os.path.join(save_dir_iclr, 'poster')
+    download_iclr_oral_papers(save_dir_iclr_oral, driver_path, year, time_step_in_seconds=5)
+    download_iclr_poster_papers(save_dir_iclr_poster, driver_path, year, time_step_in_seconds=5)
+    download_iclr_spotlight_papers(save_dir_iclr_spotlight, driver_path, year, time_step_in_seconds=5)
+    # download_iclr_paper(year, save_dir=fr'G:\all_papers\ICLR\ICLR_{year}')
     # download_iclr_paper_given_html_file(
     #     year,
     #     html_path=r'F:\oral.html',
