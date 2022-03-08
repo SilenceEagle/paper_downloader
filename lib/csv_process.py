@@ -12,11 +12,11 @@ from lib.downloader import Downloader
 
 
 def download_from_csv(
-        postfix, save_dir, csv_file_path, is_download_main_paper=True,
+        postfix, save_dir, csv_file_path, is_download_main_paper=True, is_download_bib=True,
         is_download_supplement=True, time_step_in_seconds=5, total_paper_number=None,
         downloader='IDM'):
     """
-    download paper and supplement files and save them to save_dir/main_paper and save_dir/supplement
+    download paper, bibtex and supplement files and save them to save_dir/main_paper and save_dir/supplement
         respectively
     :param postfix: str, postfix that will be added at the end of papers' title
     :param save_dir: str, paper and supplement material's save path
@@ -45,6 +45,7 @@ def download_from_csv(
         pbar = tqdm(myreader)
         i = 0
         for this_paper in pbar:
+            is_download_bib = ('bib' in this_paper)
             is_grouped = ('group' in this_paper)
             i += 1
             # get title
@@ -110,6 +111,24 @@ def download_from_csv(
                                 # error_flag = True
                                 print('Error: ' + title + ' - ' + str(e))
                                 error_log.append((title, this_paper['supplemental link'], 'supplement download error',
+                                                  str(e)))
+                # download bibtex file
+                if is_download_bib:
+                    bib_path = this_paper_main_path[:-3] + 'bib'
+                    if not os.path.exists(bib_path):
+                        if 'error' == this_paper['bib']:
+                            error_log.append((title, 'no bibtex link'))
+                        elif '' != this_paper['bib']:
+                            try:
+                                downloader.download(
+                                    urls=this_paper['bib'],
+                                    save_path=os.path.join(os.getcwd(), bib_path),
+                                    time_sleep_in_seconds=time_step_in_seconds
+                                )
+                            except Exception as e:
+                                # error_flag = True
+                                print('Error: ' + title + ' - ' + str(e))
+                                error_log.append((title, this_paper['bib'], 'bibtex download error',
                                                   str(e)))
 
         # 2. write error log
