@@ -76,7 +76,7 @@ def download_paper_given_volume(
                 main_link = link.get('href')
             elif is_download_supplement and (
                     'Supplementary PDF' == link.text or 'Supplementary Material' == link.text or \
-                    'supplementary' == link.text):
+                    'supplementary' == link.text or 'Supplementary ZIP' == link.text):
                 supp_link = link.get('href')
                 if supp_link[-3:] != 'pdf':
                     this_paper_supp_path = this_paper_supp_path_no_ext + supp_link[-3:]
@@ -124,3 +124,14 @@ def download_paper_given_volume(
             f.write('\n')
 
     return True
+
+
+if __name__ == '__main__':
+    download_paper_given_volume(
+        volume=150,
+        save_dir=r'D:\The_KDD21_Workshop_on_Causal_Discovery',
+        postfix=f'',
+        is_download_supplement=False,
+        time_step_in_seconds=5,
+        downloader='IDM'
+    )
