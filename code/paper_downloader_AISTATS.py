@@ -1,5 +1,7 @@
 """paper_downloader_AISTATS.py"""
 import lib.pmlr as pmlr
+from lib.supplement_porcess import merge_main_supplement, move_main_and_supplement_2_one_directory, \
+    move_main_and_supplement_2_one_directory_with_group
 
 
 def download_paper(year, save_dir, is_download_supplement=True, time_step_in_seconds=5, downloader='IDM'):
@@ -14,6 +16,7 @@ def download_paper(year, save_dir, is_download_supplement=True, time_step_in_sec
     :return: True
     """
     AISTATS_year_dict = {
+        2022: 151,
         2021: 130,
         2020: 108,
         2019: 89,
@@ -56,7 +59,7 @@ def download_paper(year, save_dir, is_download_supplement=True, time_step_in_sec
 
 
 if __name__ == '__main__':
-    year = 1999
+    year = 2022
     download_paper(
         year,
         rf'D:\AISTATS_{year}',
@@ -64,4 +67,9 @@ if __name__ == '__main__':
         time_step_in_seconds=5,
         downloader='IDM'
     )
+    # move_main_and_supplement_2_one_directory(
+    #     main_path=rf'D:\AISTATS_{year}\main_paper',
+    #     supplement_path=rf'D:\AISTATS_{year}\supplement',
+    #     supp_pdf_save_path=rf'D:\AISTATS_{year}\supplement_pdf'
+    # )
     pass
