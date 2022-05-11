@@ -102,13 +102,13 @@ def move_main_and_supplement_2_one_directory_with_group(main_path, supplement_pa
                                     # by default, we only deal with the first pdf
                                     supp_pdf_path = os.path.join(supp_pdf_save_path, group.name, name+'_supp.pdf')
                                     if not os.path.exists(supp_pdf_path):
-                                        os.rename(supp_pdf_list[0], supp_pdf_path)
+                                        shutil.move(supp_pdf_list[0], supp_pdf_path)
                                     if len(supp_pdf_list) > 1:
                                         for i in range(1, len(supp_pdf_list)):
                                             supp_pdf_path = os.path.join(
                                                 supp_pdf_save_path, group.name, name + f'_supp_{i}.pdf')
                                             if not os.path.exists(supp_pdf_path):
-                                                os.rename(supp_pdf_list[i], supp_pdf_path)
+                                                shutil.move(supp_pdf_list[i], supp_pdf_path)
                                 # empty the temp_folder (both the dirs and files)
                                 for unzip_file in os.listdir(temp_zip_dir):
                                     if os.path.isfile(os.path.join(temp_zip_dir, unzip_file)):
@@ -193,12 +193,12 @@ def move_main_and_supplement_2_one_directory(main_path, supplement_path, supp_pd
                             # by default, we only deal with the first pdf
                             supp_pdf_path = os.path.join(supp_pdf_save_path, name+'_supp.pdf')
                             if not os.path.exists(supp_pdf_path):
-                                os.rename(supp_pdf_list[0], supp_pdf_path)
+                                shutil.move(supp_pdf_list[0], supp_pdf_path)
                             if len(supp_pdf_list) > 1:
                                 for i in range(1, len(supp_pdf_list)):
                                     supp_pdf_path = os.path.join(supp_pdf_save_path, name + f'_supp_{i}.pdf')
                                     if not os.path.exists(supp_pdf_path):
-                                        os.rename(supp_pdf_list[i], supp_pdf_path)
+                                        shutil.move(supp_pdf_list[i], supp_pdf_path)
                         # empty the temp_folder (both the dirs and files)
                         for unzip_file in os.listdir(temp_zip_dir):
                             if os.path.isfile(os.path.join(temp_zip_dir, unzip_file)):
@@ -281,7 +281,7 @@ def merge_main_supplement(main_path, supplement_path, save_path, is_delete_ori_f
                             # by default, we only deal with the first pdf
                             supp_pdf_path = os.path.join(supplement_path, name+'_supp.pdf')
                             if not os.path.exists(supp_pdf_path):
-                                os.rename(supp_pdf_list[0], supp_pdf_path)
+                                shutil.move(supp_pdf_list[0], supp_pdf_path)
                         # empty the temp_folder (both the dirs and files)
                         for unzip_file in os.listdir(temp_zip_dir):
                             if os.path.isfile(os.path.join(temp_zip_dir, unzip_file)):
@@ -330,7 +330,7 @@ def merge_main_supplement(main_path, supplement_path, save_path, is_delete_ori_f
 
                 else:
                     if is_delete_ori_files:
-                        os.rename(paper.path, os.path.join(save_path, paper.name))
+                        shutil.move(paper.path, os.path.join(save_path, paper.name))
                     else:
                         shutil.copyfile(paper.path, os.path.join(save_path, paper.name))
 
