@@ -29,6 +29,8 @@ def save_csv(year, conference):
         init_url = f'http://openaccess.thecvf.com/{conference}{year}'
         if conference == 'ICCV' and year == 2021:
             init_url = 'https://openaccess.thecvf.com/ICCV2021?day=all'
+        elif conference == 'CVPR' and year == 2022:
+            init_url = 'https://openaccess.thecvf.com/CVPR2022?day=all'
         content = None
         if os.path.exists(f'..\\urls\\init_url_{conference}_{year}.dat'):
             with open(f'..\\urls\\init_url_{conference}_{year}.dat', 'rb') as f:
@@ -86,13 +88,13 @@ def save_csv_workshops(year, conference):
             'User-Agent':
                 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:23.0) Gecko/20100101 Firefox/23.0'}
 
-        init_url = f'http://openaccess.thecvf.com/{conference}{year}_workshops/menu'
+        init_url = f'https://openaccess.thecvf.com/{conference}{year}_workshops/menu'
         if os.path.exists(f'..\\urls\\init_url_{conference}_WS_{year}.dat'):
             with open(f'..\\urls\\init_url_{conference}_WS_{year}.dat', 'rb') as f:
                 content = pickle.load(f)
         else:
             req = urllib.request.Request(url=init_url, headers=headers)
-            content = urllib.request.urlopen(req, timeout=10).read()
+            content = urllib.request.urlopen(req, timeout=20).read()
             # content = open(f'..\\{conference}_WS_{year}.html', 'rb').read()
             with open(f'..\\urls\\init_url_{conference}_WS_{year}.dat', 'wb') as f:
                 pickle.dump(content, f)
@@ -107,7 +109,8 @@ def save_csv_workshops(year, conference):
             group_link = urllib.parse.urljoin(init_url, a.get('href'))
             group_paper_dict_list, _ = get_paper_dict_list(
                 url=group_link,
-                group_name=group_name
+                group_name=group_name,
+                timeout=20,
             )
             paper_index += len(group_paper_dict_list)
             for paper_dict in group_paper_dict_list:
@@ -165,7 +168,7 @@ def download_paper(
     :param time_step_in_seconds: int, the interval time between two downloading request in seconds.
     :param is_download_main_conference: bool, this parameter controls whether to download main conference papers,
         it is a upper level control flag of parameters is_download_main_paper and is_download_supplement.
-        eg. After setting is_download_main_conference=True, is_download_main_paper=False, is_download_supplement=False,
+        eg. After setting is_download_main_conference=True, is_download_main_paper=False, is_download_supplement=True,
         the only the supplement materials of the conference (vs. workshops) will be downloaded.
     :param is_download_workshops: bool, True for downloading workshops paper and is similar with
         is_download_main_conference.
@@ -218,14 +221,14 @@ def download_paper(
 
 if __name__ == '__main__':
     year = 2022
-    conference = 'WACV'
+    conference = 'CVPR'
     download_paper(
         year,
         conference=conference,
         save_dir=fr'E:\{conference}',
         is_download_main_paper=True,
         is_download_supplement=True,
-        time_step_in_seconds=2,
+        time_step_in_seconds=5,
         is_download_main_conference=True,
         is_download_workshops=True
     )
