@@ -33,6 +33,7 @@ def download_paper(year, save_dir, is_download_supplement=True, time_step_in_sec
         2007: 2
     }
     AISTATS_year_dict_R = {
+        1995: 0,
         1997: 1,
         1999: 2,
         2001: 3,
@@ -59,7 +60,7 @@ def download_paper(year, save_dir, is_download_supplement=True, time_step_in_sec
 
 
 if __name__ == '__main__':
-    year = 2022
+    year = 1995
     download_paper(
         year,
         rf'D:\AISTATS_{year}',
