@@ -76,7 +76,8 @@ def download_paper_given_volume(
                 main_link = link.get('href')
             elif is_download_supplement and (
                     'Supplementary PDF' == link.text or 'Supplementary Material' == link.text or \
-                    'supplementary' == link.text or 'Supplementary ZIP' == link.text):
+                    'supplementary' == link.text or 'Supplementary ZIP' == link.text or \
+                    'Other Files' == link.text):
                 supp_link = link.get('href')
                 if supp_link[-3:] != 'pdf':
                     this_paper_supp_path = this_paper_supp_path_no_ext + supp_link[-3:]
