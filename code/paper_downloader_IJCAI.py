@@ -25,7 +25,7 @@ def save_csv(year):
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
         if year >= 2003:
-            init_urls = [f'https://www.ijcai.org/Proceedings/{year}/']
+            init_urls = [f'https://www.ijcai.org/proceedings/{year}/']
         elif year >= 1977:
             init_urls = [f'https://www.ijcai.org/Proceedings/{year}-1/',
                          f'https://www.ijcai.org/Proceedings/{year}-2/']
@@ -43,7 +43,7 @@ def save_csv(year):
             'Lynx/2.8.5rel.1 libwww-FM/2.14 SSL-MM/1.4.1 GNUTLS/1.2.9',
             "Mozilla/5.0 (X11; Linux i686) AppleWebKit/535.7 (KHTML, like Gecko) Ubuntu/11.04 Chromium/16.0.912.77 Chrome/16.0.912.77 Safari/535.7",
             "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:10.0) Gecko/20100101 Firefox/10.0 ",
-            'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.137 Safari/537.36 LBBROWSER'
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36'
 
         ]
         headers = {
@@ -442,7 +442,7 @@ if __name__ == '__main__':
     #     # save_csv(year)
     #     # time.sleep(2)
     #     download_from_csv(year, save_dir=f'..\\IJCAI_{year}', time_step_in_seconds=1)
-    year = 2021
+    year = 2022
     # total_paper_number = 723
     total_paper_number = save_csv(year)
     download_from_csv(

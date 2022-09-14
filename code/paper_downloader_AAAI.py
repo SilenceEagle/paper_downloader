@@ -162,6 +162,9 @@ def save_csv_given_urls(urls, csv_filename='AAAI_tmp.csv'):
     :param csv_filename: str, csv file's name, default to 'AAAI_tmp.csv'
     :return: peper_index: int, the total number of papers
     """
+    if os.path.exists(f'..\\csv\\{csv_filename}'):
+        print(f'''found local csv file: ..\\csv\\{csv_filename}''')
+        return None
     with open(f'..\\csv\\{csv_filename}', 'w', newline='') as csvfile:
         fieldnames = ['title', 'main link', 'group']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
@@ -228,7 +231,8 @@ def download_from_csv(
     :return: True
     """
     postfix = f'AAAI_{year}'
-    csv_file_path = os.path.join(os.getcwd(), f'..\\csv\\AAAI_{year}.csv')
+    csv_file_path = os.path.join(os.getcwd(), f'..\\csv\\AAAI_{year}.csv') if csv_filename is None else \
+        os.path.join(os.getcwd(), f'..\\csv\\{csv_filename}')
     csv_process.download_from_csv(
         postfix=postfix,
         save_dir=save_dir,
@@ -255,17 +259,17 @@ if __name__ == '__main__':
     #                       time_step_in_seconds=10,
     #                       total_paper_number=total_paper_number)
     #     time.sleep(2)
-    for i in range(1, 19):
-        print(f'issue {i}/{18}')
-        year = 2021
+    for i in range(1, 12):
+        print(f'issue {i}/{11}')
+        year = 2022
         total_paper_number = save_csv_given_urls(
             urls=f'https://www.aaai.org/Library/AAAI/aaai{year - 2000}-issue{i:0>2}.php',
-            csv_filename='AAAI_tmp.csv'
+            csv_filename=f'.\AAAI_{year}_issue_{i}.csv'
         )
         # total_paper_number = 156
         download_from_csv(
             year=year,
-            csv_filename='AAAI_tmp.csv',
+            csv_filename=f'.\AAAI_{year}_issue_{i}.csv',
             save_dir=rf'D:\AAAI_{year}',
             time_step_in_seconds=1,
             total_paper_number=total_paper_number)
