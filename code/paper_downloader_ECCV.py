@@ -379,25 +379,27 @@ def __download_from_springer(
                 time_sleep_in_seconds)
 
 if __name__ == '__main__':
-    year = 2016
-    # total_paper_number = 451
-    # total_paper_number = save_csv(year)
-    # download_from_csv(year,
-    #                   save_dir=f'F:\\ECCV_{year}',
-    #                   is_download_supplement=True,
-    #                   time_step_in_seconds=5,
-    #                   total_paper_number=total_paper_number,
-    #                   is_workshops=False)
-    # move_main_and_supplement_2_one_directory(
-    #     main_path=f'F:\\ECCV_{year}\\main_paper',
-    #     supplement_path=f'F:\\ECCV_{year}\\supplement')
-    for year in range(2018, 2017, -2):
-        # download_from_springer(
-        #     save_dir=f'F:\\ECCV_{year}',
-        #     year=year,
-        #     is_workshops=False, time_sleep_in_seconds=30)
-        download_from_springer(
-            save_dir=f'F:\\ECCV_WS_{year}',
-            year=year,
-            is_workshops=True, time_sleep_in_seconds=30)
-    pass
+    year = 2022
+    # total_paper_number = 1645
+    total_paper_number = save_csv(year)
+    download_from_csv(year,
+                      save_dir=f'E:\\ECCV_{year}',
+                      is_download_supplement=True,
+                      time_step_in_seconds=5,
+                      total_paper_number=total_paper_number,
+                      is_workshops=False)
+    move_main_and_supplement_2_one_directory(
+        main_path=f'E:\\ECCV_{year}\\main_paper',
+        supplement_path=f'E:\\ECCV_{year}\\supplement',
+        supp_pdf_save_path=f'E:\\ECCV_{year}\\main_paper'
+    )
+    # for year in range(2018, 2017, -2):
+    #     # download_from_springer(
+    #     #     save_dir=f'F:\\ECCV_{year}',
+    #     #     year=year,
+    #     #     is_workshops=False, time_sleep_in_seconds=30)
+    #     download_from_springer(
+    #         save_dir=f'F:\\ECCV_WS_{year}',
+    #         year=year,
+    #         is_workshops=True, time_sleep_in_seconds=30)
+    # pass
