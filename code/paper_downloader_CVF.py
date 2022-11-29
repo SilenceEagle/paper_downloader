@@ -17,10 +17,10 @@ def save_csv(year, conference):
     """
     write CVF conference papers' and supplemental material's urls in one csv file
     :param year: int
-    :param conference: str, one of ['CVPR', 'ICCV', 'WACV']
+    :param conference: str, one of ['CVPR', 'ICCV', 'WACV', 'ACCV']
     :return: True
     """
-    if conference not in ['CVPR', 'ICCV', 'WACV']:
+    if conference not in ['CVPR', 'ICCV', 'WACV', 'ACCV']:
         raise ValueError(f'{conference} is not found in https://openaccess.thecvf.com/menu, maybe a spelling mistake!')
     with open(f'..\\csv\\{conference}_{year}.csv', 'w', newline='') as csvfile:
         fieldnames = ['title', 'main link', 'supplemental link', 'arxiv']
@@ -74,10 +74,10 @@ def save_csv_workshops(year, conference):
     """
     write CVF workshops papers' and supplemental material's urls in one csv file
     :param year: int
-    :param conference: str, one of ['CVPR', 'ICCV', 'WACV']
+    :param conference: str, one of ['CVPR', 'ICCV', 'WACV', 'ACCV']
     :return: True
     """
-    if conference not in ['CVPR', 'ICCV', 'WACV']:
+    if conference not in ['CVPR', 'ICCV', 'WACV', 'ACCV']:
         raise ValueError(f'{conference} is not found in https://openaccess.thecvf.com/menu, maybe a spelling mistake!')
     with open(f'..\\csv\\{conference}_WS_{year}.csv', 'w', newline='') as csvfile:
         fieldnames = ['group', 'title', 'main link', 'supplemental link', 'arxiv']
@@ -221,23 +221,23 @@ def download_paper(
 
 if __name__ == '__main__':
     year = 2022
-    conference = 'CVPR'
-    download_paper(
-        year,
-        conference=conference,
-        save_dir=fr'E:\{conference}',
-        is_download_main_paper=True,
-        is_download_supplement=True,
-        time_step_in_seconds=5,
-        is_download_main_conference=True,
-        is_download_workshops=True
-    )
-    #
-    # move_main_and_supplement_2_one_directory(
-    #     main_path=rf'E:\{conference}\{conference}_{year}\main_paper',
-    #     supplement_path=rf'E:\{conference}\{conference}_{year}\supplement',
-    #     supp_pdf_save_path=rf'E:\{conference}\{conference}_{year}\main_paper'
+    conference = 'ACCV'
+    # download_paper(
+    #     year,
+    #     conference=conference,
+    #     save_dir=fr'E:\{conference}',
+    #     is_download_main_paper=True,
+    #     is_download_supplement=True,
+    #     time_step_in_seconds=5,
+    #     is_download_main_conference=True,
+    #     is_download_workshops=True
     # )
+    #
+    move_main_and_supplement_2_one_directory(
+        main_path=rf'E:\{conference}\{conference}_{year}\main_paper',
+        supplement_path=rf'E:\{conference}\{conference}_{year}\supplement',
+        supp_pdf_save_path=rf'E:\{conference}\{conference}_{year}\main_paper'
+    )
     # move_main_and_supplement_2_one_directory_with_group(
     #     main_path=rf'E:\{conference}\{conference}_WS_{year}\main_paper',
     #     supplement_path=rf'E:\{conference}\{conference}_WS_{year}\supplement',

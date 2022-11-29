@@ -46,7 +46,7 @@ def get_paper_dict_list(url=None, content=None, group_name=None, timeout=10):
                 title = slugify(paper.text.strip())
                 paper_dict['title'] = title
                 paper_index += 1
-                paper_list_bar.set_description_str(f'Downloading paper {paper_index}: {title}')
+                paper_list_bar.set_description_str(f'Collecting paper {paper_index}: {title}')
             elif 'dd' == paper.name:
                 all_as = paper.find_all('a')
                 for a in all_as:
