@@ -12,6 +12,7 @@ import csv
 from lib.supplement_porcess import move_main_and_supplement_2_one_directory
 from lib.downloader import Downloader
 from lib import csv_process
+from lib.openreview import download_nips_papers_given_url
 
 
 # def download_paper_and_sup_IDM(year, save_dir, is_download_supplement=True):
@@ -374,8 +375,8 @@ def download_from_csv(
 
 
 if __name__ == '__main__':
-    year = 2020
-    total_paper_number = 1899
+    year = 2022
+    # total_paper_number = 1899
     # total_paper_number = save_csv(year)
     # download_from_csv(
     #     year, f'..\\NIPS_{year}',
@@ -384,8 +385,14 @@ if __name__ == '__main__':
     #     time_step_in_seconds=20,
     #     total_paper_number=total_paper_number,
     #     downloader='IDM')
-    move_main_and_supplement_2_one_directory(
-        main_path=rf'F:\workspace\python3_ws\paper_downloader-master\NIPS_{year}\main_paper',
-        supplement_path=rf'F:\workspace\python3_ws\paper_downloader-master\NIPS_{year}\supplement',
-        supp_pdf_save_path=rf'F:\workspace\python3_ws\paper_downloader-master\NIPS_{year}\supplement_pdf'
-    )
+    download_nips_papers_given_url(
+        save_dir=rf'E:\NIPS_{year}',
+        year=year,
+        base_url='https://openreview.net/group?id=NeurIPS.cc/2022/Conference',
+        time_step_in_seconds=10,
+        downloader='IDM')
+    # move_main_and_supplement_2_one_directory(
+    #     main_path=rf'F:\workspace\python3_ws\paper_downloader-master\NIPS_{year}\main_paper',
+    #     supplement_path=rf'F:\workspace\python3_ws\paper_downloader-master\NIPS_{year}\supplement',
+    #     supp_pdf_save_path=rf'F:\workspace\python3_ws\paper_downloader-master\NIPS_{year}\supplement_pdf'
+    # )
