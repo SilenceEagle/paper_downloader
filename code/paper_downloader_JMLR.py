@@ -11,16 +11,21 @@ from lib.downloader import Downloader
 import time
 
 
-def download_paper(volumn, save_dir, time_step_in_seconds=5, downloader='IDM', url=None, is_use_url=False):
+def download_paper(
+        volumn, save_dir, time_step_in_seconds=5, downloader='IDM', url=None,
+        is_use_url=False, refresh_paper_list=True):
     """
     download all JMLR paper files given volumn and restore in save_dir
     respectively
     :param volumn: int, JMLR volumn, such as 2019
-    :param save_dir: str, paper and supplement material's save path
+    :param save_dir: str, paper and supplement material's saving path
     :param time_step_in_seconds: int, the interval time between two downlaod request in seconds
     :param downloader: str, the downloader to download, could be 'IDM' or 'Thunder', default to 'IDM'
     :param url: None or str, None means to download volumn papers.
     :param is_use_url: bool, if to download papers from 'url'. url couldn't be None when is_use_url is True.
+    :param refresh_paper_list: bool, if to refresh the saved paper list, default
+        true, which means the "dat" file that contains the papers' information
+        will be re-downloaded.
     :return: True
     """
     downloader = Downloader(downloader=downloader)
@@ -34,10 +39,12 @@ def download_paper(volumn, save_dir, time_step_in_seconds=5, downloader='IDM', u
     if not is_use_url:
         init_url = f'http://jmlr.org/papers/v{volumn}/'
         postfix = f'JMLR_v{volumn}'
-        if os.path.exists(f'..\\urls\\init_url_JMLR_v{volumn}.dat'):
+        if not refresh_paper_list and \
+                os.path.exists(f'..\\urls\\init_url_JMLR_v{volumn}.dat'):
             with open(f'..\\urls\\init_url_JMLR_v{volumn}.dat', 'rb') as f:
                 content = pickle.load(f)
         else:
+            print('collecting papers from website...')
             req = urllib.request.Request(url=init_url, headers=headers)
             content = urllib.request.urlopen(req, timeout=10).read()
             # content = open(f'..\\JMLR_{volumn}.html', 'rb').read()
@@ -61,15 +68,11 @@ def download_paper(volumn, save_dir, time_step_in_seconds=5, downloader='IDM', u
         paper_list = soup.find('div', {'id': 'content'}).find_all('dl')
     # num_download = 5 # number of papers to download
     num_download = len(paper_list)
+    print(f'total papers counting: {num_download}, start downloading...')
     for paper in tqdm(zip(paper_list, range(num_download))):
         # get title
-        print('\n')
         this_paper = paper[0]
         title = slugify(this_paper.find('dt').text)
-        try:
-            print('Downloading paper {}/{}: {}'.format(paper[1]+1, num_download, title))
-        except:
-            print(title.encode('utf8'))
         title_list.append(title)
 
         this_paper_main_path = os.path.join(save_dir, f'{title}_{postfix}.pdf'.replace(' ', '_'))
@@ -90,6 +93,10 @@ def download_paper(volumn, save_dir, time_step_in_seconds=5, downloader='IDM', u
             try:
                 # download paper with IDM
                 if not os.path.exists(this_paper_main_path) and main_link is not None:
+                    try:
+                        print('Downloading paper {}/{}: {}'.format(paper[1] + 1, num_download, title))
+                    except:
+                        print(title.encode('utf8'))
                     downloader.download(
                         urls=main_link,
                         save_path=this_paper_main_path,
@@ -123,8 +130,7 @@ def download_special_topics_and_issues_paper(save_dir, time_step_in_seconds=5, d
     """
     download all JMLR special topics and issues paper files given volumn and restore in save_dir
     respectively
-    :param volumn: int, JMLR volumn, such as 2019
-    :param save_dir: str, paper and supplement material's save path
+    :param save_dir: str, paper and supplement material's saving path
     :param time_step_in_seconds: int, the interval time between two downlaod request in seconds
     :param downloader: str, the downloader to download, could be 'IDM' or 'Thunder', default to 'IDM'
     :return: True
@@ -183,7 +189,7 @@ def download_special_topics_and_issues_paper(save_dir, time_step_in_seconds=5, d
 
 
 if __name__ == '__main__':
-    # volumn = 21
-    # download_paper(volumn, rf'E:\all_papers\JMLR\JMLR_v{volumn}', time_step_in_seconds=1)
-    download_special_topics_and_issues_paper(rf'E:\all_papers\JMLR', time_step_in_seconds=2, downloader='IDM')
+    volumn = 23
+    download_paper(volumn, rf'Z:\all_papers\JMLR\JMLR_v{volumn}', time_step_in_seconds=3)
+    # download_special_topics_and_issues_paper(rf'Z:\all_papers\JMLR', time_step_in_seconds=3, downloader='IDM')
     pass
