@@ -220,24 +220,24 @@ def download_paper(
 
 
 if __name__ == '__main__':
-    year = 2022
-    conference = 'ACCV'
-    # download_paper(
-    #     year,
-    #     conference=conference,
-    #     save_dir=fr'E:\{conference}',
-    #     is_download_main_paper=True,
-    #     is_download_supplement=True,
-    #     time_step_in_seconds=5,
-    #     is_download_main_conference=True,
-    #     is_download_workshops=True
-    # )
-    #
-    move_main_and_supplement_2_one_directory(
-        main_path=rf'E:\{conference}\{conference}_{year}\main_paper',
-        supplement_path=rf'E:\{conference}\{conference}_{year}\supplement',
-        supp_pdf_save_path=rf'E:\{conference}\{conference}_{year}\main_paper'
+    year = 2023
+    conference = 'WACV'
+    download_paper(
+        year,
+        conference=conference,
+        save_dir=fr'E:\{conference}',
+        is_download_main_paper=True,
+        is_download_supplement=True,
+        time_step_in_seconds=5,
+        is_download_main_conference=True,
+        is_download_workshops=True
     )
+    #
+    # move_main_and_supplement_2_one_directory(
+    #     main_path=rf'E:\{conference}\{conference}_{year}\main_paper',
+    #     supplement_path=rf'E:\{conference}\{conference}_{year}\supplement',
+    #     supp_pdf_save_path=rf'E:\{conference}\{conference}_{year}\main_paper'
+    # )
     # move_main_and_supplement_2_one_directory_with_group(
     #     main_path=rf'E:\{conference}\{conference}_WS_{year}\main_paper',
     #     supplement_path=rf'E:\{conference}\{conference}_WS_{year}\supplement',
