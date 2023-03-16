@@ -3,5 +3,5 @@ tqdm
 python-slugify
 html5lib
 selenium
-PyPDF3
+PyPDF3  # optional
 pywin32
