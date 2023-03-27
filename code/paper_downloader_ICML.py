@@ -7,6 +7,10 @@ import pickle
 import os
 from tqdm import tqdm
 from slugify import slugify
+import sys
+root_folder = os.path.abspath(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.append(root_folder)
 from lib.downloader import Downloader
 import lib.pmlr as pmlr
 from lib.supplement_porcess import merge_main_supplement
@@ -14,15 +18,21 @@ from lib.supplement_porcess import merge_main_supplement
 
 def download_paper(year, save_dir, is_download_supplement=True, time_step_in_seconds=5, downloader='IDM'):
     """
-    download all ICML paper and supplement files given year, restore in save_dir/main_paper and save_dir/supplement
+    download all ICML paper and supplement files given year, restore in
+        save_dir/main_paper and save_dir/supplement
     respectively
     :param year: int, ICML year, such 2019
     :param save_dir: str, paper and supplement material's save path
-    :param is_download_supplement: bool, True for downloading supplemental material
-    :param time_step_in_seconds: int, the interval time between two downlaod request in seconds
-    :param downloader: str, the downloader to download, could be 'IDM' or 'Thunder', default to 'IDM'
+    :param is_download_supplement: bool, True for downloading supplemental
+        material
+    :param time_step_in_seconds: int, the interval time between two download
+        request in seconds
+    :param downloader: str, the downloader to download, could be 'IDM' or
+        'Thunder', default to 'IDM'
     :return: True
     """
+    project_root_folder = os.path.abspath(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     downloader = Downloader(downloader=downloader)
     ICML_year_dict = {
         2022: 162,
@@ -45,7 +55,8 @@ def download_paper(year, save_dir, is_download_supplement=True, time_step_in_sec
     elif 2009 == year:
         init_url = 'https://icml.cc/Conferences/2009/abstracts.html'
     elif 2008 == year:
-        init_url = 'http://www.machinelearning.org/archive/icml2008/abstracts.shtml'
+        init_url = 'http://www.machinelearning.org/archive/icml2008/' \
+                   'abstracts.shtml'
     elif 2007 == year:
         init_url = 'https://icml.cc/Conferences/2007/paperlist.html'
     elif year in [2006, 2004, 2005]:
@@ -56,17 +67,20 @@ def download_paper(year, save_dir, is_download_supplement=True, time_step_in_sec
         raise ValueError('''the given year's url is unknown !''')
 
     postfix = f'ICML_{year}'
-    if os.path.exists(f'..\\urls\\init_url_icml_{year}.dat'):
-        with open(f'..\\urls\\init_url_icml_{year}.dat', 'rb') as f:
+    dat_file_pathname = os.path.join(
+        project_root_folder, 'urls', f'init_url_icml_{year}.dat')
+    if os.path.exists(dat_file_pathname):
+        with open(dat_file_pathname, 'rb') as f:
             content = pickle.load(f)
     else:
         headers = {
             'User-Agent':
-                'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:23.0) Gecko/20100101 Firefox/23.0'}
+                'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:23.0) '
+                'Gecko/20100101 Firefox/23.0'}
         req = urllib.request.Request(url=init_url, headers=headers)
         content = urllib.request.urlopen(req).read()
         # content = open(f'..\\ICML_{year}.html', 'rb').read()
-        with open(f'..\\urls\\init_url_icml_{year}.dat', 'wb') as f:
+        with open(dat_file_pathname, 'wb') as f:
             pickle.dump(content, f)
     # soup = BeautifulSoup(content, 'html.parser')
     soup = BeautifulSoup(content, 'html5lib')
@@ -100,10 +114,13 @@ def download_paper(year, save_dir, is_download_supplement=True, time_step_in_sec
                     link = urllib.parse.urljoin(init_url, a.get('href'))
                     break
             if link is not None:
-                this_paper_main_path = os.path.join(save_dir, f'{title}_{postfix}.pdf'.replace(' ', '_'))
-                paper_list_bar.set_description(f'find paper {paper_index}:{title}')
+                this_paper_main_path = os.path.join(
+                    save_dir, f'{title}_{postfix}.pdf'.replace(' ', '_'))
+                paper_list_bar.set_description(
+                    f'find paper {paper_index}:{title}')
                 if not os.path.exists(this_paper_main_path) :
-                    paper_list_bar.set_description(f'downloading paper {paper_index}:{title}')
+                    paper_list_bar.set_description(
+                        f'downloading paper {paper_index}:{title}')
                     downloader.download(
                         urls=link,
                         save_path=this_paper_main_path,
@@ -123,10 +140,13 @@ def download_paper(year, save_dir, is_download_supplement=True, time_step_in_sec
                 link = paper.get('href')
                 link = urllib.parse.urljoin(init_url, link)
                 if link is not None:
-                    this_paper_main_path = os.path.join(save_dir, f'{title}_{postfix}.pdf'.replace(' ', '_'))
-                    paper_list_bar.set_description(f'find paper {paper_index}:{title}')
+                    this_paper_main_path = os.path.join(
+                        save_dir, f'{title}_{postfix}.pdf'.replace(' ', '_'))
+                    paper_list_bar.set_description(
+                        f'find paper {paper_index}:{title}')
                     if not os.path.exists(this_paper_main_path) :
-                        paper_list_bar.set_description(f'downloading paper {paper_index}:{title}')
+                        paper_list_bar.set_description(
+                            f'downloading paper {paper_index}:{title}')
                         downloader.download(
                             urls=link,
                             save_path=this_paper_main_path,
@@ -136,9 +156,11 @@ def download_paper(year, save_dir, is_download_supplement=True, time_step_in_sec
                     error_log.append((title, 'no main link error'))
     elif year in [2009, 2008]:
         if 2009 == year:
-            paper_list_bar = tqdm(soup.find('div', {'id': 'right_column'}).find_all(['h3','a']))
+            paper_list_bar = tqdm(
+                soup.find('div', {'id': 'right_column'}).find_all(['h3','a']))
         elif 2008 == year:
-            paper_list_bar = tqdm(soup.find('div', {'class': 'content'}).find_all(['h3','a']))
+            paper_list_bar = tqdm(
+                soup.find('div', {'class': 'content'}).find_all(['h3','a']))
         paper_index = 0
         title = None
         for paper in paper_list_bar:
@@ -149,10 +171,13 @@ def download_paper(year, save_dir, is_download_supplement=True, time_step_in_sec
                 link = paper.get('href')
                 if link is not None and title is not None:
                     link = urllib.parse.urljoin(init_url, link)
-                    this_paper_main_path = os.path.join(save_dir, f'{title}_{postfix}.pdf')
-                    paper_list_bar.set_description(f'find paper {paper_index}:{title}')
+                    this_paper_main_path = os.path.join(
+                        save_dir, f'{title}_{postfix}.pdf')
+                    paper_list_bar.set_description(
+                        f'find paper {paper_index}:{title}')
                     if not os.path.exists(this_paper_main_path):
-                        paper_list_bar.set_description(f'downloading paper {paper_index}:{title}')
+                        paper_list_bar.set_description(
+                            f'downloading paper {paper_index}:{title}')
                         downloader.download(
                             urls=link,
                             save_path=this_paper_main_path,
@@ -168,12 +193,16 @@ def download_paper(year, save_dir, is_download_supplement=True, time_step_in_sec
             title = slugify(paper.text.strip())
             link = paper.get('href')
             paper_index += 1
-            if link is not None and title is not None and ('pdf' == link[-3:] or 'ps' == link[-2:]):
+            if link is not None and title is not None and \
+                    ('pdf' == link[-3:] or 'ps' == link[-2:]):
                 link = urllib.parse.urljoin(init_url, link)
-                this_paper_main_path = os.path.join(save_dir, f'{title}_{postfix}.pdf'.replace(' ', '_'))
-                paper_list_bar.set_description(f'find paper {paper_index}:{title}')
+                this_paper_main_path = os.path.join(
+                    save_dir, f'{title}_{postfix}.pdf'.replace(' ', '_'))
+                paper_list_bar.set_description(
+                    f'find paper {paper_index}:{title}')
                 if not os.path.exists(this_paper_main_path):
-                    paper_list_bar.set_description(f'downloading paper {paper_index}:{title}')
+                    paper_list_bar.set_description(
+                        f'downloading paper {paper_index}:{title}')
                     downloader.download(
                         urls=link,
                         save_path=this_paper_main_path,
@@ -181,7 +210,8 @@ def download_paper(year, save_dir, is_download_supplement=True, time_step_in_sec
                     )
     elif 2004 == year:
         paper_index = 0
-        paper_list_bar = tqdm(soup.find('table', {'class': 'proceedings'}).find_all('tr'))
+        paper_list_bar = tqdm(
+            soup.find('table', {'class': 'proceedings'}).find_all('tr'))
         title = None
         for paper in paper_list_bar:
             tr_class = None
@@ -198,10 +228,14 @@ def download_paper(year, save_dir, is_download_supplement=True, time_step_in_sec
                         link = a.get('href')
                         if link is not None and title is not None:
                             link = urllib.parse.urljoin(init_url, link)
-                            this_paper_main_path = os.path.join(save_dir, f'{title}_{postfix}.pdf'.replace(' ', '_'))
-                            paper_list_bar.set_description(f'find paper {paper_index}:{title}')
+                            this_paper_main_path = os.path.join(
+                                save_dir,
+                                f'{title}_{postfix}.pdf'.replace(' ', '_'))
+                            paper_list_bar.set_description(
+                                f'find paper {paper_index}:{title}')
                             if not os.path.exists(this_paper_main_path):
-                                paper_list_bar.set_description(f'downloading paper {paper_index}:{title}')
+                                paper_list_bar.set_description(
+                                    f'downloading paper {paper_index}:{title}')
                                 downloader.download(
                                     urls=link,
                                     save_path=this_paper_main_path,
@@ -210,7 +244,9 @@ def download_paper(year, save_dir, is_download_supplement=True, time_step_in_sec
                         break
     elif 2003 == year:
         paper_index = 0
-        paper_list_bar = tqdm(soup.find('div', {'id': 'content'}).find_all('p', {'class': 'left'}))
+        paper_list_bar = tqdm(
+            soup.find('div', {'id': 'content'}).find_all(
+                'p', {'class': 'left'}))
         for paper in paper_list_bar:
             abs_link = None
             title = None
@@ -222,27 +258,38 @@ def download_paper(year, save_dir, is_download_supplement=True, time_step_in_sec
                     break
             if title is not None:
                 paper_index += 1
-                this_paper_main_path = os.path.join(save_dir, f'{title}_{postfix}.pdf'.replace(' ', '_'))
-                paper_list_bar.set_description(f'find paper {paper_index}:{title}')
+                this_paper_main_path = os.path.join(
+                    save_dir, f'{title}_{postfix}.pdf'.replace(' ', '_'))
+                paper_list_bar.set_description(
+                    f'find paper {paper_index}:{title}')
                 if not os.path.exists(this_paper_main_path):
                     if abs_link is not None:
-                        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:23.0) Gecko/20100101 Firefox/23.0'}
-                        req = urllib.request.Request(url=abs_link, headers=headers)
+                        headers = {'User-Agent':
+                                       'Mozilla/5.0 (Windows NT 6.1; WOW64; '
+                                       'rv:23.0) Gecko/20100101 Firefox/23.0'}
+                        req = urllib.request.Request(
+                            url=abs_link, headers=headers)
                         for i in range(3):
                             try:
-                                abs_content = urllib.request.urlopen(req, timeout=10).read()
+                                abs_content = urllib.request.urlopen(
+                                    req, timeout=10).read()
                                 break
                             except Exception as e:
                                 if i == 2:
                                     print('error'+title+str(e))
-                                    error_log.append((title, abs_link, 'download error', str(e)))
+                                    error_log.append(
+                                        (title, abs_link, 'download error',
+                                         str(e)))
                         abs_soup = BeautifulSoup(abs_content, 'html5lib')
                         for a in abs_soup.find_all('a'):
                             try:
                                 if 'pdf' == a.get('href')[-3:]:
-                                    link = urllib.parse.urljoin(abs_link, a.get('href'))
+                                    link = urllib.parse.urljoin(
+                                        abs_link, a.get('href'))
                                     if link is not None:
-                                        paper_list_bar.set_description(f'downloading paper {paper_index}:{title}')
+                                        paper_list_bar.set_description(
+                                            f'downloading paper {paper_index}:'
+                                            f'{title}')
                                         downloader.download(
                                             urls=link,
                                             save_path=this_paper_main_path,
@@ -254,7 +301,9 @@ def download_paper(year, save_dir, is_download_supplement=True, time_step_in_sec
 
     # write error log
     print('write error log')
-    with open('..\\log\\download_err_log.txt', 'w') as f:
+    log_file_pathname = os.path.join(
+        project_root_folder, 'log', 'download_err_log.txt')
+    with open(log_file_pathname, 'w') as f:
         for log in tqdm(error_log):
             for e in log:
                 if e is not None:
@@ -268,28 +317,34 @@ def download_paper(year, save_dir, is_download_supplement=True, time_step_in_sec
 
 def rename_downloaded_paper(year, source_path):
     """
-    rename the downloaded ICML paper to {title}_ICML_2010.pdf and save to source_path
+    rename the downloaded ICML paper to {title}_ICML_2010.pdf and save to
+    source_path
     :param year: int, year
-    :param source_path: str, whose structure should be source_path/papers/pdf files (2010)
-                                                                  /index.html       (2010)
-                                                       source_path/icml2007_proc.html (2007)
+    :param source_path: str, whose structure should be
+        source_path/papers/pdf files (2010)
+                   /index.html       (2010)
+        source_path/icml2007_proc.html (2007)
    :return:
     """
     if not os.path.exists(source_path):
         raise ValueError(f'can not find {source_path}')
     postfix = f'ICML_{year}'
     if 2010 == year:
-        soup = BeautifulSoup(open(os.path.join(source_path, 'index.html'), 'rb'), 'html5lib')
+        soup = BeautifulSoup(
+            open(os.path.join(source_path, 'index.html'), 'rb'), 'html5lib')
         paper_list_bar = tqdm(soup.find_all('span', {'class': 'boxpopup3'}))
 
         for paper in paper_list_bar:
             a = paper.find('a')
             title = slugify(a.text)
-            ori_name = os.path.join(source_path, 'papers', a.get('href').split('/')[-1])
-            os.rename(ori_name, os.path.join(source_path, f'{title}_{postfix}.pdf'))
+            ori_name = os.path.join(
+                source_path, 'papers', a.get('href').split('/')[-1])
+            os.rename(ori_name, os.path.join(
+                source_path, f'{title}_{postfix}.pdf'))
             paper_list_bar.set_description(f'processing {title}')
     elif 2007 == year:
-        soup = BeautifulSoup(open(os.path.join(source_path, 'icml2007_proc.html'), 'rb'), 'html5lib')
+        soup = BeautifulSoup(open(os.path.join(
+            source_path, 'icml2007_proc.html'), 'rb'), 'html5lib')
         paper_list_bar = tqdm(soup.find_all('td', {'colspan': '2'}))
         for paper in paper_list_bar:
             all_as = paper.find_all('a')
@@ -300,8 +355,10 @@ def rename_downloaded_paper(year, source_path):
                     if '[Paper]' == a.text:
                         sub_path = a.get('href')
                         os.rename(os.path.join(source_path, sub_path),
-                                  os.path.join(source_path, f'{title}_{postfix}.pdf'))
-                        paper_list_bar.set_description_str((f'processing {title}'))
+                                  os.path.join(
+                                      source_path, f'{title}_{postfix}.pdf'))
+                        paper_list_bar.set_description_str(
+                            (f'processing {title}'))
                         break
 
 

@@ -70,27 +70,26 @@ The number of papers that could be downloaded using this repo (with Aliyundrive 
 <!--| **2023/v24** |                                                              |                                                                                                                   |                                                             |                                                             |                                                                                                                     |                                                                                                                    |                                                                                                                     |                                                                    |                                                              |                                                             |                              |                                                              |                                                                                                                   |-->
 
 ****
+## usage
+**For example: download AAAI-2022 papers**
+1. Change the code block at the end of [code/paper_downloader_AAAI.py](https://github.com/SilenceEagle/paper_downloader/blob/2dbe66d645dcde89fbad5a1423c270f9f47b4528/code/paper_downloader_AAAI.py#L247)
+```python
+if __name__ == '__main__':
+    year = 2022
+    total_paper_number = save_csv(year)  # save papers urls to csv/AAAI_2022.csv
+    download_from_csv(
+        year, 
+        save_dir=f'..\\AAAI_{year}', # change to your save location
+        time_step_in_seconds=5,  # time step (seconds) between two downloading requests
+        total_paper_number=total_paper_number,
+        downloader='IDM'  # use Internet Download Manager software to download papers
+    )
+```
 
-*[paper_downloader_AAAI.py](https://github.com/SilenceEagle/paper_downloader/blob/master/code/paper_downloader_AAAI.py)* uses the IDM to download [AAAI](https://www.aaai.org/Library/AAAI/aaai-library.php) 1980-present papers.
-
-*[paper_downloader_AISTATS.py](https://github.com/SilenceEagle/paper_downloader/blob/master/code/paper_downloader_AISTATS.py)* uses the IDM to download [AISTATS](https://www.aistats.org/) 2007-present papers.
-
-*[paper_downloader_COLT.py](https://github.com/SilenceEagle/paper_downloader/blob/master/code/paper_downloader_COLT.py)* uses the IDM to download [COLT](http://learningtheory.org/colt2020/) 2011-present papers.
-
-*[paper_downloader_CVF.py](https://github.com/SilenceEagle/paper_downloader/blob/master/code/paper_downloader_CVF.py)* uses the IDM to download [ACCV](https://openaccess.thecvf.com/ACCV2020)(2020-present), [CVPR](http://openaccess.thecvf.com/menu.py) (2013-present),  [ICCV](http://openaccess.thecvf.com/menu.py) (2013-present) papers and [WACV](http://wacv2021.thecvf.com/)(2020-present) papers.
-
-*[paper_downloader_ECCV.py](https://github.com/SilenceEagle/paper_downloader/blob/master/code/paper_downloader_ECCV.py)* uses the IDM to download [ECCV](https://www.ecva.net/papers.php) 1990-present papers.
-
-*[paper_downloader_ICLR.py](https://github.com/SilenceEagle/paper_downloader/blob/master/code/paper_downloader_ICLR.py)* uses the IDM to download [ICLR](https://iclr.cc/) 2014-present oral/Top 5%, spotlight/Top 25% and poster papers.
-
-*[paper_downloader_ICML.py](https://github.com/SilenceEagle/paper_downloader/blob/master/code/paper_downloader_ICML.py)* uses the IDM to download [ICML](https://icml.cc/) 2002-present papers.
-
-*[paper_downloader_IJCAI.py](https://github.com/SilenceEagle/paper_downloader/blob/master/code/paper_downloader_IJCAI.py)* uses the IDM to download [IJCAI](https://www.ijcai.org/) 1969-present papers.
-
-*[paper_downloader_JMLR.py](https://github.com/SilenceEagle/paper_downloader/blob/master/code/paper_downloader_JMLR.py)* uses the IDM to download [JMLR](http://www.jmlr.org/) volume 1-present papers and special issues papers.
-
-*[paper_downloader_NIPS.py](https://github.com/SilenceEagle/paper_downloader/blob/master/code/paper_downloader_NIPS.py)* uses the IDM to download [NIPS or NeurIPS](https://nips.cc/) 1987-present papers.
-Forked from [Han-Jia/NIPS2018_Download](https://github.com/Han-Jia/NIPS2018_Download) and update it.
+2. Then run the code:
+```python
+python code/paper_downloader_AAAI.py  # download AAAI papers
+```
 
 ****
 

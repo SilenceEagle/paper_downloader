@@ -1,4 +1,9 @@
 """paper_downloader_AISTATS.py"""
+import os
+import sys
+root_folder = os.path.abspath(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.append(root_folder)
 import lib.pmlr as pmlr
 from lib.supplement_porcess import merge_main_supplement, move_main_and_supplement_2_one_directory, \
     move_main_and_supplement_2_one_directory_with_group
@@ -6,13 +11,17 @@ from lib.supplement_porcess import merge_main_supplement, move_main_and_suppleme
 
 def download_paper(year, save_dir, is_download_supplement=True, time_step_in_seconds=5, downloader='IDM'):
     """
-    download all AISTATS paper and supplement files given year, restore in save_dir/main_paper and save_dir/supplement
+    download all AISTATS paper and supplement files given year, restore in
+    save_dir/main_paper and save_dir/supplement
     respectively
     :param year: int, AISTATS year, such as 2019
     :param save_dir: str, paper and supplement material's save path
-    :param is_download_supplement: bool, True for downloading supplemental material
-    :param time_step_in_seconds: int, the interval time between two downlaod request in seconds
-    :param downloader: str, the downloader to download, could be 'IDM' or 'Thunder', default to 'IDM'
+    :param is_download_supplement: bool, True for downloading supplemental
+        material
+    :param time_step_in_seconds: int, the interval time between two download
+        request in seconds
+    :param downloader: str, the downloader to download, could be 'IDM' or
+        'Thunder', default to 'IDM'
     :return: True
     """
     AISTATS_year_dict = {

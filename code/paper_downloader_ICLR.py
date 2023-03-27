@@ -15,6 +15,10 @@ from bs4 import BeautifulSoup
 import pickle
 from urllib.request import urlopen
 import urllib
+import sys
+root_folder = os.path.abspath(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.append(root_folder)
 from lib.downloader import Downloader
 from lib.openreview import download_iclr_papers_given_url_and_group_id
 
@@ -73,23 +77,32 @@ def download_iclr_oral_papers(save_dir, year, base_url=None,
     :param save_dir: str, paper save path
     :param year: int, iclr year, current only support year >= 2018
     :param base_url: str, paper website url
-    :param time_step_in_seconds: int, the interval time between two downlaod request in seconds
-    :param downloader: str, the downloader to download, could be 'IDM' or 'Thunder', default to 'IDM'
+    :param time_step_in_seconds: int, the interval time between two download
+        request in seconds
+    :param downloader: str, the downloader to download, could be 'IDM' or
+        'Thunder', default to 'IDM'
     :return:
     """
+    project_root_folder = os.path.abspath(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     if base_url is None:
         if year == 2017:
             base_url = 'https://openreview.net/group?id=ICLR.cc/2017/conference'
         elif year == 2018:
-            base_url = 'https://openreview.net/group?id=ICLR.cc/2018/Conference#accepted-oral-papers'
+            base_url = 'https://openreview.net/group?id=ICLR.cc/' \
+                       '2018/Conference#accepted-oral-papers'
         elif year == 2019:
-            base_url = 'https://openreview.net/group?id=ICLR.cc/2019/Conference#accepted-oral-papers'
+            base_url = 'https://openreview.net/group?id=ICLR.cc/' \
+                       '2019/Conference#accepted-oral-papers'
         elif year == 2020:
-            base_url = 'https://openreview.net/group?id=ICLR.cc/2020/Conference#accept-talk'
+            base_url = 'https://openreview.net/group?id=ICLR.cc/' \
+                       '2020/Conference#accept-talk'
         elif year == 2021:
-            base_url = 'https://openreview.net/group?id=ICLR.cc/2021/Conference#oral-presentations'
+            base_url = 'https://openreview.net/group?id=ICLR.cc/' \
+                       '2021/Conference#oral-presentations'
         elif year == 2022:
-            base_url = 'https://openreview.net/group?id=ICLR.cc/2022/Conference#oral-submissions'
+            base_url = 'https://openreview.net/group?id=ICLR.cc/' \
+                       '2022/Conference#oral-submissions'
         else:
             raise ValueError('the website url is not given for this year!')
     first_poster_index = {'2017': 15}
@@ -145,9 +158,11 @@ def download_iclr_oral_papers(save_dir, year, base_url=None,
                 '//*[@id="oral-submissions"]/nav/ul/li')
             current_page += 1
             total_pages_number = int(pages[-3].text)
-            # if we do not reread the pages, all the pages will be not available with an exception:
+            # if we do not reread the pages, all the pages will be not
+            # available with an exception:
             # selenium.common.exceptions.StaleElementReferenceException:
-            # Message: stale element reference: element is not attached to the page document
+            # Message: stale element reference: element is not attached to
+            # the page document
             divs = driver.find_elements_by_xpath(
                 '//*[@id="oral-submissions"]/ul/li')
             this_error_log = __download_papers_given_divs(
@@ -183,7 +198,9 @@ def download_iclr_oral_papers(save_dir, year, base_url=None,
     driver.close()
     # 2. write error log
     print('write error log')
-    with open('..\\log\\download_err_log.txt', 'w') as f:
+    log_file_pathname = os.path.join(
+        project_root_folder, 'log', 'download_err_log.txt')
+    with open(log_file_pathname, 'w') as f:
         for log in tqdm(error_log):
             for e in log:
                 f.write(e)
@@ -215,7 +232,8 @@ def download_iclr_top5_papers(save_dir, year, base_url=None, start_page=1,
     """
     if base_url is None:
         if year == 2023:
-            base_url = "https://openreview.net/group?id=ICLR.cc/2023/Conference#notable-top-5-"
+            base_url = "https://openreview.net/group?id=ICLR.cc/" \
+                       "2023/Conference#notable-top-5-"
         else:
             raise ValueError('the website url is not given for this year!')
     group_id = "notable-top-5-"
@@ -251,21 +269,29 @@ def download_iclr_poster_papers(save_dir, year, base_url=None, start_page=1,
     :type proxy_ip_port: str | None
     :return:
     """
+    project_root_folder = os.path.abspath(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     if base_url is None:
         if year == 2017:
             base_url = 'https://openreview.net/group?id=ICLR.cc/2017/conference'
         elif year == 2018:
-            base_url = 'https://openreview.net/group?id=ICLR.cc/2018/Conference#accepted-poster-papers'
+            base_url = 'https://openreview.net/group?id=ICLR.cc/' \
+                       '2018/Conference#accepted-poster-papers'
         elif year == 2019:
-            base_url = 'https://openreview.net/group?id=ICLR.cc/2019/Conference#accepted-poster-papers'
+            base_url = 'https://openreview.net/group?id=ICLR.cc/' \
+                       '2019/Conference#accepted-poster-papers'
         elif year == 2020:
-            base_url = 'https://openreview.net/group?id=ICLR.cc/2020/Conference#accept-poster'
+            base_url = 'https://openreview.net/group?id=ICLR.cc/' \
+                       '2020/Conference#accept-poster'
         elif year == 2021:
-            base_url = 'https://openreview.net/group?id=ICLR.cc/2021/Conference#poster-presentations'
+            base_url = 'https://openreview.net/group?id=ICLR.cc/' \
+                       '2021/Conference#poster-presentations'
         elif year == 2022:
-            base_url = 'https://openreview.net/group?id=ICLR.cc/2022/Conference#poster-submissions'
+            base_url = 'https://openreview.net/group?id=ICLR.cc/' \
+                       '2022/Conference#poster-submissions'
         elif year == 2023:
-            base_url = "https://openreview.net/group?id=ICLR.cc/2023/Conference#poster"
+            base_url = "https://openreview.net/group?id=ICLR.cc/" \
+                       "2023/Conference#poster"
         else:
             raise ValueError('the website url is not given for this year!')
     if year >= 2023:
@@ -282,7 +308,8 @@ def download_iclr_poster_papers(save_dir, year, base_url=None, start_page=1,
         return
     first_poster_index = {'2017': 15}
     first_workshop_title = {
-        '2017': 'Learning Continuous Semantic Representations of Symbolic Expressions'}
+        '2017': 'Learning Continuous Semantic Representations of '
+                'Symbolic Expressions'}
     paper_postfix = f'ICLR_{year}'
     error_log = []
     driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
@@ -334,9 +361,11 @@ def download_iclr_poster_papers(save_dir, year, base_url=None, start_page=1,
                 '//*[@id="poster-submissions"]/nav/ul/li')
             current_page += 1
             total_pages_number = int(pages[-3].text)
-            # if we do not reread the pages, all the pages will be not available with an exception:
+            # if we do not reread the pages, all the pages will be not
+            # available with an exception:
             # selenium.common.exceptions.StaleElementReferenceException:
-            # Message: stale element reference: element is not attached to the page document
+            # Message: stale element reference: element is not attached to the
+            # page document
             divs = driver.find_elements_by_xpath(
                 '//*[@id="poster-submissions"]/ul/li')
             this_error_log = __download_papers_given_divs(
@@ -372,7 +401,9 @@ def download_iclr_poster_papers(save_dir, year, base_url=None, start_page=1,
     driver.close()
     # 2. write error log
     print('write error log')
-    with open('..\\log\\download_err_log.txt', 'w') as f:
+    log_file_pathname = os.path.join(
+        project_root_folder, 'log', 'download_err_log.txt')
+    with open(log_file_pathname, 'w') as f:
         for log in tqdm(error_log):
             for e in log:
                 f.write(e)
@@ -387,17 +418,24 @@ def download_iclr_spotlight_papers(save_dir, year, base_url=None,
     :param save_dir: str, paper save path
     :param year: int, iclr year, current only support year >= 2018
     :param base_url: str, paper website url
-    :param time_step_in_seconds: int, the interval time between two downlaod request in seconds
-    :param downloader: str, the downloader to download, could be 'IDM' or 'Thunder', default to 'IDM'
+    :param time_step_in_seconds: int, the interval time between two download
+        request in seconds
+    :param downloader: str, the downloader to download, could be 'IDM' or
+        'Thunder', default to 'IDM'
     :return:
     """
+    project_root_folder = os.path.abspath(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     if base_url is None:
         if year == 2022:
-            base_url = 'https://openreview.net/group?id=ICLR.cc/2022/Conference#spotlight-submissions'
+            base_url = 'https://openreview.net/group?id=ICLR.cc/' \
+                       '2022/Conference#spotlight-submissions'
         elif year == 2021:
-            base_url = 'https://openreview.net/group?id=ICLR.cc/2021/Conference#spotlight-presentations'
+            base_url = 'https://openreview.net/group?id=ICLR.cc/' \
+                       '2021/Conference#spotlight-presentations'
         elif year == 2020:
-            base_url = 'https://openreview.net/group?id=ICLR.cc/2020/Conference#accept-spotlight'
+            base_url = 'https://openreview.net/group?id=ICLR.cc/' \
+                       '2020/Conference#accept-spotlight'
         else:
             raise ValueError('the website url is not given for this year!')
     first_poster_index = {'2017': 15}
@@ -453,9 +491,11 @@ def download_iclr_spotlight_papers(save_dir, year, base_url=None,
                 '//*[@id="spotlight-submissions"]/nav/ul/li')
             current_page += 1
             total_pages_number = int(pages[-3].text)
-            # if we do not reread the pages, all the pages will be not available with an exception:
+            # if we do not reread the pages, all the pages will be not
+            # available with an exception:
             # selenium.common.exceptions.StaleElementReferenceException:
-            # Message: stale element reference: element is not attached to the page document
+            # Message: stale element reference: element is not attached to the
+            # page document
             divs = driver.find_elements_by_xpath(
                 '//*[@id="spotlight-submissions"]/ul/li')
             this_error_log = __download_papers_given_divs(
@@ -489,7 +529,9 @@ def download_iclr_spotlight_papers(save_dir, year, base_url=None,
     driver.close()
     # 2. write error log
     print('write error log')
-    with open('..\\log\\download_err_log.txt', 'w') as f:
+    log_file_pathname = os.path.join(
+        project_root_folder, 'log', 'download_err_log.txt')
+    with open(log_file_pathname, 'w') as f:
         for log in tqdm(error_log):
             for e in log:
                 f.write(e)
@@ -521,7 +563,8 @@ def download_iclr_top25_papers(save_dir, year, base_url=None, start_page=1,
     """
     if base_url is None:
         if year == 2023:
-            base_url = "https://openreview.net/group?id=ICLR.cc/2023/Conference#notable-top-25-"
+            base_url = "https://openreview.net/group?id=ICLR.cc/" \
+                       "2023/Conference#notable-top-25-"
         else:
             raise ValueError('the website url is not given for this year!')
     group_id = "notable-top-25-"
@@ -543,10 +586,14 @@ def download_iclr_paper(year, save_dir, time_step_in_seconds=5,
     Download iclr conference paper between year 2014 and 2016.
     :param year: int, iclr year
     :param save_dir: str, paper save path
-    :param time_step_in_seconds: int, the interval time between two downlaod request in seconds
-    :param downloader: str, the downloader to download, could be 'IDM' or 'Thunder', default to 'IDM'
+    :param time_step_in_seconds: int, the interval time between two download
+        request in seconds
+    :param downloader: str, the downloader to download, could be 'IDM' or
+        'Thunder', default to 'IDM'
     :return: True
     """
+    project_root_folder = os.path.abspath(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     downloader = Downloader(downloader=downloader)
     paper_postfix = f'ICLR_{year}'
     if year == 2016:
@@ -565,13 +612,17 @@ def download_iclr_paper(year, save_dir, time_step_in_seconds=5,
         os.makedirs(oral_save_path, exist_ok=True)
         os.makedirs(poster_save_path, exist_ok=True)
         os.makedirs(workshop_save_path, exist_ok=True)
-    if os.path.exists(f'..\\urls\\init_url_iclr_{year}.dat'):
-        with open(f'..\\urls\\init_url_iclr_{year}.dat', 'rb') as f:
+    dat_file_pathname = os.path.join(
+        project_root_folder, 'urls', f'init_url_iclr_{year}.dat'
+    )
+    if os.path.exists(dat_file_pathname):
+        with open(dat_file_pathname, 'rb') as f:
             content = pickle.load(f)
     else:
         headers = {
             'User-Agent':
-                'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:23.0) Gecko/20100101 Firefox/23.0'}
+                'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:23.0) '
+                'Gecko/20100101 Firefox/23.0'}
         req = urllib.request.Request(url=base_url, headers=headers)
         content = urllib.request.urlopen(req).read()
         with open(f'..\\urls\\init_url_iclr_{year}.dat', 'wb') as f:
@@ -589,10 +640,11 @@ def download_iclr_paper(year, save_dir, time_step_in_seconds=5,
                 title = slugify(paper.text)
                 pdf_name = f'{title}_{paper_postfix}.pdf'
                 try:
-                    if not os.path.exists(os.path.join(save_dir,
-                                                       title + f'_{paper_postfix}.pdf')):
-                        pdf_link = get_pdf_link_from_arxiv(link,
-                                                           is_use_mirror=is_use_arxiv_mirror)
+                    if not os.path.exists(
+                            os.path.join(save_dir,
+                                         title + f'_{paper_postfix}.pdf')):
+                        pdf_link = get_pdf_link_from_arxiv(
+                            link, is_use_mirror=is_use_arxiv_mirror)
                         print(f'downloading {title}')
                         downloader.download(
                             urls=pdf_link,
@@ -662,10 +714,11 @@ def download_iclr_paper(year, save_dir, time_step_in_seconds=5,
                 title = slugify(paper.text)
                 pdf_name = f'{title}_{paper_postfix}.pdf'
                 try:
-                    if not os.path.exists(os.path.join(oral_save_path,
-                                                       title + f'_{paper_postfix}.pdf')):
-                        pdf_link = get_pdf_link_from_arxiv(link,
-                                                           is_use_mirror=is_use_arxiv_mirror)
+                    if not os.path.exists(
+                            os.path.join(oral_save_path,
+                                         title + f'_{paper_postfix}.pdf')):
+                        pdf_link = get_pdf_link_from_arxiv(
+                            link, is_use_mirror=is_use_arxiv_mirror)
                         print(f'downloading {title}')
                         downloader.download(
                             urls=pdf_link,
@@ -691,10 +744,11 @@ def download_iclr_paper(year, save_dir, time_step_in_seconds=5,
                 title = slugify(paper.text)
                 pdf_name = f'{title}_ICLR_WS_{year}.pdf'
                 try:
-                    if not os.path.exists(os.path.join(workshop_save_path,
-                                                       title + f'_{paper_postfix}.pdf')):
-                        pdf_link = get_pdf_link_from_arxiv(link,
-                                                           is_use_mirror=is_use_arxiv_mirror)
+                    if not os.path.exists(
+                            os.path.join(workshop_save_path,
+                                         title + f'_{paper_postfix}.pdf')):
+                        pdf_link = get_pdf_link_from_arxiv(
+                            link, is_use_mirror=is_use_arxiv_mirror)
                         print(f'downloading {title}')
                         downloader.download(
                             urls=pdf_link,
@@ -716,10 +770,11 @@ def download_iclr_paper(year, save_dir, time_step_in_seconds=5,
                 title = slugify(paper.text)
                 pdf_name = f'{title}_{paper_postfix}.pdf'
                 try:
-                    if not os.path.exists(os.path.join(poster_save_path,
-                                                       title + f'_{paper_postfix}.pdf')):
-                        pdf_link = get_pdf_link_from_arxiv(link,
-                                                           is_use_mirror=is_use_arxiv_mirror)
+                    if not os.path.exists(
+                            os.path.join(poster_save_path,
+                                         title + f'_{paper_postfix}.pdf')):
+                        pdf_link = get_pdf_link_from_arxiv(
+                            link, is_use_mirror=is_use_arxiv_mirror)
                         print(f'downloading {title}')
                         downloader.download(
                             urls=pdf_link,
@@ -740,8 +795,8 @@ def download_iclr_paper(year, save_dir, time_step_in_seconds=5,
                 pdf_name = f'{title}_{paper_postfix}.pdf'
                 try:
                     if not os.path.exists(os.path.join(save_dir, pdf_name)):
-                        pdf_link = get_pdf_link_from_arxiv(link,
-                                                           is_use_mirror=is_use_arxiv_mirror)
+                        pdf_link = get_pdf_link_from_arxiv(
+                            link, is_use_mirror=is_use_arxiv_mirror)
                         print(f'downloading {title}')
                         downloader.download(
                             urls=pdf_link,
@@ -755,17 +810,19 @@ def download_iclr_paper(year, save_dir, time_step_in_seconds=5,
 
         # workshops
         paper_postfix = f'ICLR_WS_{year}'
-        base_url = 'https://sites.google.com/site/representationlearning2014/workshop-proceedings'
+        base_url = 'https://sites.google.com/site/representationlearning2014/' \
+                   'workshop-proceedings'
         headers = {
             'User-Agent':
-                'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:23.0) Gecko/20100101 Firefox/23.0'}
+                'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:23.0) '
+                'Gecko/20100101 Firefox/23.0'}
         req = urllib.request.Request(url=base_url, headers=headers)
         content = urllib.request.urlopen(req).read()
         soup = BeautifulSoup(content, 'html.parser')
         workshop_save_path = os.path.join(save_dir, 'WS')
         os.makedirs(workshop_save_path, exist_ok=True)
-        papers = soup.find('div', {'id': 'sites-canvas-main-content'}).find_all(
-            'a')
+        papers = soup.find(
+            'div', {'id': 'sites-canvas-main-content'}).find_all('a')
         for paper in tqdm(papers):
             link = paper.get('href')
             if link.startswith('http://arxiv'):
@@ -774,8 +831,8 @@ def download_iclr_paper(year, save_dir, time_step_in_seconds=5,
                 try:
                     if not os.path.exists(
                             os.path.join(workshop_save_path, pdf_name)):
-                        pdf_link = get_pdf_link_from_arxiv(link,
-                                                           is_use_mirror=is_use_arxiv_mirror)
+                        pdf_link = get_pdf_link_from_arxiv(
+                            link, is_use_mirror=is_use_arxiv_mirror)
                         print(f'downloading {title}')
                         downloader.download(
                             urls=pdf_link,
@@ -790,7 +847,9 @@ def download_iclr_paper(year, save_dir, time_step_in_seconds=5,
 
     # write error log
     print('write error log')
-    with open('..\\log\\download_err_log.txt', 'w') as f:
+    log_file_pathname = os.path.join(
+        project_root_folder, 'log', 'download_err_log.txt')
+    with open(log_file_pathname, 'w') as f:
         for log in tqdm(error_log):
             for e in log:
                 if e is not None:
@@ -811,18 +870,21 @@ def download_iclr_paper_given_html_file(year, html_path, save_dir,
     :param year: int, iclr year, current only support year >= 2018
     :param html_path: str, html file's full pathname
     :param save_dir: str, paper save path
-    :param time_step_in_seconds: int, the interval time between two downlaod request in seconds
-    :param downloader: str, the downloader to download, could be 'IDM' or 'Thunder', default to 'IDM'
+    :param time_step_in_seconds: int, the interval time between two download
+        request in seconds
+    :param downloader: str, the downloader to download, could be 'IDM' or
+        'Thunder', default to 'IDM'
     :return: True
     """
+    project_root_folder = os.path.abspath(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     downloader = Downloader(downloader=downloader)
     base_url = f'https://openreview.net/group?id=ICLR.cc/{year}'
     content = open(html_path, 'rb').read()
     soup = BeautifulSoup(content, 'html5lib')
     divs = soup.find('div', {'class': 'tabs-container'})
-    oral_papers = divs.find('div', {'id': 'oral-presentations'}).find_all('li',
-                                                                          {
-                                                                              'class': 'note'})
+    oral_papers = divs.find('div', {'id': 'oral-presentations'}).find_all(
+        'li', {'class': 'note'})
     num_oral_papers = len(oral_papers)
     print('found number of oral papers:', num_oral_papers)
 
@@ -934,7 +996,9 @@ def download_iclr_paper_given_html_file(year, html_path, save_dir,
 
     # 2. write error log
     print('write error log')
-    with open('..\\log\\download_err_log.txt', 'w') as f:
+    log_file_pathname = os.path.join(
+        project_root_folder, 'log', 'download_err_log.txt')
+    with open(log_file_pathname, 'w') as f:
         for log in tqdm(error_log):
             for e in log:
                 f.write(e)

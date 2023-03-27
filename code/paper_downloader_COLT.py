@@ -1,16 +1,25 @@
 """paper_downloader_COLT.py"""
+import os
+import sys
+root_folder = os.path.abspath(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.append(root_folder)
 import lib.pmlr as pmlr
 
 
 def download_paper(year, save_dir, is_download_supplement=False, time_step_in_seconds=5, downloader='IDM'):
     """
-    download all COLT paper and supplement files given year, restore in save_dir/main_paper and save_dir/supplement
+    download all COLT paper and supplement files given year, restore in
+    save_dir/main_paper and save_dir/supplement
     respectively
     :param year: int, COLT year, such as 2019
     :param save_dir: str, paper and supplement material's save path
-    :param is_download_supplement: bool, True for downloading supplemental material
-    :param time_step_in_seconds: int, the interval time between two downlaod request in seconds
-    :param downloader: str, the downloader to download, could be 'IDM' or 'Thunder', default to 'IDM'
+    :param is_download_supplement: bool, True for downloading supplemental
+        material
+    :param time_step_in_seconds: int, the interval time between two download
+        request in seconds
+    :param downloader: str, the downloader to download, could be 'IDM' or
+        'Thunder', default to 'IDM'
     :return: True
     """
     COLT_year_dict = {

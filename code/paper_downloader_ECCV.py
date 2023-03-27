@@ -10,10 +10,16 @@ from tqdm import tqdm
 import subprocess
 from slugify import slugify
 import csv
+import sys
+
+root_folder = os.path.abspath(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.append(root_folder)
 from lib.supplement_porcess import move_main_and_supplement_2_one_directory
 import lib.springer as springer
 from lib import csv_process
 from lib.downloader import Downloader
+
 
 def save_csv(year):
     """
@@ -21,24 +27,31 @@ def save_csv(year):
     :param year: int
     :return: True
     """
-    with open(f'..\\csv\\ECCV_{year}.csv', 'w', newline='') as csvfile:
+    project_root_folder = os.path.abspath(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    csv_file_pathname = os.path.join(
+        project_root_folder, 'csv', f'ECCV_{year}.csv')
+    with open(csv_file_pathname, 'w', newline='') as csvfile:
         fieldnames = ['title', 'main link', 'supplemental link']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
         headers = {
             'User-Agent':
-                'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:23.0) Gecko/20100101 Firefox/23.0'}
+                'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:23.0) '
+                'Gecko/20100101 Firefox/23.0'}
+        dat_file_pathname = os.path.join(
+            project_root_folder, 'urls', f'init_url_ECCV_{year}.dat')
         if year >= 2018:
             init_url = f'https://www.ecva.net/papers.php'
-            if os.path.exists(f'..\\urls\\init_url_ECCV_{year}.dat'):
-                with open(f'..\\urls\\init_url_ECCV_{year}.dat', 'rb') as f:
+            if os.path.exists(dat_file_pathname):
+                with open(dat_file_pathname, 'rb') as f:
                     content = pickle.load(f)
             else:
                 req = urllib.request.Request(url=init_url, headers=headers)
                 content = urllib.request.urlopen(req, timeout=10).read()
                 # content = urlopen(init_url).read()
                 # content = open(f'..\\ECCV_{year}.html', 'rb').read()
-                with open(f'..\\urls\\init_url_ECCV_{year}.dat', 'wb') as f:
+                with open(dat_file_pathname, 'wb') as f:
                     pickle.dump(content, f)
             soup = BeautifulSoup(content, 'html5lib')
             paper_list_bar = tqdm(soup.find_all(['dt', 'dd']))
@@ -51,22 +64,26 @@ def save_csv(year):
 
                 # get title
                 try:
-                    if 'dt' == paper.name and 'ptitle' == paper.get('class')[0] and \
+                    if 'dt' == paper.name and \
+                            'ptitle' == paper.get('class')[0] and \
                             year == int(paper.a.get('href').split('_')[1][:4]):  # title:
                         # this_year = int(paper.a.get('href').split('_')[1][:4])
                         title = slugify(paper.text.strip())
                         paper_dict['title'] = title
                         paper_index += 1
-                        paper_list_bar.set_description_str(f'Downloading paper {paper_index}: {title}')
+                        paper_list_bar.set_description_str(
+                            f'Downloading paper {paper_index}: {title}')
                     elif '' != paper_dict['title'] and 'dd' == paper.name:
                         all_as = paper.find_all('a')
                         for a in all_as:
                             if 'pdf' == slugify(a.text.strip()):
-                                main_link = urllib.parse.urljoin(init_url, a.get('href'))
+                                main_link = urllib.parse.urljoin(init_url,
+                                                                 a.get('href'))
                                 paper_dict['main link'] = main_link
                                 is_new_paper = True
                             elif 'supp' == slugify(a.text.strip())[:4]:
-                                supp_link = urllib.parse.urljoin(init_url, a.get('href'))
+                                supp_link = urllib.parse.urljoin(init_url,
+                                                                 a.get('href'))
                                 paper_dict['supplemental link'] = supp_link
                                 break
                 except:
@@ -78,29 +95,33 @@ def save_csv(year):
                                   'supplemental link': ''}
         else:
             init_url = f'http://www.eccv{year}.org/main-conference/'
-            if os.path.exists(f'..\\urls\\init_url_ECCV_{year}.dat'):
-                with open(f'..\\urls\\init_url_ECCV_{year}.dat', 'rb') as f:
+            if os.path.exists(dat_file_pathname):
+                with open(dat_file_pathname, 'rb') as f:
                     content = pickle.load(f)
             else:
                 req = urllib.request.Request(url=init_url, headers=headers)
                 content = urllib.request.urlopen(req, timeout=10).read()
                 # content = urlopen(init_url).read()
                 # content = open(f'..\\ECCV_{year}.html', 'rb').read()
-                with open(f'..\\urls\\init_url_ECCV_{year}.dat', 'wb') as f:
+                with open(dat_file_pathname, 'wb') as f:
                     pickle.dump(content, f)
             soup = BeautifulSoup(content, 'html5lib')
-            paper_list_bar = tqdm(soup.find('div', {'class': 'entry-content'}).find_all(['p']))
+            paper_list_bar = tqdm(
+                soup.find('div', {'class': 'entry-content'}).find_all(['p']))
             paper_index = 0
             paper_dict = {'title': '',
                           'main link': '',
                           'supplemental link': ''}
             for paper in paper_list_bar:
                 try:
-                    if len(paper.find_all(['strong'])) and len(paper.find_all(['a'])) and len(paper.find_all(['img'])):
+                    if len(paper.find_all(['strong'])) and len(
+                            paper.find_all(['a'])) and len(
+                            paper.find_all(['img'])):
                         paper_index += 1
                         title = slugify(paper.find('strong').text)
                         paper_dict['title'] = title
-                        paper_list_bar.set_description_str(f'Downloading paper {paper_index}: {title}')
+                        paper_list_bar.set_description_str(
+                            f'Downloading paper {paper_index}: {title}')
                         main_link = paper.find('a').get('href')
                         paper_dict['main link'] = main_link
                         writer.writerow(paper_dict)
@@ -113,25 +134,33 @@ def save_csv(year):
 
 
 def download_from_csv(
-        year, save_dir, is_download_supplement=True, time_step_in_seconds=5, total_paper_number=None,
+        year, save_dir, is_download_supplement=True, time_step_in_seconds=5,
+        total_paper_number=None,
         is_workshops=False, downloader='IDM'):
     """
-    download all ECCV paper and supplement files given year, restore in save_dir/main_paper and save_dir/supplement
-    respectively
+    download all ECCV paper and supplement files given year, restore in
+    save_dir/main_paper and save_dir/supplement respectively
     :param year: int, ECCV year, such 2019
     :param save_dir: str, paper and supplement material's save path
-    :param is_download_supplement: bool, True for downloading supplemental material
-    :param time_step_in_seconds: int, the interval time between two downlaod request in seconds
-    :param total_paper_number: int, the total number of papers that is going to download
+    :param is_download_supplement: bool, True for downloading supplemental
+        material
+    :param time_step_in_seconds: int, the interval time between two downlaod
+        request in seconds
+    :param total_paper_number: int, the total number of papers that is going
+        to download
     :param is_workshops: bool, is to download workshops from csv file.
-    :param downloader: str, the downloader to download, could be 'IDM' or 'Thunder', default to 'IDM'
+    :param downloader: str, the downloader to download, could be 'IDM' or
+        'Thunder', default to 'IDM'
     :return: True
     """
     postfix = f'ECCV_{year}'
     if is_workshops:
         postfix = f'ECCV_WS_{year}'
-    csv_file_name = f'..\\csv\\ECCV_{year}.csv' if not is_workshops else f'..\\csv\\ECCV_WS_{year}.csv'
-    csv_file_name = os.path.join(os.getcwd(), csv_file_name)
+    csv_file_name = f'ECCV_{year}.csv' if not is_workshops else \
+        f'ECCV_WS_{year}.csv'
+    project_root_folder = os.path.abspath(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    csv_file_name = os.path.join(project_root_folder, 'csv', csv_file_name)
     csv_process.download_from_csv(
         postfix=postfix,
         save_dir=save_dir,
@@ -144,7 +173,8 @@ def download_from_csv(
 
 
 def download_from_springer(
-        year, save_dir,  is_workshops=False, time_sleep_in_seconds=5, downloader='IDM'):
+        year, save_dir, is_workshops=False, time_sleep_in_seconds=5,
+        downloader='IDM'):
     os.makedirs(save_dir, exist_ok=True)
     if 2018 == year:
         if not is_workshops:
@@ -351,12 +381,14 @@ def download_from_springer(
         raise ValueError(f'ECCV {year} is current not available!')
     for url in urls_list:
         __download_from_springer(
-            url, save_dir, year, is_workshops=is_workshops, time_sleep_in_seconds=time_sleep_in_seconds,
+            url, save_dir, year, is_workshops=is_workshops,
+            time_sleep_in_seconds=time_sleep_in_seconds,
             downloader=downloader)
 
 
 def __download_from_springer(
-        url, save_dir, year, is_workshops=False, time_sleep_in_seconds=5, downloader='IDM'):
+        url, save_dir, year, is_workshops=False, time_sleep_in_seconds=5,
+        downloader='IDM'):
     downloader = Downloader(downloader)
     for i in range(3):
         try:
@@ -377,6 +409,7 @@ def __download_from_springer(
                 papers_dict[name],
                 os.path.join(save_dir, f'{name}_{postfix}.pdf'),
                 time_sleep_in_seconds)
+
 
 if __name__ == '__main__':
     year = 2022

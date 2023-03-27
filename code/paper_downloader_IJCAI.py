@@ -10,6 +10,10 @@ import os
 from tqdm import tqdm
 from slugify import slugify
 import csv
+import sys
+root_folder = os.path.abspath(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.append(root_folder)
 from lib.downloader import Downloader
 from lib import csv_process
 
@@ -20,7 +24,12 @@ def save_csv(year):
     :param year: int, IJCAI year, such 2019
     :return: peper_index: int, the total number of papers
     """
-    with open(f'..\\csv\\IJCAI_{year}.csv', 'w', newline='') as csvfile:
+    project_root_folder = os.path.abspath(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    csv_file_pathname = os.path.join(
+        project_root_folder, 'csv', f'IJCAI_{year}.csv'
+    )
+    with open(csv_file_pathname, 'w', newline='') as csvfile:
         fieldnames = ['title', 'main link', 'group']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
@@ -35,15 +44,32 @@ def save_csv(year):
             raise ValueError('invalid year!')
         error_log = []
         user_agents = [
-            'Mozilla/5.0 (Windows; U; Windows NT 5.1; it; rv:1.8.1.11) Gecko/20071127 Firefox/2.0.0.11',
+            'Mozilla/5.0 (Windows; U; Windows NT 5.1; it; rv:1.8.1.11) '
+            'Gecko/20071127 Firefox/2.0.0.11',
+
             'Opera/9.25 (Windows NT 5.1; U; en)',
-            'Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1; .NET CLR 1.1.4322; .NET CLR 2.0.50727)',
-            'Mozilla/5.0 (compatible; Konqueror/3.5; Linux) KHTML/3.5.5 (like Gecko) (Kubuntu)',
-            'Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.8.0.12) Gecko/20070731 Ubuntu/dapper-security Firefox/1.5.0.12',
+
+            'Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1; '
+            '.NET CLR 1.1.4322; .NET CLR 2.0.50727)',
+
+            'Mozilla/5.0 (compatible; Konqueror/3.5; Linux) '
+            'KHTML/3.5.5 (like Gecko) (Kubuntu)',
+
+            'Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.8.0.12) '
+            'Gecko/20070731 Ubuntu/dapper-security Firefox/1.5.0.12',
+
             'Lynx/2.8.5rel.1 libwww-FM/2.14 SSL-MM/1.4.1 GNUTLS/1.2.9',
-            "Mozilla/5.0 (X11; Linux i686) AppleWebKit/535.7 (KHTML, like Gecko) Ubuntu/11.04 Chromium/16.0.912.77 Chrome/16.0.912.77 Safari/535.7",
-            "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:10.0) Gecko/20100101 Firefox/10.0 ",
-            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36'
+
+            "Mozilla/5.0 (X11; Linux i686) AppleWebKit/535.7 "
+            "(KHTML, like Gecko) Ubuntu/11.04 Chromium/16.0.912.77 "
+            "Chrome/16.0.912.77 Safari/535.7",
+
+            "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:10.0) "
+            "Gecko/20100101 Firefox/10.0 ",
+
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
+            'AppleWebKit/537.36 (KHTML, like Gecko) '
+            'Chrome/105.0.0.0 Safari/537.36'
 
         ]
         headers = {
@@ -53,8 +79,11 @@ def save_csv(year):
             'GET': init_urls[0]
         }
         if len(init_urls) == 1:
-            if os.path.exists(f'..\\urls\\init_url_IJCAI_{year}.dat'):
-                with open(f'..\\urls\\init_url_IJCAI_{year}.dat', 'rb') as f:
+            data_file_pathname = os.path.join(
+                project_root_folder, 'urls', f'init_url_IJCAI_{year}.dat'
+            )
+            if os.path.exists(data_file_pathname):
+                with open(data_file_pathname, 'rb') as f:
                     content = pickle.load(f)
             else:
                 req = urllib.request.Request(url=init_urls[0], headers=headers)
@@ -72,24 +101,30 @@ def save_csv(year):
             contents = [content]
         else:
             contents = []
-            if os.path.exists(f'..\\urls\\init_url_IJCAI_0_{year}.dat'):
-                with open(f'..\\urls\\init_url_IJCAI_0_{year}.dat', 'rb') as f:
+            data_file_pathname = os.path.join(
+                project_root_folder, 'urls', f'init_url_IJCAI_0_{year}.dat'
+            )
+            if os.path.exists(data_file_pathname):
+                with open(data_file_pathname, 'rb') as f:
                     content = pickle.load(f)
             else:
                 # content = urlopen(init_urls[0]).read()
                 req = urllib.request.Request(url=init_urls[0], headers=headers)
                 content = urllib.request.urlopen(req).read()
-                with open(f'..\\urls\\init_url_IJCAI_0_{year}.dat', 'wb') as f:
+                with open(data_file_pathname, 'wb') as f:
                     pickle.dump(content, f)
             contents.append(content)
-            if os.path.exists(f'..\\urls\\init_url_IJCAI_1_{year}.dat'):
-                with open(f'..\\urls\\init_url_IJCAI_1_{year}.dat', 'rb') as f:
+            data_file_pathname = os.path.join(
+                project_root_folder, 'urls', f'init_url_IJCAI_1_{year}.dat'
+            )
+            if os.path.exists(data_file_pathname):
+                with open(data_file_pathname, 'rb') as f:
                     content = pickle.load(f)
             else:
                 # content = urlopen(init_urls[1]).read()
                 req = urllib.request.Request(url=init_urls[1], headers=headers)
                 content = urllib.request.urlopen(req).read()
-                with open(f'..\\urls\\init_url_IJCAI_1_{year}.dat', 'wb') as f:
+                with open(data_file_pathname, 'wb') as f:
                     pickle.dump(content, f)
             contents.append(content)
         paper_index = 0
@@ -99,7 +134,8 @@ def save_csv(year):
                 pbar = tqdm(soup.find_all('div', {'class': 'section_title'}))
                 for section in pbar:
                     this_group = slugify(section.text)
-                    papers = section.parent.find_all('div', {'class': ['paper_wrapper', 'subsection_title']})
+                    papers = section.parent.find_all(
+                        'div', {'class': ['paper_wrapper', 'subsection_title']})
                     sub_group = ''
                     for paper in papers:
                         if 'subsection_title' == paper.get('class')[0]:
@@ -107,21 +143,29 @@ def save_csv(year):
                             continue
                         paper_index += 1
                         is_get_link = False
-                        title = slugify(paper.find('div', {'class': 'title'}).text)
-                        pbar.set_description(f'downloading paper {paper_index}: {title}')
-                        for a in paper.find('div', {'class': 'details'}).find_all('a'):
+                        title = slugify(
+                            paper.find('div', {'class': 'title'}).text)
+                        pbar.set_description(
+                            f'downloading paper {paper_index}: {title}')
+                        for a in paper.find(
+                                'div', {'class': 'details'}).find_all('a'):
                             if 'PDF' == a.text:
-                                link = urllib.parse.urljoin(init_urls[0], a.get('href'))
+                                link = urllib.parse.urljoin(
+                                    init_urls[0], a.get('href'))
                                 is_get_link = True
                                 break
                         if is_get_link:
                             paper_dict = {'title': title,
                                           'main link': link,
-                                          'group': this_group + '--' + sub_group if sub_group != '' else this_group}
+                                          'group': this_group + '--' +
+                                                   sub_group if
+                                          sub_group != '' else this_group}
                         else:
                             paper_dict = {'title': title,
                                           'main link': 'error',
-                                          'group': this_group + '--' + sub_group if sub_group != '' else this_group}
+                                          'group': this_group + '--' +
+                                                   sub_group if
+                                          sub_group != '' else this_group}
                             print(f'get link for {title}_{year} failed!')
                             error_log.apend(title, 'no link')
                         writer.writerow(paper_dict)
@@ -132,7 +176,8 @@ def save_csv(year):
                     if len(all_as) >= 2:  # paper pdf and abstract
                         paper_index += 1
                         title = slugify(paper.text.split('\n')[0])
-                        papers_bar.set_description(f'downloading paper {paper_index}: {title}')
+                        papers_bar.set_description(
+                            f'downloading paper {paper_index}: {title}')
                         is_get_link = False
                         for a in all_as:
                             if 'PDF' == a.text:
@@ -168,11 +213,13 @@ def save_csv(year):
                             if len(all_as) >= 2:  # paper pdf and abstract
                                 paper_index += 1
                                 title = slugify(paper.text.split('\n')[0])
-                                papers_bar.set_description(f'downloading paper {paper_index}: {title}')
+                                papers_bar.set_description(
+                                    f'downloading paper {paper_index}: {title}')
                                 is_get_link = False
                                 for a in all_as:
                                     if 'PDF' == a.text:
-                                        link = 'https://www.ijcai.org' + a.get('href')
+                                        link = 'https://www.ijcai.org' + \
+                                               a.get('href')
                                         is_get_link = True
                                         break
                                 if is_get_link:
@@ -197,7 +244,8 @@ def save_csv(year):
                 for paper in papers_bar:
                     if not is_start:
                         if 'h2' == paper.name:  # find 'content'
-                            if 'Contents' == paper.text or 'IJCAI-09 Contents' == paper.text or \
+                            if 'Contents' == paper.text or \
+                                    'IJCAI-09 Contents' == paper.text or \
                                     'IJCAI-07 Contents' == paper.text:
                                 is_start = True
                     else:
@@ -220,7 +268,9 @@ def save_csv(year):
                                         title = slugify(a.text)
                                         link = a.get('href')
                                         is_get_link = True
-                                        papers_bar.set_description(f'downloading paper {paper_index}: {title}')
+                                        papers_bar.set_description(
+                                            f'downloading paper {paper_index}: '
+                                            f'{title}')
                                         break
                                 if is_get_link:
                                     paper_dict = {'title': title,
@@ -232,7 +282,8 @@ def save_csv(year):
                                                   'group': this_group}
                                     print(f'get link for {title}_{year} failed!')
                                     error_log.append((title, 'no link'))
-                                # papers_bar.set_description(f'downloading paper {paper_index}: {title}')
+                                # papers_bar.set_description(f'downloading
+                                # paper {paper_index}: {title}')
                                 writer.writerow(paper_dict)
             elif year in [2005]:
                 div_content = soup.find('div', {'id': 'content'})
@@ -249,7 +300,8 @@ def save_csv(year):
                         paper_index += 1
                         title = slugify(paper.a.text)
                         link = paper.a.get('href')
-                        papers_bar.set_description(f'downloading paper {paper_index}: {title}')
+                        papers_bar.set_description(
+                            f'downloading paper {paper_index}: {title}')
                         paper_dict = {'title': title,
                                       'main link': link,
                                       'group': this_group}
@@ -268,7 +320,8 @@ def save_csv(year):
                         title = slugify(paper.a.text)
                         link = base_url + paper.a.get('href')
                         paper_index += 1
-                        papers_bar.set_description(f'downloading paper {paper_index}: {title}')
+                        papers_bar.set_description(
+                            f'downloading paper {paper_index}: {title}')
                         paper_dict = {'title': title,
                                       'main link': link,
                                       'group': this_group}
@@ -284,14 +337,16 @@ def save_csv(year):
                         title = slugify(paper.a.text)
                         link = paper.a.get('href')
                         paper_index += 1
-                        papers_bar.set_description(f'downloading paper {paper_index}: {title}')
+                        papers_bar.set_description(
+                            f'downloading paper {paper_index}: {title}')
                         paper_dict = {'title': title,
                                       'main link': link,
                                       'group': this_group}
                         writer.writerow(paper_dict)
                     except:
                         continue
-            elif year in [1999, 1997, 1995, 1993, 1991, 1989, 1987, 1981, 1979, 1977, 1969]:  # goup in capital in p.b.text
+            elif year in [1999, 1997, 1995, 1993, 1991, 1989, 1987, 1981, 1979,
+                          1977, 1969]:  # goup in capital in p.b.text
                 div_content = soup.find('div', {'id': 'content'})
                 papers_bar = tqdm(div_content.find_all(['p']))
                 this_group = ''
@@ -308,7 +363,8 @@ def save_csv(year):
                             link = a.get('href')
                             if link[-3:] == 'pdf' and '' != title:
                                 paper_index += 1
-                                papers_bar.set_description(f'downloading paper {paper_index}: {title}')
+                                papers_bar.set_description(
+                                    f'downloading paper {paper_index}: {title}')
                                 paper_dict = {'title': title,
                                               'main link': link,
                                               'group': this_group}
@@ -330,7 +386,8 @@ def save_csv(year):
                             link = a.get('href')
                             if link[-3:] == 'pdf' and '' != title:
                                 paper_index += 1
-                                papers_bar.set_description(f'downloading paper {paper_index}: {title}')
+                                papers_bar.set_description(
+                                    f'downloading paper {paper_index}: {title}')
                                 paper_dict = {'title': title,
                                               'main link': link,
                                               'group': this_group}
@@ -357,7 +414,8 @@ def save_csv(year):
                             link = a.get('href')
                             if link[-3:] == 'pdf' and '' != title:
                                 paper_index += 1
-                                papers_bar.set_description(f'downloading paper {paper_index}: {title}')
+                                papers_bar.set_description(
+                                    f'downloading paper {paper_index}: {title}')
                                 paper_dict = {'title': title,
                                               'main link': link,
                                               'group': this_group}
@@ -384,7 +442,8 @@ def save_csv(year):
                             link = a.get('href')
                             if link[-3:] == 'pdf' and '' != title:
                                 paper_index += 1
-                                papers_bar.set_description(f'downloading paper {paper_index}: {title}')
+                                papers_bar.set_description(
+                                    f'downloading paper {paper_index}: {title}')
                                 paper_dict = {'title': title,
                                               'main link': link,
                                               'group': this_group}
@@ -397,7 +456,9 @@ def save_csv(year):
                         continue
         #  write error log
         print('write error log')
-        with open('..\\log\\download_err_log.txt', 'w') as f:
+        log_file_pathname = os.path.join(
+            project_root_folder, 'log', 'download_err_log.txt')
+        with open(log_file_pathname, 'w') as f:
             for log in tqdm(error_log):
                 for e in log:
                     if e is not None:
@@ -422,9 +483,11 @@ def download_from_csv(
     :param downloader: str, the downloader to download, could be 'IDM' or 'Thunder', default to 'IDM'
     :return: True
     """
+    project_root_folder = os.path.abspath(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     postfix = f'IJCAI_{year}'
-    csv_filename = f'..\\csv\\IJCAI_{year}.csv'
-    csv_filename = os.path.join(os.getcwd(), csv_filename)
+    csv_filename = f'IJCAI_{year}.csv'
+    csv_filename = os.path.join(project_root_folder, 'csv', csv_filename)
     csv_process.download_from_csv(
         postfix=postfix,
         save_dir=save_dir,
@@ -441,7 +504,8 @@ if __name__ == '__main__':
     #     print(year)
     #     # save_csv(year)
     #     # time.sleep(2)
-    #     download_from_csv(year, save_dir=f'..\\IJCAI_{year}', time_step_in_seconds=1)
+    #     download_from_csv(year, save_dir=f'..\\IJCAI_{year}',
+    #     time_step_in_seconds=1)
     year = 2022
     # total_paper_number = 723
     total_paper_number = save_csv(year)

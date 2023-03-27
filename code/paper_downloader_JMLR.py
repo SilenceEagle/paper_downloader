@@ -7,8 +7,12 @@ import pickle
 import os
 from tqdm import tqdm
 from slugify import slugify
-from lib.downloader import Downloader
 import time
+import sys
+root_folder = os.path.abspath(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.append(root_folder)
+from lib.downloader import Downloader
 
 
 def download_paper(
@@ -32,6 +36,8 @@ def download_paper(
     # create current dict
     title_list = []
     # paper_dict = dict()
+    project_root_folder = os.path.abspath(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
     headers = {
         'User-Agent':
@@ -39,16 +45,18 @@ def download_paper(
     if not is_use_url:
         init_url = f'http://jmlr.org/papers/v{volumn}/'
         postfix = f'JMLR_v{volumn}'
+        dat_file_pathname = os.path.join(
+            project_root_folder, 'urls', f'init_url_JMLR_v{volumn}.dat')
         if not refresh_paper_list and \
-                os.path.exists(f'..\\urls\\init_url_JMLR_v{volumn}.dat'):
-            with open(f'..\\urls\\init_url_JMLR_v{volumn}.dat', 'rb') as f:
+                os.path.exists(dat_file_pathname):
+            with open(dat_file_pathname, 'rb') as f:
                 content = pickle.load(f)
         else:
             print('collecting papers from website...')
             req = urllib.request.Request(url=init_url, headers=headers)
             content = urllib.request.urlopen(req, timeout=10).read()
             # content = open(f'..\\JMLR_{volumn}.html', 'rb').read()
-            with open(f'..\\urls\\init_url_JMLR_v{volumn}.dat', 'wb') as f:
+            with open(dat_file_pathname, 'wb') as f:
                 pickle.dump(content, f)
     elif url is not None:
         req = urllib.request.Request(url=url, headers=headers)
@@ -114,7 +122,9 @@ def download_paper(
 
     # 2. write error log
     print('write error log')
-    with open('..\\log\\download_err_log.txt', 'w') as f:
+    log_file_pathname = os.path.join(
+        project_root_folder, 'log', 'download_err_log.txt')
+    with open(log_file_pathname, 'w') as f:
         for log in tqdm(error_log):
             for e in log:
                 if e is not None:
@@ -189,7 +199,9 @@ def download_special_topics_and_issues_paper(save_dir, time_step_in_seconds=5, d
 
 
 if __name__ == '__main__':
-    volumn = 23
-    download_paper(volumn, rf'Z:\all_papers\JMLR\JMLR_v{volumn}', time_step_in_seconds=3)
-    # download_special_topics_and_issues_paper(rf'Z:\all_papers\JMLR', time_step_in_seconds=3, downloader='IDM')
+    volumn = 24
+    download_paper(volumn, rf'W:\all_papers\JMLR\JMLR_v{volumn}',
+                   time_step_in_seconds=3)
+    # download_special_topics_and_issues_paper(
+    #     rf'Z:\all_papers\JMLR', time_step_in_seconds=3, downloader='IDM')
     pass

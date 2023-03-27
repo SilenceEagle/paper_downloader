@@ -7,6 +7,10 @@ import pickle
 import os
 from slugify import slugify
 import csv
+import sys
+root_folder = os.path.abspath(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.append(root_folder)
 from lib.supplement_porcess import merge_main_supplement, move_main_and_supplement_2_one_directory, \
     move_main_and_supplement_2_one_directory_with_group
 from lib.cvf import get_paper_dict_list
@@ -20,9 +24,16 @@ def save_csv(year, conference):
     :param conference: str, one of ['CVPR', 'ICCV', 'WACV', 'ACCV']
     :return: True
     """
+    project_root_folder = os.path.abspath(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     if conference not in ['CVPR', 'ICCV', 'WACV', 'ACCV']:
-        raise ValueError(f'{conference} is not found in https://openaccess.thecvf.com/menu, maybe a spelling mistake!')
-    with open(f'..\\csv\\{conference}_{year}.csv', 'w', newline='') as csvfile:
+        raise ValueError(f'{conference} is not found in '
+                         f'https://openaccess.thecvf.com/menu, '
+                         f'maybe a spelling mistake!')
+    csv_file_pathname = os.path.join(
+        project_root_folder, 'csv', f'{conference}_{year}.csv'
+    )
+    with open(csv_file_pathname, 'w', newline='') as csvfile:
         fieldnames = ['title', 'main link', 'supplemental link', 'arxiv']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
@@ -32,22 +43,27 @@ def save_csv(year, conference):
         elif conference == 'CVPR' and year == 2022:
             init_url = 'https://openaccess.thecvf.com/CVPR2022?day=all'
         content = None
-        if os.path.exists(f'..\\urls\\init_url_{conference}_{year}.dat'):
-            with open(f'..\\urls\\init_url_{conference}_{year}.dat', 'rb') as f:
+        url_file_pathname = os.path.join(
+            project_root_folder, 'urls', f'init_url_{conference}_{year}.dat'
+        )
+        if os.path.exists(url_file_pathname):
+            with open(url_file_pathname, 'rb') as f:
                 content = pickle.load(f)
         else:
             headers = {
                 'User-Agent':
-                    'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:23.0) Gecko/20100101 Firefox/23.0'}
+                    'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:23.0) '
+                    'Gecko/20100101 Firefox/23.0'}
             req = urllib.request.Request(url=init_url, headers=headers)
             content = urllib.request.urlopen(req).read()
-            with open(f'..\\urls\\init_url_{conference}_{year}.dat', 'wb') as f:
+            with open(url_file_pathname, 'wb') as f:
                 pickle.dump(content, f)
 
         soup = BeautifulSoup(content, 'html5lib')
         tmp_list = soup.find('div', {'id': 'content'}).find_all('dt')
         if len(tmp_list) <= 1:
-            paper_different_days_list_bar = soup.find('div', {'id': 'content'}).find_all('dd')
+            paper_different_days_list_bar = soup.find(
+                'div', {'id': 'content'}).find_all('dd')
             paper_index = 0
             for group in paper_different_days_list_bar:
                 # get group name
@@ -77,26 +93,39 @@ def save_csv_workshops(year, conference):
     :param conference: str, one of ['CVPR', 'ICCV', 'WACV', 'ACCV']
     :return: True
     """
+    project_root_folder = os.path.abspath(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     if conference not in ['CVPR', 'ICCV', 'WACV', 'ACCV']:
-        raise ValueError(f'{conference} is not found in https://openaccess.thecvf.com/menu, maybe a spelling mistake!')
-    with open(f'..\\csv\\{conference}_WS_{year}.csv', 'w', newline='') as csvfile:
-        fieldnames = ['group', 'title', 'main link', 'supplemental link', 'arxiv']
+        raise ValueError(f'{conference} is not found in '
+                         f'https://openaccess.thecvf.com/menu, '
+                         f'maybe a spelling mistake!')
+    csv_file_pathname = os.path.join(
+        project_root_folder, 'csv', f'{conference}_WS_{year}.csv'
+    )
+    with open(csv_file_pathname, 'w', newline='') as csvfile:
+        fieldnames = ['group', 'title', 'main link', 'supplemental link',
+                      'arxiv']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
 
         headers = {
             'User-Agent':
-                'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:23.0) Gecko/20100101 Firefox/23.0'}
+                'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:23.0) '
+                'Gecko/20100101 Firefox/23.0'}
 
-        init_url = f'https://openaccess.thecvf.com/{conference}{year}_workshops/menu'
-        if os.path.exists(f'..\\urls\\init_url_{conference}_WS_{year}.dat'):
-            with open(f'..\\urls\\init_url_{conference}_WS_{year}.dat', 'rb') as f:
+        init_url = f'https://openaccess.thecvf.com/' \
+                   f'{conference}{year}_workshops/menu'
+        url_file_pathname = os.path.join(
+            project_root_folder, 'urls', f'init_url_{conference}_WS_{year}.dat'
+        )
+        if os.path.exists(url_file_pathname):
+            with open(url_file_pathname, 'rb') as f:
                 content = pickle.load(f)
         else:
             req = urllib.request.Request(url=init_url, headers=headers)
             content = urllib.request.urlopen(req, timeout=20).read()
             # content = open(f'..\\{conference}_WS_{year}.html', 'rb').read()
-            with open(f'..\\urls\\init_url_{conference}_WS_{year}.dat', 'wb') as f:
+            with open(url_file_pathname, 'wb') as f:
                 pickle.dump(content, f)
         soup = BeautifulSoup(content, 'html5lib')
         paper_group_list_bar = soup.find('div', {'id': 'content'}).find_all('dd')
@@ -120,27 +149,38 @@ def save_csv_workshops(year, conference):
 
 def download_from_csv(
         year, conference, save_dir, is_download_main_paper=True,
-        is_download_supplement=True, time_step_in_seconds=5, total_paper_number=None,
-        is_workshops=False, downloader='IDM'):
+        is_download_supplement=True, time_step_in_seconds=5,
+        total_paper_number=None, is_workshops=False, downloader='IDM'):
     """
-    download all CVF paper and supplement files given year, restore in save_dir/main_paper and save_dir/supplement
+    download all CVF paper and supplement files given year, restore in
+    save_dir/main_paper and save_dir/supplement
     respectively
     :param year: int, CVF year, such 2019
     :param conference: str, one of ['CVPR', 'ICCV', 'WACV']
     :param save_dir: str, paper and supplement material's save path
     :param is_download_main_paper: bool, True for downloading main paper
-    :param is_download_supplement: bool, True for downloading supplemental material
-    :param time_step_in_seconds: int, the interval time between two downloading request in seconds
-    :param total_paper_number: int, the total number of papers that is going to download
+    :param is_download_supplement: bool, True for downloading supplemental
+        material
+    :param time_step_in_seconds: int, the interval time between two downloading
+        request in seconds
+    :param total_paper_number: int, the total number of papers that is going to
+        download
     :param is_workshops: bool, is to download workshops from csv file.
-    :param downloader: str, the downloader to download, could be 'IDM' or 'Thunder', default to 'IDM'.
+    :param downloader: str, the downloader to download, could be 'IDM' or
+        'Thunder', default to 'IDM'.
     :return: True
     """
-
+    project_root_folder = os.path.abspath(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     postfix = f'{conference}_{year}'
     if is_workshops:
         postfix = f'{conference}_WS_{year}'
-    csv_file_path = f'..\\csv\\{conference}_{year}.csv' if not is_workshops else f'..\\csv\\{conference}_WS_{year}.csv'
+    csv_file_path = os.path.join(
+        project_root_folder,
+        'csv',
+        f'{conference}_{year}.csv' if not is_workshops else
+        f'{conference}_WS_{year}.csv'
+    )
     csv_process.download_from_csv(
         postfix=postfix,
         save_dir=save_dir,
@@ -157,27 +197,38 @@ def download_from_csv(
 def download_paper(
         year, conference, save_dir, is_download_main_paper=True,
         is_download_supplement=True, time_step_in_seconds=5,
-        is_download_main_conference=True, is_download_workshops=True, downloader='IDM'):
+        is_download_main_conference=True, is_download_workshops=True,
+        downloader='IDM'):
     """
-    download all CVF papers in given year, support downloading main conference and workshops.
+    download all CVF papers in given year, support downloading main conference
+    and workshops.
     :param year: int, CVF year, such 2019.
     :param conference: str, one of {'CVPR', 'ICCV', 'WACV'}.
     :param save_dir: str, paper and supplement material's save path.
     :param is_download_main_paper: bool, True for downloading main paper.
-    :param is_download_supplement: bool, True for downloading supplemental material.
-    :param time_step_in_seconds: int, the interval time between two downloading request in seconds.
-    :param is_download_main_conference: bool, this parameter controls whether to download main conference papers,
-        it is a upper level control flag of parameters is_download_main_paper and is_download_supplement.
-        eg. After setting is_download_main_conference=True, is_download_main_paper=False, is_download_supplement=True,
-        the only the supplement materials of the conference (vs. workshops) will be downloaded.
-    :param is_download_workshops: bool, True for downloading workshops paper and is similar with
-        is_download_main_conference.
-    :param downloader: str, the downloader to download, could be 'IDM' or 'Thunder', default to 'IDM'.
+    :param is_download_supplement: bool, True for downloading supplemental
+        material.
+    :param time_step_in_seconds: int, the interval time between two downloading
+        request in seconds.
+    :param is_download_main_conference: bool, this parameter controls whether to
+        download main conference papers,
+        it is a upper level control flag of parameters is_download_main_paper
+        and is_download_supplement. eg. After setting
+        is_download_main_conference=True, is_download_main_paper=False,
+        is_download_supplement=True, the only the supplement materials of the
+        conference (vs. workshops) will be downloaded.
+    :param is_download_workshops: bool, True for downloading workshops paper
+        and is similar with is_download_main_conference.
+    :param downloader: str, the downloader to download, could be 'IDM' or
+        'Thunder', default to 'IDM'.
     :return:
     """
+    project_root_folder = os.path.abspath(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     # main conference
     if is_download_main_conference:
-        csv_file_path = f'..\\csv\\{conference}_{year}.csv'
+        csv_file_path = os.path.join(
+            project_root_folder, 'csv', f'{conference}_{year}.csv')
         if not os.path.exists(csv_file_path):
             total_paper_number = save_csv(year=year, conference=conference)
         else:
@@ -199,9 +250,11 @@ def download_paper(
 
     # workshops
     if is_download_workshops:
-        csv_file_path = f'..\\csv\\{conference}_WS_{year}.csv'
+        csv_file_path = os.path.join(
+            project_root_folder, 'csv', f'{conference}_WS_{year}.csv')
         if not os.path.exists(csv_file_path):
-            total_paper_number = save_csv_workshops(year=year, conference=conference)
+            total_paper_number = save_csv_workshops(
+                year=year, conference=conference)
         else:
             with open(csv_file_path, newline='') as csvfile:
                 myreader = csv.DictReader(csvfile, delimiter=',')
@@ -222,25 +275,25 @@ def download_paper(
 if __name__ == '__main__':
     year = 2023
     conference = 'WACV'
-    download_paper(
-        year,
-        conference=conference,
-        save_dir=fr'E:\{conference}',
-        is_download_main_paper=True,
-        is_download_supplement=True,
-        time_step_in_seconds=5,
-        is_download_main_conference=True,
-        is_download_workshops=True
-    )
+    # download_paper(
+    #     year,
+    #     conference=conference,
+    #     save_dir=fr'E:\{conference}',
+    #     is_download_main_paper=True,
+    #     is_download_supplement=True,
+    #     time_step_in_seconds=5,
+    #     is_download_main_conference=True,
+    #     is_download_workshops=True
+    # )
     #
-    # move_main_and_supplement_2_one_directory(
-    #     main_path=rf'E:\{conference}\{conference}_{year}\main_paper',
-    #     supplement_path=rf'E:\{conference}\{conference}_{year}\supplement',
-    #     supp_pdf_save_path=rf'E:\{conference}\{conference}_{year}\main_paper'
-    # )
-    # move_main_and_supplement_2_one_directory_with_group(
-    #     main_path=rf'E:\{conference}\{conference}_WS_{year}\main_paper',
-    #     supplement_path=rf'E:\{conference}\{conference}_WS_{year}\supplement',
-    #     supp_pdf_save_path=rf'E:\{conference}\{conference}_WS_{year}\main_paper'
-    # )
+    move_main_and_supplement_2_one_directory(
+        main_path=rf'E:\{conference}\{conference}_{year}\main_paper',
+        supplement_path=rf'E:\{conference}\{conference}_{year}\supplement',
+        supp_pdf_save_path=rf'E:\{conference}\{conference}_{year}\main_paper'
+    )
+    move_main_and_supplement_2_one_directory_with_group(
+        main_path=rf'E:\{conference}\{conference}_WS_{year}\main_paper',
+        supplement_path=rf'E:\{conference}\{conference}_WS_{year}\supplement',
+        supp_pdf_save_path=rf'E:\{conference}\{conference}_WS_{year}\main_paper'
+    )
     pass

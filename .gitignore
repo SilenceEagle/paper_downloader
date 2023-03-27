@@ -165,3 +165,4 @@ data/
 log/
 temp_zip
 urls/
+*.txt
