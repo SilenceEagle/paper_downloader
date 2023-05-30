@@ -40,9 +40,8 @@ def save_csv(year, conference):
         init_url = f'http://openaccess.thecvf.com/{conference}{year}'
         if conference == 'ICCV' and year == 2021:
             init_url = 'https://openaccess.thecvf.com/ICCV2021?day=all'
-        elif conference == 'CVPR' and year == 2022:
-            init_url = 'https://openaccess.thecvf.com/CVPR2022?day=all'
-        content = None
+        elif conference == 'CVPR' and year >= 2022:
+            init_url = f'https://openaccess.thecvf.com/CVPR{year}?day=all'
         url_file_pathname = os.path.join(
             project_root_folder, 'urls', f'init_url_{conference}_{year}.dat'
         )
@@ -274,7 +273,7 @@ def download_paper(
 
 if __name__ == '__main__':
     year = 2023
-    conference = 'WACV'
+    conference = 'CVPR'
     # download_paper(
     #     year,
     #     conference=conference,
@@ -283,17 +282,17 @@ if __name__ == '__main__':
     #     is_download_supplement=True,
     #     time_step_in_seconds=5,
     #     is_download_main_conference=True,
-    #     is_download_workshops=True
+    #     is_download_workshops=False
     # )
     #
-    move_main_and_supplement_2_one_directory(
-        main_path=rf'E:\{conference}\{conference}_{year}\main_paper',
-        supplement_path=rf'E:\{conference}\{conference}_{year}\supplement',
-        supp_pdf_save_path=rf'E:\{conference}\{conference}_{year}\main_paper'
-    )
-    move_main_and_supplement_2_one_directory_with_group(
-        main_path=rf'E:\{conference}\{conference}_WS_{year}\main_paper',
-        supplement_path=rf'E:\{conference}\{conference}_WS_{year}\supplement',
-        supp_pdf_save_path=rf'E:\{conference}\{conference}_WS_{year}\main_paper'
-    )
+    # move_main_and_supplement_2_one_directory(
+    #     main_path=rf'E:\{conference}\{conference}_{year}\main_paper',
+    #     supplement_path=rf'E:\{conference}\{conference}_{year}\supplement',
+    #     supp_pdf_save_path=rf'E:\{conference}\{conference}_{year}\main_paper'
+    # )
+    # move_main_and_supplement_2_one_directory_with_group(
+    #     main_path=rf'E:\{conference}\{conference}_WS_{year}\main_paper',
+    #     supplement_path=rf'E:\{conference}\{conference}_WS_{year}\supplement',
+    #     supp_pdf_save_path=rf'E:\{conference}\{conference}_WS_{year}\main_paper'
+    # )
     pass
