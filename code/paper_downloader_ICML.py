@@ -14,9 +14,11 @@ sys.path.append(root_folder)
 from lib.downloader import Downloader
 import lib.pmlr as pmlr
 from lib.supplement_porcess import merge_main_supplement
+from lib.openreview import download_icml_papers_given_url_and_group_id
 
 
-def download_paper(year, save_dir, is_download_supplement=True, time_step_in_seconds=5, downloader='IDM'):
+def download_paper(year, save_dir, is_download_supplement=True,
+                   time_step_in_seconds=5, downloader='IDM', source='pmlr'):
     """
     download all ICML paper and supplement files given year, restore in
         save_dir/main_paper and save_dir/supplement
@@ -29,12 +31,16 @@ def download_paper(year, save_dir, is_download_supplement=True, time_step_in_sec
         request in seconds
     :param downloader: str, the downloader to download, could be 'IDM' or
         'Thunder', default to 'IDM'
+    :param source: str, source website, 'pmlr' or 'openreview'
     :return: True
     """
+    assert source in ['pmlr', 'openreview'], \
+        f'only support source pmlr or openreview, but get {source}'
     project_root_folder = os.path.abspath(
         os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     downloader = Downloader(downloader=downloader)
     ICML_year_dict = {
+        2023: 202,
         2022: 162,
         2021: 139,
         2020: 119,
@@ -46,27 +52,55 @@ def download_paper(year, save_dir, is_download_supplement=True, time_step_in_sec
         2014: 32,
         2013: 28
     }
-    if year >= 2013:
-        init_url = f'http://proceedings.mlr.press/v{ICML_year_dict[year]}/'
-    elif year == 2012:
-        init_url = 'https://icml.cc/2012/papers.1.html'
-    elif year == 2011:
-        init_url = 'http://www.icml-2011.org/papers.php'
-    elif 2009 == year:
-        init_url = 'https://icml.cc/Conferences/2009/abstracts.html'
-    elif 2008 == year:
-        init_url = 'http://www.machinelearning.org/archive/icml2008/' \
-                   'abstracts.shtml'
-    elif 2007 == year:
-        init_url = 'https://icml.cc/Conferences/2007/paperlist.html'
-    elif year in [2006, 2004, 2005]:
-        init_url = f'https://icml.cc/Conferences/{year}/proceedings.html'
-    elif 2003 == year:
-        init_url = 'https://aaai.org/Library/ICML/icml03contents.php'
-    else:
-        raise ValueError('''the given year's url is unknown !''')
+    if source == 'openreview':
+        init_url = f'https://openreview.net/group?id=ICML.cc/{year}/Conference'
+    else:  # pmlr
+        if year >= 2013:
+            init_url = f'http://proceedings.mlr.press/v{ICML_year_dict[year]}/'
+        elif year == 2012:
+            init_url = 'https://icml.cc/2012/papers.1.html'
+        elif year == 2011:
+            init_url = 'http://www.icml-2011.org/papers.php'
+        elif 2009 == year:
+            init_url = 'https://icml.cc/Conferences/2009/abstracts.html'
+        elif 2008 == year:
+            init_url = 'http://www.machinelearning.org/archive/icml2008/' \
+                       'abstracts.shtml'
+        elif 2007 == year:
+            init_url = 'https://icml.cc/Conferences/2007/paperlist.html'
+        elif year in [2006, 2004, 2005]:
+            init_url = f'https://icml.cc/Conferences/{year}/proceedings.html'
+        elif 2003 == year:
+            init_url = 'https://aaai.org/Library/ICML/icml03contents.php'
+        else:
+            raise ValueError('''the given year's url is unknown !''')
 
     postfix = f'ICML_{year}'
+    if source == 'openreview':  # download from openreview website:
+        # oral paper
+        group_id = 'oral'
+        save_dir_oral = os.path.join(save_dir, group_id)
+        os.makedirs(save_dir_oral, exist_ok=True)
+        download_icml_papers_given_url_and_group_id(
+            save_dir=save_dir_oral,
+            year=year,
+            base_url=init_url,
+            group_id=group_id,
+            start_page=1,
+            time_step_in_seconds=time_step_in_seconds)
+        # poster paper
+        group_id = 'poster'
+        save_dir_poster = os.path.join(save_dir, group_id)
+        os.makedirs(save_dir_poster, exist_ok=True)
+        download_icml_papers_given_url_and_group_id(
+            save_dir=os.path.join(save_dir, 'poster'),
+            year=year,
+            base_url=init_url,
+            group_id=group_id,
+            start_page=1,
+            time_step_in_seconds=time_step_in_seconds)
+        return
+
     dat_file_pathname = os.path.join(
         project_root_folder, 'urls', f'init_url_icml_{year}.dat')
     if os.path.exists(dat_file_pathname):
@@ -363,13 +397,14 @@ def rename_downloaded_paper(year, source_path):
 
 
 if __name__ == '__main__':
-    year = 2022
+    year = 2023
     download_paper(
         year,
         rf'D:\ICML_{year}',
         is_download_supplement=True,
         time_step_in_seconds=5,
-        downloader='IDM'
+        downloader='IDM',
+        source='openreview'
     )
     # merge_main_supplement(main_path=f'..\\ICML_{year}\\main_paper',
     #                       supplement_path=f'..\\ICML_{year}\\supplement',
