@@ -23,6 +23,7 @@ def download_paper(year, save_dir, is_download_supplement=False, time_step_in_se
     :return: True
     """
     COLT_year_dict = {
+        2023: 195,
         2022: 178,
         2021: 134,
         2020: 125,
@@ -53,7 +54,7 @@ def download_paper(year, save_dir, is_download_supplement=False, time_step_in_se
 
 
 if __name__ == '__main__':
-    year = 2022
+    year = 2023
     download_paper(
         year,
         rf'E:\COLT_{year}',
