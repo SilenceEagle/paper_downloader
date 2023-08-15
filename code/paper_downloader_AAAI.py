@@ -574,11 +574,13 @@ def download_from_csv(
 
 if __name__ == '__main__':
     year = 2023
-    # total_paper_number = 2022
-    total_paper_number = save_csv(year)
-    download_from_csv(year, save_dir=f'..\\AAAI_{year}',
-                      time_step_in_seconds=5,
-                      total_paper_number=total_paper_number)
+    total_paper_number = 2021
+    # total_paper_number = save_csv(year)
+    download_from_csv(
+        year,
+        save_dir=fr'E:\AAAI_{year}',
+        time_step_in_seconds=5,
+        total_paper_number=total_paper_number)
     # for year in range(2012, 2018, 2):
     #     print(year)
     #     total_paper_number = None

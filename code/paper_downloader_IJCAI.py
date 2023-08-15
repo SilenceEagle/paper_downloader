@@ -506,12 +506,12 @@ if __name__ == '__main__':
     #     # time.sleep(2)
     #     download_from_csv(year, save_dir=f'..\\IJCAI_{year}',
     #     time_step_in_seconds=1)
-    year = 2022
+    year = 2023
     # total_paper_number = 723
     total_paper_number = save_csv(year)
     download_from_csv(
         year,
-        save_dir=fr'D:\IJCAI_{year}',
+        save_dir=fr'E:\IJCAI_{year}',
         time_step_in_seconds=5,
         total_paper_number=total_paper_number)
 
