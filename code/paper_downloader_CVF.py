@@ -15,6 +15,7 @@ from lib.supplement_porcess import merge_main_supplement, move_main_and_suppleme
     move_main_and_supplement_2_one_directory_with_group
 from lib.cvf import get_paper_dict_list
 from lib import csv_process
+import time
 
 
 def save_csv(year, conference):
@@ -134,12 +135,24 @@ def save_csv_workshops(year, conference):
             a = group.find('a')
             group_name = slugify(a.text)
             print(f'GROUP: {group_name}')
+
             group_link = urllib.parse.urljoin(init_url, a.get('href'))
-            group_paper_dict_list, _ = get_paper_dict_list(
-                url=group_link,
-                group_name=group_name,
-                timeout=20,
-            )
+
+            repeat_time = 3
+            for r in range(repeat_time):
+                try:
+                    group_paper_dict_list, _ = get_paper_dict_list(
+                        url=group_link,
+                        group_name=group_name,
+                        timeout=20,
+                    )
+                    time.sleep(1)
+                    break
+                except Exception as e:
+                    if r + 1 == repeat_time:
+                        print(f'ERROR: {str(e)}')
+                        continue
+
             paper_index += len(group_paper_dict_list)
             for paper_dict in group_paper_dict_list:
                 writer.writerow(paper_dict)
@@ -273,17 +286,17 @@ def download_paper(
 
 if __name__ == '__main__':
     year = 2023
-    conference = 'CVPR'
-    # download_paper(
-    #     year,
-    #     conference=conference,
-    #     save_dir=fr'E:\{conference}',
-    #     is_download_main_paper=True,
-    #     is_download_supplement=True,
-    #     time_step_in_seconds=5,
-    #     is_download_main_conference=True,
-    #     is_download_workshops=False
-    # )
+    conference = 'ICCV'
+    download_paper(
+        year,
+        conference=conference,
+        save_dir=fr'E:\{conference}',
+        is_download_main_paper=True,
+        is_download_supplement=True,
+        time_step_in_seconds=5,
+        is_download_main_conference=True,
+        is_download_workshops=True
+    )
     #
     # move_main_and_supplement_2_one_directory(
     #     main_path=rf'E:\{conference}\{conference}_{year}\main_paper',
