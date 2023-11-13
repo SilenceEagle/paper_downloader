@@ -29,18 +29,25 @@ def __download_papers_given_divs(driver, divs, save_dir, paper_postfix,
                                  time_step_in_seconds=10, downloader='IDM'):
     error_log = []
     downloader = Downloader(downloader=downloader)
-    num_papers = len(divs)
+
+    titles = [d.text for d in divs]
+    valid_divs = []
+    for i, t in enumerate(titles):
+        if len(t):
+            valid_divs.append(divs[i])
+    num_papers = len(valid_divs)
     print('found number of papers:', num_papers)
     name = None
-    for index, paper in enumerate(divs):
+    for index, paper in enumerate(valid_divs):
         is_get_paper = False
         try:
             a_hrefs = paper.find_elements(By.TAG_NAME, "a")
             name = slugify(a_hrefs[0].text.strip())
             link = a_hrefs[1].get_attribute('href')
             link = urllib.parse.urljoin('https://openreview.net', link)
+            if name == '':
+                continue
             is_get_paper = True
-            break
         except Exception as e:
             print(f'\tget Exception: {str(e.msg)}')
             print('\tskip this download...')
@@ -72,7 +79,7 @@ def __download_papers_given_divs(driver, divs, save_dir, paper_postfix,
                     print('Error: ' + name + ' - ' + str(e))
             if not success_flag:
                 error_log.append((name, link))
-    return error_log
+    return error_log, num_papers
 
 
 def __get_into_pages_given_number(driver, page_number, pages, wait_fn,
@@ -90,7 +97,7 @@ def __get_into_pages_given_number(driver, page_number, pages, wait_fn,
 
 def download_nips_papers_given_url(
         save_dir, year, base_url, conference='NIPS', start_page=1,
-        time_step_in_seconds=10, downloader='IDM'):
+        time_step_in_seconds=10, download_groups='all', downloader='IDM'):
     """
     download NeurIPS papers from the given web url.
     :param save_dir: str, paper save path
@@ -103,9 +110,16 @@ def download_nips_papers_given_url(
     :param start_page: int, the initial downloading webpage number, only the pages whose number is
                             equal to or greater than this number will be processed.
     :param time_step_in_seconds: int, the interval time between two downlaod request in seconds
+    :param groups: group name, such as 'oral', 'spotlight', 'poster'.
+        Default: 'all'.
+    :type download_groups: str | list[str]
     :param downloader: str, the downloader to download, could be 'IDM' or 'Thunder', default to 'IDM'
     :return:
     """
+    if year < 2023:
+        sub_xpath = '''id="accepted-papers"'''
+    else:
+        sub_xpath = '''class="submissions-list"'''
     def mywait(driver, condition=None):
         # wait for the select element to become visible
         # print('Starting web driver wait...')
@@ -115,13 +129,24 @@ def download_nips_papers_given_url(
         # print('Starting web driver wait... finished')
         # res = wait.until(EC.presence_of_element_located((By.ID, "notes")))
         # print("Successful load the website!->", res)
+        # res = wait.until(
+        #     EC.presence_of_element_located((By.CLASS_NAME, "note")))
         res = wait.until(
-            EC.presence_of_element_located((By.CLASS_NAME, "note")))
+            EC.presence_of_element_located((By.ID, "notes")))
         # print("Successful load the website notes!->", res)
         res = wait.until(EC.presence_of_element_located(
-            (By.XPATH, '''//*[@id="accepted-papers"]/nav''')))
+            (By.XPATH, f'''//*[@{sub_xpath}]/nav''')))
         # print("Successful load the website pagination!->", res)
         time.sleep(2)  # seconds, workaround for bugs
+
+    def find_divs_of_papers():
+        if year < 2023:
+            divs = driver.find_element(By.ID, group_id). \
+                find_elements(By.CLASS_NAME, 'note ')
+        else:
+            divs = driver.find_element(By.ID, group_id). \
+                find_elements(By.XPATH, '//*[@class="note  undefined"]')
+        return divs
 
     paper_postfix = f'{conference}_{year}'
     error_log = []
@@ -134,105 +159,147 @@ def download_nips_papers_given_url(
 
     mywait(driver)
     # pages = driver.find_elements_by_xpath('//*[@id="accepted-papers"]/nav/ul/li')
-    pages = driver.find_elements(By.XPATH,
-                                 '//*[@id="accepted-papers"]/nav/ul/li')
-    current_page = 1
-    ind_page = 2  # 0 << ; 1 <
-    total_pages_number = int(pages[-3].text)  # << | < | 1, 2, 3, ... | > | >>
-    last_total_pages = total_pages_number
-    # get into start pages
-    while current_page < start_page:
-        if total_pages_number < start_page:  # flip pages until seeing the start page
-            current_page = total_pages_number
-            __get_into_pages_given_number(
-                driver=driver, page_number=current_page, pages=pages,
-                wait_fn=mywait)
-            print(f'getting into web page {current_page}...')
-            # res = wait.until(EC.presence_of_element_located(
-            #     (By.XPATH, '//*[@id="accepted-papers"]/ul/li/h4/a')))
-            # res = wait.until(EC.presence_of_element_located(
-            #     (By.XPATH, '''//*[@id="accepted-papers"]/nav''')))
+
+    # download grouped papers, such as "Accepted Papaers" for year before 2023
+    # "Accept (oral)", "Accept (spotlight)", "Accept (poster)" for year 2023
+    groups = driver.find_elements(
+        By.XPATH, f'//*[@id="notes"]/div/div[1]/ul/li')
+    accept_groups = []
+    for g in groups:
+        if 'accept' in g.text.lower():
+            # whether download this group
+            is_download_group = True
+            if not 'all' == download_groups:
+                is_download_group = False
+                for dg in download_groups:
+                    if dg.lower() in g.text.lower():
+                        is_download_group = True
+                        break
+            if is_download_group:
+                accept_groups.append(g)
+    group_name = None
+    group_save_dir = save_dir
+    for ag in accept_groups:
+        group_name = slugify(ag.text)
+        group_save_dir = os.path.join(save_dir, group_name)
+        print(f'Downloading {group_name}...')
+        os.makedirs(group_save_dir, exist_ok=True)
+        number_paper_group = 0
+        accept_group_link = ag.find_element(By.TAG_NAME, "a")
+        group_id = accept_group_link.get_attribute('aria-controls')
+        # scroll to top of page, if not at top, the click action not work
+        # https://stackoverflow.com/questions/45576958/scrolling-to-top-of-the-page-in-python-using-selenium
+        driver.find_element(By.TAG_NAME, 'body').send_keys(
+            Keys.CONTROL + Keys.HOME)
+        accept_group_link.click()
+        mywait(driver)
+        pages = driver.find_elements(
+            By.XPATH, f'//*[@{sub_xpath}]/nav[1]/ul/li')
+        page_str_list = get_pages_str(pages)
+        # print(f'Current page navigation bar:\n{page_str_list}')
+        current_page = 1
+        ind_page = 2  # 0 << ; 1 <
+        # << | < | 1, 2, 3, ... | > | >>
+        total_pages_number = get_max_page_number(page_str_list)
+        last_total_pages = total_pages_number
+        # get into start pages
+        while current_page < start_page:
+            if total_pages_number < start_page:  # flip pages until seeing the start page
+                current_page = total_pages_number
+                __get_into_pages_given_number(
+                    driver=driver, page_number=current_page, pages=pages,
+                    wait_fn=mywait)
+                print(f'getting into web page {current_page}...')
+                # res = wait.until(EC.presence_of_element_located(
+                #     (By.XPATH, '//*[@id="accepted-papers"]/ul/li/h4/a')))
+                # res = wait.until(EC.presence_of_element_located(
+                #     (By.XPATH, '''//*[@id="accepted-papers"]/nav''')))
+                mywait(driver)
+
+                # print("Successful load the website pagination!->", res)
+                # pages = driver.find_elements_by_xpath('//*[@id="accepted-papers"]/nav/ul/li')
+                pages = pages = driver.find_elements(
+                    By.XPATH, f'//*[@{sub_xpath}]/nav[1]/ul/li')
+                page_str_list = get_pages_str(pages)
+                total_pages_number = get_max_page_number(page_str_list)
+                # # print(f'Current page navigation bar:\n{page_str_list}')
+                if total_pages_number == last_total_pages:  # total page remain unchanged after reload
+                    print(f'reached last({total_pages_number}-th) webpage')
+                    # when get the last page, but the page number is till less than start page, so
+                    # the start page doesn't exist. PRINT ERROR and return
+                    print(f'ERROR: THE {start_page}-th webpage not found!')
+                    return
+            else:
+                current_page = start_page
+
+        page = __get_into_pages_given_number(
+            driver=driver, page_number=current_page, pages=pages,
+            wait_fn=mywait)
+
+        while current_page <= total_pages_number:
+            if page is None:
+                break
+            print(f'downloading papers in page: {current_page}')
             mywait(driver)
 
-            # print("Successful load the website pagination!->", res)
+            # divs = driver.find_elements_by_xpath('//*[@id="accepted-papers"]/ul/li')
+            # divs = driver.find_elements(By.XPATH, '//*[@id="accepted-papers"]/ul/li')
+            divs = find_divs_of_papers()
+
+            # temp workaround
+            repeat_times = 3
+            is_find_paper = False
+            for r in range(repeat_times):
+                try:
+                    a_hrefs = divs[0].find_elements(By.TAG_NAME, "a")
+                    name = slugify(a_hrefs[0].text.strip())
+                    link = a_hrefs[1].get_attribute('href')
+                    a_hrefs = divs[-1].find_elements(By.TAG_NAME, "a")
+                    name = slugify(a_hrefs[0].text.strip())
+                    link = a_hrefs[1].get_attribute('href')
+                    is_find_paper = True
+                    break
+                except Exception as e:
+                    if (r + 1) < repeat_times:
+                        print(f'\terror occurre: {str(e.msg)}')
+                        print(f'\tsleep {(r + 1) * 5} seconds...')
+                        time.sleep((r + 1) * 5)
+                        print(f'{r + 1}-th reloading page')
+                        divs = find_divs_of_papers()
+                    else:
+                        print('\tskip this page.')
+            if not is_find_paper:
+                continue
+
+            # time.sleep(time_step_in_seconds)
+            this_error_log, this_number_paper = __download_papers_given_divs(
+                driver=driver,
+                divs=divs,
+                save_dir=group_save_dir,
+                paper_postfix=paper_postfix,
+                time_step_in_seconds=time_step_in_seconds,
+                downloader=downloader
+            )
+            for e in this_error_log:
+                error_log.append(e)
+            number_paper_group += this_number_paper
+            # get into next page
+            current_page += 1
             # pages = driver.find_elements_by_xpath('//*[@id="accepted-papers"]/nav/ul/li')
-            pages = driver.find_elements(By.XPATH,
-                                         '//*[@id="accepted-papers"]/nav/ul/li')
-            total_pages_number = int(pages[-3].text)
-            if total_pages_number == last_total_pages:  # total page remain unchanged after reload
-                print(f'reached last({total_pages_number}-th) webpage')
-                # when get the last page, but the page number is till less than start page, so
-                # the start page doesn't exist. PRINT ERROR and return
-                print(f'ERROR: THE {start_page}-th webpage not found!')
-                return
-        else:
-            current_page = start_page
-
-    page = __get_into_pages_given_number(
-        driver=driver, page_number=current_page, pages=pages,
-        wait_fn=mywait)
-
-    while current_page <= total_pages_number:
-        if page is None:
-            break
-        print(f'downloading papers in page: {current_page}')
-        mywait(driver)
-
-        # divs = driver.find_elements_by_xpath('//*[@id="accepted-papers"]/ul/li')
-        # divs = driver.find_elements(By.XPATH, '//*[@id="accepted-papers"]/ul/li')
-        divs = driver.find_element(By.ID, 'accepted-papers'). \
-            find_elements(By.CLASS_NAME, 'note ')
-
-        # temp workaround
-        repeat_times = 3
-        is_find_paper = False
-        for r in range(repeat_times):
-            try:
-                a_hrefs = divs[0].find_elements(By.TAG_NAME, "a")
-                name = slugify(a_hrefs[0].text.strip())
-                link = a_hrefs[1].get_attribute('href')
-                a_hrefs = divs[-1].find_elements(By.TAG_NAME, "a")
-                name = slugify(a_hrefs[0].text.strip())
-                link = a_hrefs[1].get_attribute('href')
-                is_find_paper = True
-                break
-            except Exception as e:
-                if (r + 1) < repeat_times:
-                    print(f'\terror occurre: {str(e.msg)}')
-                    print(f'\tsleep {(r + 1) * 5} seconds...')
-                    time.sleep((r + 1) * 5)
-                    print(f'{r + 1}-th reloading page')
-                    divs = driver.find_element(By.ID, 'accepted-papers'). \
-                        find_elements(By.CLASS_NAME, 'note ')
-                else:
-                    print('\tskip this page.')
-        if not is_find_paper:
-            continue
-
-        # time.sleep(time_step_in_seconds)
-        this_error_log = __download_papers_given_divs(
-            driver=driver,
-            divs=divs,
-            save_dir=save_dir,
-            paper_postfix=paper_postfix,
-            time_step_in_seconds=time_step_in_seconds,
-            downloader=downloader
-        )
-        for e in this_error_log:
-            error_log.append(e)
-        # get into next page
-        current_page += 1
-        # pages = driver.find_elements_by_xpath('//*[@id="accepted-papers"]/nav/ul/li')
-        pages = driver.find_elements(By.XPATH,
-                                     '//*[@id="accepted-papers"]/nav/ul/li')
-        total_pages_number = int(pages[-3].text)
-        # if we do not reread the pages, all the pages will be not available with an exception:
-        # selenium.common.exceptions.StaleElementReferenceException:
-        # Message: stale element reference: element is not attached to the page document
-        page = __get_into_pages_given_number(driver=driver,
-                                             page_number=current_page,
-                                             pages=pages,
-                                             wait_fn=mywait)
+            pages = driver.find_elements(
+                By.XPATH, f'//*[@{sub_xpath}]/nav[1]/ul/li')
+            page_str_list = get_pages_str(pages)
+            total_pages_number = get_max_page_number(page_str_list)
+            # print(f'Current page navigation bar:\n{page_str_list}')
+            # if we do not reread the pages, all the pages will be not available with an exception:
+            # selenium.common.exceptions.StaleElementReferenceException:
+            # Message: stale element reference: element is not attached to the page document
+            page = __get_into_pages_given_number(driver=driver,
+                                                 page_number=current_page,
+                                                 pages=pages,
+                                                 wait_fn=mywait)
+        # display total number of papers
+        print(f'number of papers in {group_name}: {number_paper_group}')
 
     driver.quit()
     # 2. write error log
@@ -382,7 +449,7 @@ def download_iclr_papers_given_url_and_group_id(
             continue
 
         # time.sleep(time_step_in_seconds)
-        this_error_log = __download_papers_given_divs(
+        this_error_log, this_number_paper = __download_papers_given_divs(
             driver=driver,
             divs=divs,
             save_dir=save_dir,
@@ -579,7 +646,7 @@ def download_icml_papers_given_url_and_group_id(
         if not is_find_paper:
             continue
         # time.sleep(time_step_in_seconds)
-        this_error_log = __download_papers_given_divs(
+        this_error_log, this_number_paper = __download_papers_given_divs(
             driver=driver,
             divs=divs,
             save_dir=save_dir,
@@ -612,6 +679,24 @@ def download_icml_papers_given_url_and_group_id(
                 f.write(e)
                 f.write('\n')
             f.write('\n')
+
+
+def get_pages_str(pages):
+    page_str_list = [p.text for p in pages]
+    # print(f'Current page navigation bar:\n{page_str_list}')
+    return page_str_list
+
+
+def get_max_page_number(page_str_list):
+    is_find_number = False
+    for i, page_str in enumerate(page_str_list):
+        if not page_str.isnumeric() and is_find_number:
+            return int(page_str_list[i-1])
+        if page_str.isnumeric():
+            is_find_number = True
+    return int(page_str_list[-1])
+
+
 
 
 if __name__ == "__main__":

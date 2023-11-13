@@ -173,7 +173,7 @@ def download_from_csv(
 
 
 if __name__ == '__main__':
-    year = 2022
+    year = 2023
     # total_paper_number = 1899
     # total_paper_number = save_csv(year)
     # download_from_csv(
@@ -186,8 +186,10 @@ if __name__ == '__main__':
     download_nips_papers_given_url(
         save_dir=rf'E:\NIPS_{year}',
         year=year,
-        base_url='https://openreview.net/group?id=NeurIPS.cc/2022/Conference',
+        base_url=f'https://openreview.net/group?id=NeurIPS.cc/'
+                 f'{year}/Conference',
         time_step_in_seconds=10,
+        # download_groups=['poster'],
         downloader='IDM')
     # move_main_and_supplement_2_one_directory(
     #     main_path=rf'F:\workspace\python3_ws\paper_downloader-master\NIPS_{year}\main_paper',
