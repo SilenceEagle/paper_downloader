@@ -3,7 +3,7 @@ downloader.py
 20210624
 """
 import time
-from lib import IDM, thunder
+from lib import IDM
 import requests
 import os
 
@@ -29,18 +29,20 @@ def _download(urls, save_path, time_sleep_in_seconds=5):
 
 
 class Downloader(object):
-    def __init__(self, downloader):
+    def __init__(self, downloader=None):
         """
-        :param downloader: None or str, the downloader's name,  if downloader is None, 'request' will be used to
-            download files; if downloader is 'IDM', the Internet Downloader Manager will be used to download
-            files; if downloader is 'Thunder', the Thunder(迅雷) will be used to download will be used to
-            download files; or a ValueError will be raised.
+        :param downloader: None or str, the downloader's name.
+            if downloader is None, 'request' will be used to
+            download files; if downloader is 'IDM', the
+            "Internet Downloader Manager" will be used to download
+            files; or a ValueError will be raised.
         """
         super(Downloader, self).__init__()
-        if downloader is not None and downloader.lower() not in ['idm', 'thunder']:
+        if downloader is not None and downloader.lower() not in ['idm']:
             raise ValueError(
-                f'''ERROR: Unsupported downloader: {downloader}, we currently only support'''
-                f''' "IDM" or "Thunder" '''
+                f'''ERROR: Unsupported downloader: {downloader}, '''
+                f'''we currently only support'''
+                f''' None (means python's requests) or "IDM" '''
             )
         self.downloader = downloader
 
@@ -60,12 +62,6 @@ class Downloader(object):
             )
         elif self.downloader.lower() == 'idm':
             IDM.download(
-                urls=urls,
-                save_path=save_path,
-                time_sleep_in_seconds=time_sleep_in_seconds
-            )
-        elif self.downloader.lower() == 'thunder':
-            thunder.download(
                 urls=urls,
                 save_path=save_path,
                 time_sleep_in_seconds=time_sleep_in_seconds

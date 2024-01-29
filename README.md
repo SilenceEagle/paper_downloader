@@ -82,7 +82,9 @@ if __name__ == '__main__':
         save_dir=f'..\\AAAI_{year}', # change to your save location
         time_step_in_seconds=5,  # time step (seconds) between two downloading requests
         total_paper_number=total_paper_number,
-        downloader='IDM'  # use Internet Download Manager software to download papers
+        downloader=None # use python "requests" package to download papers
+        # downloader='IDM'  # use Internet Download Manager software to 
+                           # download papers
     )
 ```
 
@@ -96,10 +98,3 @@ python code/paper_downloader_AAAI.py  # download AAAI papers
 **This repo also provides the function to process supplemental material:**
 1. Merge the main supplemental material pdf file and the main paper into one single pdf file;
 2. Move the supplemental material pdf files (extracted from the downloaded zip files if presented) into the main papers' folder.
-
-## KNOWN ISSUES
-
-### issue with pywin32
-
-**ERROR**: After install pywin32, a error may accour: *ImportError: DLL load failed while importing win32api: 找不到指定的模块*.    
-**[SOLUTION](https://blog.csdn.net/ljr_123/article/details/104693372)**: Get into the *python interpreter path*/Scripts folder and run this command in CMD: **python pywin32_postinstall.py -install**
