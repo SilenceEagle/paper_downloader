@@ -340,6 +340,12 @@ def download_iclr_papers_given_url_and_group_id(
     :type proxy_ip_port: str | None
     :return:
     """
+    def _get_pages_xpath(year):
+        if year <= 2023:
+            xpath = f'''//*[@id="{group_id}"]/nav/ul/li'''
+        else:
+            xpath = f'''//*[@id="{group_id}"]/div/div/nav/ul/li'''
+        return xpath
     def mywait(driver, condition=None):
         # wait for the select element to become visible
         # print('Starting web driver wait...')
@@ -349,13 +355,22 @@ def download_iclr_papers_given_url_and_group_id(
         # print('Starting web driver wait... finished')
         # res = wait.until(EC.presence_of_element_located((By.ID, "notes")))
         # print("Successful load the website!->", res)
-        res = wait.until(
-            EC.presence_of_element_located((By.CLASS_NAME, "note")))
+        if year <= 2023:
+            res = wait.until(
+                EC.presence_of_element_located((By.CLASS_NAME, "note")))
         # print("Successful load the website notes!->", res)
         # res = wait.until(EC.presence_of_element_located(
         #     (By.XPATH, f'''//*[@id="{group_id}"]/nav''')))
-        wait.until(EC.element_to_be_clickable(
-            (By.XPATH, f'''//*[@id="{group_id}"]/nav/ul/li[3]/a''')))
+        # scroll to bottom of page
+        # https://stackoverflow.com/questions/45576958/scrolling-to-top-of-the-page-in-python-using-selenium
+        driver.find_element(By.TAG_NAME, 'body').send_keys(
+            Keys.CONTROL + Keys.END)
+        if year <= 2023:
+            wait.until(EC.element_to_be_clickable(
+                (By.XPATH, f'{_get_pages_xpath(year)}[3]/a')))
+        else:
+            wait.until(EC.element_to_be_clickable(
+                (By.XPATH, f'{_get_pages_xpath(year)}[3]/a')))
         # print("Successful load the website pagination!->", res)
         time.sleep(2)  # seconds, workaround for bugs
 
@@ -375,7 +390,7 @@ def download_iclr_papers_given_url_and_group_id(
         os.makedirs(save_dir)
 
     mywait(driver)
-    pages = driver.find_elements(By.XPATH, f'//*[@id="{group_id}"]/nav/ul/li')
+    pages = driver.find_elements(By.XPATH, _get_pages_xpath(year))
     current_page = 1
     ind_page = 2  # 0 << ; 1 <
     total_pages_number = int(pages[-3].text)  # << | < | 1, 2, 3, ... | > | >>
@@ -397,7 +412,7 @@ def download_iclr_papers_given_url_and_group_id(
 
             # print("Successful load the website pagination!->", res)
             pages = driver.find_elements(
-                By.XPATH, f'//*[@id="{group_id}"]/nav/ul/li')
+                By.XPATH, _get_pages_xpath(year))
             total_pages_number = int(pages[-3].text)
             # total page remain unchanged after reload
             if total_pages_number == last_total_pages:
@@ -462,7 +477,7 @@ def download_iclr_papers_given_url_and_group_id(
         # get into next page
         current_page += 1
         pages = driver.find_elements(
-            By.XPATH, f'//*[@id="{group_id}"]/nav/ul/li')
+            By.XPATH, _get_pages_xpath(year))
         total_pages_number = int(pages[-3].text)
         # if we do not reread the pages, all the pages will be not available
         # with an exception:

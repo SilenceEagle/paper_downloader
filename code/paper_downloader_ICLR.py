@@ -71,16 +71,25 @@ def __find_pages_given_number(page_number, pages):
 
 
 def download_iclr_oral_papers(save_dir, year, base_url=None,
-                              time_step_in_seconds=10, downloader='IDM'):
+                              time_step_in_seconds=10, downloader='IDM',
+                              start_page=1, proxy_ip_port=None):
     """
-    Download iclr oral papers between year 2017 and 2022.
+    Download iclr oral papers between year 2017 and 2022, 2024.
     :param save_dir: str, paper save path
     :param year: int, iclr year, current only support year >= 2018
     :param base_url: str, paper website url
     :param time_step_in_seconds: int, the interval time between two download
-        request in seconds
+        request in seconds.
     :param downloader: str, the downloader to download, could be 'IDM' or
-        'Thunder', default to 'IDM'
+        None, default to 'IDM'.
+    :param start_page: int, the initial downloading webpage number, only the
+        pages whose number is equal to or greater than this number will be
+        processed. Currently, this parameter is only used in year 2024.
+        Default: 1.
+    :param proxy_ip_port: str or None, proxy ip address and port, eg.
+        eg: "127.0.0.1:7890". Currently, this parameter is only used in year
+        2024. Default: None.
+    :type proxy_ip_port: str | None
     :return:
     """
     project_root_folder = os.path.abspath(
@@ -103,16 +112,34 @@ def download_iclr_oral_papers(save_dir, year, base_url=None,
         elif year == 2022:
             base_url = 'https://openreview.net/group?id=ICLR.cc/' \
                        '2022/Conference#oral-submissions'
+        elif year == 2024:
+            base_url = 'https://openreview.net/group?id=ICLR.cc/' \
+                       '2024/Conference#tab-accept-oral'
         else:
             raise ValueError('the website url is not given for this year!')
+
+    if year >= 2024:
+        group_id = "accept-oral"
+        return download_iclr_papers_given_url_and_group_id(
+            save_dir=save_dir,
+            year=year,
+            base_url=base_url,
+            group_id=group_id,
+            start_page=start_page,
+            time_step_in_seconds=time_step_in_seconds,
+            downloader=downloader,
+            proxy_ip_port=proxy_ip_port
+        )
+
     first_poster_index = {'2017': 15}
     paper_postfix = f'ICLR_{year}'
     error_log = []
-    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
-    driver.get(base_url)
 
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
+
+    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
+    driver.get(base_url)
 
     # wait for the select element to become visible
     # print('Starting web driver wait...')
@@ -253,7 +280,7 @@ def download_iclr_poster_papers(save_dir, year, base_url=None, start_page=1,
                                 time_step_in_seconds=10, downloader='IDM',
                                 proxy_ip_port=None):
     """
-    Download iclr poster papers from year 2017.
+    Download iclr poster papers from year 2017 ~ 2023.
     :param save_dir: str, paper save path
     :param year: int, iclr year, current only support year >= 2018
     :param base_url: str, paper website url
@@ -263,7 +290,7 @@ def download_iclr_poster_papers(save_dir, year, base_url=None, start_page=1,
     :param time_step_in_seconds: int, the interval time between two downlaod
         request in seconds
     :param downloader: str, the downloader to download, could be 'IDM' or
-        'Thunder'. Default: 'IDM'
+        None. Default: 'IDM'
     :param proxy_ip_port: str or None, proxy ip address and port, eg.
         eg: "127.0.0.1:7890". Default: None.
     :type proxy_ip_port: str | None
@@ -292,14 +319,21 @@ def download_iclr_poster_papers(save_dir, year, base_url=None, start_page=1,
         elif year == 2023:
             base_url = "https://openreview.net/group?id=ICLR.cc/" \
                        "2023/Conference#poster"
+        elif year == 2024:
+            base_url = "https://openreview.net/group?id=ICLR.cc/" \
+                       "2024/Conference#tab-accept-poster"
         else:
             raise ValueError('the website url is not given for this year!')
+    group_id = {
+        2023: "poster",
+        2024: "accept-poster"
+    }
     if year >= 2023:
         download_iclr_papers_given_url_and_group_id(
             save_dir=save_dir,
             year=year,
             base_url=base_url,
-            group_id="poster",
+            group_id=group_id[year],
             start_page=start_page,
             time_step_in_seconds=time_step_in_seconds,
             downloader=downloader,
@@ -412,22 +446,33 @@ def download_iclr_poster_papers(save_dir, year, base_url=None, start_page=1,
 
 
 def download_iclr_spotlight_papers(save_dir, year, base_url=None,
-                                   time_step_in_seconds=10, downloader='IDM'):
+                                   time_step_in_seconds=10, downloader='IDM',
+                                   start_page=1, proxy_ip_port=None):
     """
-    Download iclr spotlight papers between year 2017 and 2022.
+    Download iclr spotlight papers between year 2020 and 2022, 2024.
     :param save_dir: str, paper save path
     :param year: int, iclr year, current only support year >= 2018
     :param base_url: str, paper website url
     :param time_step_in_seconds: int, the interval time between two download
         request in seconds
     :param downloader: str, the downloader to download, could be 'IDM' or
-        'Thunder', default to 'IDM'
+        None, default to 'IDM'
+    :param start_page: int, the initial downloading webpage number, only the
+        pages whose number is equal to or greater than this number will be
+        processed. Currently, this parameter is only used in year 2024.
+        Default: 1.
+    :param proxy_ip_port: str or None, proxy ip address and port, eg.
+        eg: "127.0.0.1:7890". Currently, this parameter is only used in year
+        2024. Default: None.
     :return:
     """
     project_root_folder = os.path.abspath(
         os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     if base_url is None:
-        if year == 2022:
+        if year == 2024:
+            base_url = 'https://openreview.net/group?id=ICLR.cc/' \
+                       '2024/Conference#tab-accept-spotlight'
+        elif year == 2022:
             base_url = 'https://openreview.net/group?id=ICLR.cc/' \
                        '2022/Conference#spotlight-submissions'
         elif year == 2021:
@@ -438,14 +483,29 @@ def download_iclr_spotlight_papers(save_dir, year, base_url=None,
                        '2020/Conference#accept-spotlight'
         else:
             raise ValueError('the website url is not given for this year!')
+
+    if year == 2024:
+        group_id = "accept-spotlight"
+        return download_iclr_papers_given_url_and_group_id(
+            save_dir=save_dir,
+            year=year,
+            base_url=base_url,
+            group_id=group_id,
+            start_page=start_page,
+            time_step_in_seconds=time_step_in_seconds,
+            downloader=downloader,
+            proxy_ip_port=proxy_ip_port
+        )
+
     first_poster_index = {'2017': 15}
     paper_postfix = f'ICLR_{year}'
     error_log = []
-    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
-    driver.get(base_url)
 
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
+
+    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
+    driver.get(base_url)
 
     # wait for the select element to become visible
     # print('Starting web driver wait...')
@@ -1041,27 +1101,27 @@ def get_pdf_link_from_arxiv(abs_link, is_use_mirror=True):
 
 
 if __name__ == '__main__':
-    year = 2023
+    year = 2024
     save_dir_iclr = rf'E:\ICLR_{year}'
-    # save_dir_iclr_oral = os.path.join(save_dir_iclr, 'oral')
-    save_dir_iclr_top5 = os.path.join(save_dir_iclr, 'top5')
-    # save_dir_iclr_spotlight = os.path.join(save_dir_iclr, 'spotlight')
-    save_dir_iclr_top25 = os.path.join(save_dir_iclr, 'top25')
+    save_dir_iclr_oral = os.path.join(save_dir_iclr, 'oral')
+    # save_dir_iclr_top5 = os.path.join(save_dir_iclr, 'top5')
+    save_dir_iclr_spotlight = os.path.join(save_dir_iclr, 'spotlight')
+    # save_dir_iclr_top25 = os.path.join(save_dir_iclr, 'top25')
     save_dir_iclr_poster = os.path.join(save_dir_iclr, 'poster')
     proxy_ip_port = None  # "127.0.0.1:7890"
-    # download_iclr_oral_papers(save_dir_iclr_oral, driver_path, year,
-    #                           time_step_in_seconds=5)
-    download_iclr_top5_papers(save_dir_iclr_top5, year, start_page=1,
-                              time_step_in_seconds=5,
-                              proxy_ip_port=proxy_ip_port)
-    download_iclr_top25_papers(save_dir_iclr_top25, year, start_page=1,
-                              time_step_in_seconds=5,
-                              proxy_ip_port=proxy_ip_port)
+    download_iclr_oral_papers(save_dir_iclr_oral, year,
+                              time_step_in_seconds=5)
+    # download_iclr_top5_papers(save_dir_iclr_top5, year, start_page=1,
+    #                           time_step_in_seconds=5,
+    #                           proxy_ip_port=proxy_ip_port)
+    # download_iclr_top25_papers(save_dir_iclr_top25, year, start_page=1,
+    #                           time_step_in_seconds=5,
+    #                           proxy_ip_port=proxy_ip_port)
+    download_iclr_spotlight_papers(save_dir_iclr_spotlight, year,
+                                   time_step_in_seconds=5)
     download_iclr_poster_papers(save_dir_iclr_poster, year, start_page=1,
                                 time_step_in_seconds=5,
                               proxy_ip_port=proxy_ip_port)
-    # download_iclr_spotlight_papers(save_dir_iclr_spotlight, driver_path, year,
-    #                                time_step_in_seconds=5)
     # download_iclr_paper(year, save_dir=fr'G:\all_papers\ICLR\ICLR_{year}')
     # download_iclr_paper_given_html_file(
     #     year,
