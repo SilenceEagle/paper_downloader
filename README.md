@@ -1,6 +1,6 @@
 # paper_downloader
 
-Download papers and supplemental materials from open access paper website, such as **AAAI**, **AISTATS**, **COLT**, **CVPR**, **ECCV**, **ICCV**, **ICLR**, **ICML**, **IJCAI**, **JMLR**, **NIPS**, **WACV**.   
+Download papers and supplemental materials only from **OPEN ACCESS** paper website, such as **AAAI**, **AISTATS**, **COLT**, **CVPR**, **ECCV**, **ICCV**, **ICLR**, **ICML**, **IJCAI**, **JMLR**, **NIPS**, **WACV**.   
 
 ---
 
@@ -64,13 +64,21 @@ The number of papers that could be downloaded using this repo (with Aliyundrive 
 | **2022/v23** |  [1624](https://www.aliyundrive.com/s/ePXvUw4VFdQ)`fp76`   | [279](https://www.aliyundrive.com/s/zCCTJMPrfSr)`47jy`+[25](https://www.aliyundrive.com/s/f4kdMXixwJL)`s7a9` | [492](https://www.aliyundrive.com/s/xj2fRMwZxfC)`f16o` |                          155                           | [2077](https://www.aliyundrive.com/s/Q8DG9dKbx6S)`i16a`+[562](https://www.aliyundrive.com/s/f9Zx3hFFyq4)`11kj` | [1645](https://www.aliyundrive.com/s/dv4fhuueRHs)`6d7j` |                                                       --                                                       | [54+176+865](https://www.aliyundrive.com/s/gfANcdbM9TC)`b1l3`  | [1234](https://www.aliyundrive.com/s/eopQ5H8Hz2a)`81ov` | [862](https://www.aliyundrive.com/s/DBVKNsqN2UZ)`ea46` |             351              | [2673](https://www.aliyundrive.com/s/VFLmfnzSAsA)`eh49` | [406](https://www.aliyundrive.com/s/xRhdpencLQU)`ab53`+[80](https://www.aliyundrive.com/s/JCCcQXij7WX)`q6d2` |
 | **2023/v24** |                            2021                            |                                                      --                                                      | [496](https://www.aliyundrive.com/s/CD3Kz9cxu1U)`l5m9` |                          170                           |                                          [2358+698](./sharelinks.md)                                           |                           --                            |                                                    2161+491                                                    | [90+284+1205](https://www.aliyundrive.com/s/PZ1Wann4B8A)`29sf` |                          1805                           |                          846                           |             395              |                       67+378+2773                       | [639](https://www.aliyundrive.com/s/fP52KxJEUE5)`mo78`+[74](https://www.aliyundrive.com/s/XZG992JqQfn)`nj80` |
 | **2024/v25** |                                                            |                                                                                                              |                                                        |                                                        |                                                                                                                |                                                         |                                                                                                                |                          86+369+1810                           |                                                         |                                                        |                              |                                                         |                                                                                                              |
+
 </sup>
 </sub>
 
+
 <!--| **2023/v24** |                                                              |                                                                                                                   |                                                             |                                                             |                                                                                                                     |                                                                                                                    |                                                                                                                     |                                                                    |                                                              |                                                             |                              |                                                              |                                                                                                                   |-->
 
+[Download from 123pan.com](https://www.123pan.com/s/PwXljv-QErwd.html)
+(ACCESS CODE: `FdX2`)
+
+ (May miss some papers due to the 123pan's limitation on the length of filename)
+
+NOTE: all the shared papers' pdf files are collected from network, and the original authors/providers hold the copyrights.
 ****
-## usage
+## Usage
 **For example: download AAAI-2022 papers**
 1. Change the code block at the end of [code/paper_downloader_AAAI.py](https://github.com/SilenceEagle/paper_downloader/blob/2dbe66d645dcde89fbad5a1423c270f9f47b4528/code/paper_downloader_AAAI.py#L247)
 ```python
