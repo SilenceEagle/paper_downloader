@@ -3,7 +3,6 @@ csv_process.py
 20210617
 """
 
-
 import os
 from tqdm import tqdm
 from slugify import slugify
@@ -12,20 +11,29 @@ from lib.downloader import Downloader
 
 
 def download_from_csv(
-        postfix, save_dir, csv_file_path, is_download_main_paper=True, is_download_bib=True,
-        is_download_supplement=True, time_step_in_seconds=5, total_paper_number=None,
-        downloader='IDM'):
+        postfix, save_dir, csv_file_path, is_download_main_paper=True,
+        is_download_bib=True, is_download_supplement=True,
+        time_step_in_seconds=5, total_paper_number=None,
+        downloader='IDM', is_random_step=True):
     """
-    download paper, bibtex and supplement files and save them to save_dir/main_paper and save_dir/supplement
-        respectively
+    download paper, bibtex and supplement files and save them to
+        save_dir/main_paper and save_dir/supplement respectively
     :param postfix: str, postfix that will be added at the end of papers' title
     :param save_dir: str, paper and supplement material's save path
     :param csv_file_path: str, the full path to csv file
     :param is_download_main_paper: bool, True for downloading main paper
-    :param is_download_supplement: bool, True for downloading supplemental material
-    :param time_step_in_seconds: int, the interval time between two downloading request in seconds
-    :param total_paper_number: int, the total number of papers that is going to download
-    :param downloader: str, the downloader to download, could be 'IDM' or 'Thunder', default to 'IDM'.
+    :param is_download_supplement: bool, True for downloading supplemental
+        material
+    :param time_step_in_seconds: int, the interval time between two downloading
+        request in seconds
+    :param total_paper_number: int, the total number of papers that is going to
+        download
+    :param downloader: str, the downloader to download, could be 'IDM' or None,
+        default to 'IDM'.
+    :param is_random_step: bool, whether random sample the time step between two
+        adjacent download requests. If True, the time step will be sampled
+        from Uniform(0.5t, 1.5t), where t is the given time_step_in_seconds.
+        Default: True.
     :return: True
     """
     downloader = Downloader(downloader=downloader)
@@ -53,64 +61,85 @@ def download_from_csv(
                 group = slugify(this_paper['group'])
             title = slugify(this_paper['title'])
             if total_paper_number is not None:
-                pbar.set_description(f'Downloading paper {i}/{total_paper_number}')
+                pbar.set_description(
+                    f'Downloading {postfix} paper {i} /{total_paper_number}')
             else:
-                pbar.set_description(f'Downloading paper {i}')
-            this_paper_main_path = os.path.join(main_save_path, f'{title}_{postfix}.pdf')
+                pbar.set_description(f'Downloading {postfix} paper {i}')
+            this_paper_main_path = os.path.join(
+                main_save_path, f'{title}_{postfix}.pdf')
             if is_grouped:
-                this_paper_main_path = os.path.join(main_save_path, group, f'{title}_{postfix}.pdf')
+                this_paper_main_path = os.path.join(
+                    main_save_path, group, f'{title}_{postfix}.pdf')
             if is_download_supplement:
-                this_paper_supp_path_no_ext = os.path.join(supplement_save_path, f'{title}_{postfix}_supp.')
+                this_paper_supp_path_no_ext = os.path.join(
+                    supplement_save_path, f'{title}_{postfix}_supp.')
                 if is_grouped:
-                    this_paper_supp_path_no_ext = os.path.join(supplement_save_path, group, f'{title}_{postfix}_supp.')
-                if '' != this_paper['supplemental link'] and os.path.exists(this_paper_main_path) and \
-                        (os.path.exists(this_paper_supp_path_no_ext + 'zip') or os.path.exists(
+                    this_paper_supp_path_no_ext = os.path.join(
+                        supplement_save_path, group, f'{title}_{postfix}_supp.')
+                if '' != this_paper['supplemental link'] and os.path.exists(
+                        this_paper_main_path) and \
+                        (os.path.exists(
+                            this_paper_supp_path_no_ext + 'zip') or
+                         os.path.exists(
                             this_paper_supp_path_no_ext + 'pdf')):
                     continue
-                elif '' == this_paper['supplemental link'] and os.path.exists(this_paper_main_path):
+                elif '' == this_paper['supplemental link'] and \
+                        os.path.exists(this_paper_main_path):
                     continue
             elif os.path.exists(this_paper_main_path):
-                    continue
+                continue
             if 'error' == this_paper['main link']:
                 error_log.append((title, 'no MAIN link'))
             elif '' != this_paper['main link']:
                 if is_grouped:
                     if is_download_main_paper:
-                        os.makedirs(os.path.join(main_save_path, group), exist_ok=True)
+                        os.makedirs(os.path.join(main_save_path, group),
+                                    exist_ok=True)
                     if is_download_supplement:
-                        os.makedirs(os.path.join(supplement_save_path, group), exist_ok=True)
+                        os.makedirs(os.path.join(supplement_save_path, group),
+                                    exist_ok=True)
                 if is_download_main_paper:
                     try:
                         # download paper with IDM
                         if not os.path.exists(this_paper_main_path):
                             downloader.download(
-                                urls=this_paper['main link'].replace(' ', '%20'),
-                                save_path=os.path.join(os.getcwd(), this_paper_main_path),
+                                urls=this_paper['main link'].replace(
+                                    ' ', '%20'),
+                                save_path=os.path.join(
+                                    os.getcwd(), this_paper_main_path),
                                 time_sleep_in_seconds=time_step_in_seconds
                             )
                     except Exception as e:
                         # error_flag = True
                         print('Error: ' + title + ' - ' + str(e))
-                        error_log.append((title, this_paper['main link'], 'main paper download error', str(e)))
+                        error_log.append((title, this_paper['main link'],
+                                          'main paper download error', str(e)))
                 # download supp
                 if is_download_supplement:
                     # check whether the supp can be downloaded
-                    if not (os.path.exists(this_paper_supp_path_no_ext + 'zip') or
-                            os.path.exists(this_paper_supp_path_no_ext + 'pdf')):
+                    if not (os.path.exists(
+                            this_paper_supp_path_no_ext + 'zip') or
+                            os.path.exists(
+                                this_paper_supp_path_no_ext + 'pdf')):
                         if 'error' == this_paper['supplemental link']:
                             error_log.append((title, 'no SUPPLEMENTAL link'))
                         elif '' != this_paper['supplemental link']:
-                            supp_type = this_paper['supplemental link'].split('.')[-1]
+                            supp_type = \
+                            this_paper['supplemental link'].split('.')[-1]
                             try:
                                 downloader.download(
                                     urls=this_paper['supplemental link'],
-                                    save_path=os.path.join(os.getcwd(), this_paper_supp_path_no_ext+supp_type),
+                                    save_path=os.path.join(
+                                        os.getcwd(),
+                                        this_paper_supp_path_no_ext + supp_type),
                                     time_sleep_in_seconds=time_step_in_seconds
                                 )
                             except Exception as e:
                                 # error_flag = True
                                 print('Error: ' + title + ' - ' + str(e))
-                                error_log.append((title, this_paper['supplemental link'], 'supplement download error',
+                                error_log.append((title, this_paper[
+                                    'supplemental link'],
+                                                  'supplement download error',
                                                   str(e)))
                 # download bibtex file
                 if is_download_bib:
@@ -122,13 +151,15 @@ def download_from_csv(
                             try:
                                 downloader.download(
                                     urls=this_paper['bib'],
-                                    save_path=os.path.join(os.getcwd(), bib_path),
+                                    save_path=os.path.join(os.getcwd(),
+                                                           bib_path),
                                     time_sleep_in_seconds=time_step_in_seconds
                                 )
                             except Exception as e:
                                 # error_flag = True
                                 print('Error: ' + title + ' - ' + str(e))
-                                error_log.append((title, this_paper['bib'], 'bibtex download error',
+                                error_log.append((title, this_paper['bib'],
+                                                  'bibtex download error',
                                                   str(e)))
 
         # 2. write error log
