@@ -14,18 +14,25 @@ from lib.downloader import Downloader
 
 def download_paper_given_volume(
         volume, save_dir, postfix, is_download_supplement=True,
-        time_step_in_seconds=5, downloader='IDM'):
+        time_step_in_seconds=5, downloader='IDM', is_random_step=True):
     """
     download main and supplement papers from PMLR.
     :param volume: str, such as 'v1', 'r1'
     :param save_dir: str, paper and supplement material's save path
     :param postfix: str, the postfix will be appended to the end of papers' titles
     :param is_download_supplement: bool, True for downloading supplemental material
-    :param time_step_in_seconds: int, the interval time between two downlaod request in seconds
-    :param downloader: str, the downloader to download, could be 'IDM' or 'Thunder', default to 'IDM'
+    :param time_step_in_seconds: int, the interval time between two downloading
+        requests in seconds
+    :param downloader: str, the downloader to download, could be 'IDM' or None,
+        Default: 'IDM'
+    :param is_random_step: bool, whether random sample the time step between two
+        adjacent download requests. If True, the time step will be sampled
+        from Uniform(0.5t, 1.5t), where t is the given time_step_in_seconds.
+        Default: True.
     :return: True
     """
-    downloader = Downloader(downloader=downloader)
+    downloader = Downloader(
+        downloader=downloader, is_random_step=is_random_step)
     init_url = f'http://proceedings.mlr.press/{volume}/'
 
     if is_download_supplement:
@@ -47,17 +54,18 @@ def download_paper_given_volume(
     error_log = []
     title_list = []
     num_download = len(paper_list)
-    pbar = tqdm(zip(paper_list, range(num_download)))
+    pbar = tqdm(zip(paper_list, range(num_download)), total=num_download)
     for paper in pbar:
         # get title
         this_paper = paper[0]
         title = slugify(this_paper.find_all('p', {'class': 'title'})[0].text)
         try:
             pbar.set_description(
-                f'Downloading paper {paper[1] + 1}/{num_download}: {title}')
+                f'Downloading {postfix} paper {paper[1] + 1}/{num_download}:'
+                f' {title}')
         except:
             pbar.set_description(
-                f'''Downloading paper {paper[1] + 1}/{num_download}: '''
+                f'''Downloading {postfix} paper {paper[1] + 1}/{num_download}: '''
                 f'''{title.encode('utf8')}''')
         title_list.append(title)
 

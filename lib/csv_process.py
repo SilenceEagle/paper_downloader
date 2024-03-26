@@ -36,7 +36,8 @@ def download_from_csv(
         Default: True.
     :return: True
     """
-    downloader = Downloader(downloader=downloader)
+    downloader = Downloader(
+        downloader=downloader, is_random_step=is_random_step)
     if not os.path.exists(csv_file_path):
         raise ValueError(f'ERROR: file not found in {csv_file_path}!!!')
 
@@ -50,7 +51,7 @@ def download_from_csv(
     error_log = []
     with open(csv_file_path, newline='') as csvfile:
         myreader = csv.DictReader(csvfile, delimiter=',')
-        pbar = tqdm(myreader)
+        pbar = tqdm(myreader, total=total_paper_number)
         i = 0
         for this_paper in pbar:
             is_download_bib = ('bib' in this_paper)
