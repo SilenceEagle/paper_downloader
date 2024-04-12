@@ -1,13 +1,10 @@
 """paper_downloader_ECCV.py"""
 
 import urllib
-from urllib.request import urlopen
-import time
 from bs4 import BeautifulSoup
 import pickle
 import os
 from tqdm import tqdm
-import subprocess
 from slugify import slugify
 import csv
 import sys
@@ -19,6 +16,7 @@ from lib.supplement_porcess import move_main_and_supplement_2_one_directory
 import lib.springer as springer
 from lib import csv_process
 from lib.downloader import Downloader
+from lib.my_request import urlopen_with_retry
 
 
 def save_csv(year):
@@ -47,10 +45,7 @@ def save_csv(year):
                 with open(dat_file_pathname, 'rb') as f:
                     content = pickle.load(f)
             else:
-                req = urllib.request.Request(url=init_url, headers=headers)
-                content = urllib.request.urlopen(req, timeout=10).read()
-                # content = urlopen(init_url).read()
-                # content = open(f'..\\ECCV_{year}.html', 'rb').read()
+                content = urlopen_with_retry(url=init_url, headers=headers)
                 with open(dat_file_pathname, 'wb') as f:
                     pickle.dump(content, f)
             soup = BeautifulSoup(content, 'html5lib')
@@ -99,10 +94,7 @@ def save_csv(year):
                 with open(dat_file_pathname, 'rb') as f:
                     content = pickle.load(f)
             else:
-                req = urllib.request.Request(url=init_url, headers=headers)
-                content = urllib.request.urlopen(req, timeout=10).read()
-                # content = urlopen(init_url).read()
-                # content = open(f'..\\ECCV_{year}.html', 'rb').read()
+                content = urlopen_with_retry(url=init_url, headers=headers)
                 with open(dat_file_pathname, 'wb') as f:
                     pickle.dump(content, f)
             soup = BeautifulSoup(content, 'html5lib')

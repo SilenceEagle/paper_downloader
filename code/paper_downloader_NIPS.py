@@ -1,7 +1,6 @@
 """paper_downloader_NIPS.py"""
 
 import urllib
-from urllib.request import urlopen
 import time
 from bs4 import BeautifulSoup
 import pickle
@@ -17,6 +16,7 @@ from lib.supplement_porcess import move_main_and_supplement_2_one_directory
 from lib.downloader import Downloader
 from lib import csv_process
 from lib.openreview import download_nips_papers_given_url
+from lib.my_request import urlopen_with_retry
 
 
 def save_csv(year):
@@ -45,8 +45,7 @@ def save_csv(year):
             with open(dat_file_pathname, 'rb') as f:
                 content = pickle.load(f)
         else:
-            req = urllib.request.Request(url=init_url, headers=headers)
-            content = urllib.request.urlopen(req, timeout=10).read()
+            content = urlopen_with_retry(url=init_url, headers=headers)
             with open(dat_file_pathname, 'wb') as f:
                 pickle.dump(content, f)
         soup = BeautifulSoup(content, 'html.parser')
@@ -73,33 +72,30 @@ def save_csv(year):
             # get abstract page url
             url2 = this_paper.a.get('href')
             abs_url = urllib.parse.urljoin(init_url, url2)
-            for i in range(3):  # try 3 times
-                try:
-                    req = urllib.request.Request(url=abs_url, headers=headers)
-                    abs_content = urllib.request.urlopen(req, timeout=10).read()
-                    soup_temp = BeautifulSoup(abs_content, 'html.parser')
-                    # abstract = soup_temp.find(
-                    # 'p', {'class': 'abstract'}).text.strip()
-                    # paper_dict[title] = abstract
-                    all_a = soup_temp.findAll('a')
-                    for a in all_a:
-                        # print(a.text[:-2])
-                        # print(a.text[:-2].strip().lower())
-                        if 'paper' == a.text[:-2].strip().lower():
-                            paper_dict['main link'] = urllib.parse.urljoin(
-                                abs_url, a.get('href'))
-                        elif 'supplemental' == a.text[:-2].strip().lower():
-                            paper_dict['supplemental link'] = \
-                                urllib.parse.urljoin(abs_url, a.get('href'))
-                            break
-                    break
-                except Exception as e:
-                    if i == 2:
-                        print('Error: ' + title + ' - ' + str(e))
-                        if paper_dict['main link'] == '':
-                            paper_dict['main link'] = 'error'
-                        if paper_dict['supplemental link'] == '':
-                            paper_dict['supplemental link'] = 'error'
+            abs_content = urlopen_with_retry(url=abs_url, headers=headers,
+                                             raise_error_if_failed=False)
+            if abs_content is not None:
+                soup_temp = BeautifulSoup(abs_content, 'html.parser')
+                # abstract = soup_temp.find(
+                # 'p', {'class': 'abstract'}).text.strip()
+                # paper_dict[title] = abstract
+                all_a = soup_temp.findAll('a')
+                for a in all_a:
+                    # print(a.text[:-2])
+                    # print(a.text[:-2].strip().lower())
+                    if 'paper' == a.text[:-2].strip().lower():
+                        paper_dict['main link'] = urllib.parse.urljoin(
+                            abs_url, a.get('href'))
+                    elif 'supplemental' == a.text[:-2].strip().lower():
+                        paper_dict['supplemental link'] = \
+                            urllib.parse.urljoin(abs_url, a.get('href'))
+                        break
+            else:
+                print('Error: ' + title)
+                if paper_dict['main link'] == '':
+                    paper_dict['main link'] = 'error'
+                if paper_dict['supplemental link'] == '':
+                    paper_dict['supplemental link'] = 'error'
             writer.writerow(paper_dict)
             time.sleep(1)
     return num_download

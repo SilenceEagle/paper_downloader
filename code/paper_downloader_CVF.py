@@ -1,7 +1,6 @@
 """paper_downloader_CVF.py"""
 
 import urllib
-from urllib.request import urlopen
 from bs4 import BeautifulSoup
 import pickle
 import os
@@ -16,6 +15,7 @@ from lib.supplement_porcess import merge_main_supplement, move_main_and_suppleme
 from lib.cvf import get_paper_dict_list
 from lib import csv_process
 import time
+from lib.my_request import urlopen_with_retry
 
 
 def save_csv(year, conference):
@@ -54,8 +54,7 @@ def save_csv(year, conference):
                 'User-Agent':
                     'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:23.0) '
                     'Gecko/20100101 Firefox/23.0'}
-            req = urllib.request.Request(url=init_url, headers=headers)
-            content = urllib.request.urlopen(req).read()
+            content = urlopen_with_retry(url=init_url, headers=headers)
             with open(url_file_pathname, 'wb') as f:
                 pickle.dump(content, f)
 
@@ -122,8 +121,7 @@ def save_csv_workshops(year, conference):
             with open(url_file_pathname, 'rb') as f:
                 content = pickle.load(f)
         else:
-            req = urllib.request.Request(url=init_url, headers=headers)
-            content = urllib.request.urlopen(req, timeout=20).read()
+            content = urlopen_with_retry(url=init_url, headers=headers)
             # content = open(f'..\\{conference}_WS_{year}.html', 'rb').read()
             with open(url_file_pathname, 'wb') as f:
                 pickle.dump(content, f)
@@ -285,8 +283,8 @@ def download_paper(
 
 
 if __name__ == '__main__':
-    year = 2023
-    conference = 'ICCV'
+    year = 2024
+    conference = 'WACV'
     download_paper(
         year,
         conference=conference,

@@ -54,7 +54,7 @@ def download_from_csv(
         pbar = tqdm(myreader, total=total_paper_number)
         i = 0
         for this_paper in pbar:
-            is_download_bib = ('bib' in this_paper)
+            is_download_bib &= ('bib' in this_paper)
             is_grouped = ('group' in this_paper)
             i += 1
             # get title

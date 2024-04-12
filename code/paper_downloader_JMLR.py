@@ -1,7 +1,6 @@
 """paper_downloader_JMLR.py"""
 
 import urllib
-from urllib.request import urlopen
 from bs4 import BeautifulSoup
 import pickle
 import os
@@ -13,6 +12,7 @@ root_folder = os.path.abspath(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.append(root_folder)
 from lib.downloader import Downloader
+from lib.my_request import urlopen_with_retry
 
 
 def download_paper(
@@ -53,14 +53,12 @@ def download_paper(
                 content = pickle.load(f)
         else:
             print('collecting papers from website...')
-            req = urllib.request.Request(url=init_url, headers=headers)
-            content = urllib.request.urlopen(req, timeout=10).read()
+            content = urlopen_with_retry(url=init_url, headers=headers)
             # content = open(f'..\\JMLR_{volumn}.html', 'rb').read()
             with open(dat_file_pathname, 'wb') as f:
                 pickle.dump(content, f)
     elif url is not None:
-        req = urllib.request.Request(url=url, headers=headers)
-        content = urllib.request.urlopen(req, timeout=10).read()
+        content = urlopen_with_retry(url=url, headers=headers)
         postfix = f'JMLR'
     else:
         raise ValueError(''''url' could not be None when 'is_use_url'=True!!!''')
@@ -151,10 +149,7 @@ def download_special_topics_and_issues_paper(save_dir, time_step_in_seconds=5, d
             'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:23.0) Gecko/20100101 Firefox/23.0'}
     # postfix = f'JMLR_v{volumn}'
 
-    req = urllib.request.Request(url=homepage, headers=headers)
-    content = urllib.request.urlopen(req, timeout=10).read()
-    # content = open(f'..\\JMLR_{volumn}.html', 'rb').read()
-    # soup = BeautifulSoup(content, 'html.parser')
+    content = urlopen_with_retry(url=homepage, headers=headers)
     soup = BeautifulSoup(content, 'html5lib')
     # soup = BeautifulSoup(open(r'..\JMLR_2011.html', 'rb'), 'html.parser')
 
@@ -199,7 +194,7 @@ def download_special_topics_and_issues_paper(save_dir, time_step_in_seconds=5, d
 
 
 if __name__ == '__main__':
-    volumn = 24
+    volumn = 25
     download_paper(volumn, rf'W:\all_papers\JMLR\JMLR_v{volumn}',
                    time_step_in_seconds=3)
     # download_special_topics_and_issues_paper(

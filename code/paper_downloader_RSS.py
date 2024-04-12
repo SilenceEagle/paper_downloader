@@ -2,8 +2,6 @@
 20240322"""
 import time
 import urllib
-from urllib.request import urlopen
-# import time
 from bs4 import BeautifulSoup
 import pickle
 import os
@@ -11,14 +9,12 @@ from tqdm import tqdm
 from slugify import slugify
 import csv
 import sys
-import random
 
 root_folder = os.path.abspath(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.append(root_folder)
 from lib import csv_process
-from lib.user_agents import user_agents
-from selenium.webdriver.common.by import By
+from lib.my_request import urlopen_with_retry
 
 
 def save_csv(year):
@@ -52,8 +48,7 @@ def save_csv(year):
                 'User-Agent':
                     'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:23.0) '
                     'Gecko/20100101 Firefox/23.0'}
-            req = urllib.request.Request(url=init_url, headers=headers)
-            content = urllib.request.urlopen(req).read()
+            content = urlopen_with_retry(url=init_url, headers=headers)
             with open(url_file_pathname, 'wb') as f:
                 pickle.dump(content, f)
 
@@ -150,7 +145,7 @@ if __name__ == '__main__':
     #     save_dir=fr'E:\AAAI_{year}',
     #     time_step_in_seconds=5,
     #     total_paper_number=total_paper_number)
-    for year in range(2020, 2024, 1):
+    for year in range(2023, 2024, 1):
         print(year)
         # total_paper_number = None
         total_paper_number = save_csv(year)

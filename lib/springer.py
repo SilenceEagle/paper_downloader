@@ -5,20 +5,18 @@ some function for springer
 """
 
 import urllib
-from urllib.request import urlopen, Request
-import time
-import bs4
 from bs4 import BeautifulSoup
 from tqdm import tqdm
 from slugify import slugify
+from .my_request import urlopen_with_retry
+
 
 def get_paper_name_link_from_url(url):
     headers = {
         'User-Agent':
             'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:23.0) Gecko/20100101 Firefox/23.0'}
     paper_dict = dict()
-    req = urllib.request.Request(url=url, headers=headers)
-    content = urllib.request.urlopen(req, timeout=10).read()
+    content = urlopen_with_retry(url=url, headers=headers)
     soup = BeautifulSoup(content, 'html5lib')
     paper_list_bar = tqdm(soup.find_all(['li'], {'class': 'chapter-item content-type-list__item'}))
     for paper in paper_list_bar:

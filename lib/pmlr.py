@@ -2,14 +2,12 @@
 pmlr.py
 20210618
 """
-import urllib
-from urllib.request import urlopen
-# import time
 from bs4 import BeautifulSoup
 import os
 from tqdm import tqdm
 from slugify import slugify
 from lib.downloader import Downloader
+from .my_request import urlopen_with_retry
 
 
 def download_paper_given_volume(
@@ -47,8 +45,7 @@ def download_paper_given_volume(
         'User-Agent':
             'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:23.0) '
             'Gecko/20100101 Firefox/23.0'}
-    req = urllib.request.Request(url=init_url, headers=headers)
-    content = urllib.request.urlopen(req).read()
+    content = urlopen_with_retry(url=init_url, headers=headers)
     soup = BeautifulSoup(content, 'html.parser')
     paper_list = soup.find_all('div', {'class': 'paper'})
     error_log = []

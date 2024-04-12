@@ -4,10 +4,10 @@ cvf.py
 """
 
 import urllib
-from urllib.request import urlopen
 from bs4 import BeautifulSoup
 from tqdm import tqdm
 from slugify import slugify
+from .my_request import urlopen_with_retry
 
 
 def get_paper_dict_list(url=None, content=None, group_name=None, timeout=10):
@@ -32,8 +32,7 @@ def get_paper_dict_list(url=None, content=None, group_name=None, timeout=10):
         headers = {
             'User-Agent':
                 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:23.0) Gecko/20100101 Firefox/23.0'}
-        req = urllib.request.Request(url=url, headers=headers)
-        content = urllib.request.urlopen(req, timeout=timeout).read()
+        content = urlopen_with_retry(url=url, headers=headers)
     soup = BeautifulSoup(content, 'html5lib')
     paper_list_bar = tqdm(soup.find('div', {'id': 'content'}).find_all(['dd', 'dt']))
     paper_index = 0

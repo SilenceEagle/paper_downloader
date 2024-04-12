@@ -1,7 +1,6 @@
 """paper_downloader_ICML.py"""
 
 import urllib
-from urllib.request import urlopen
 from bs4 import BeautifulSoup
 import pickle
 import os
@@ -15,6 +14,7 @@ from lib.downloader import Downloader
 import lib.pmlr as pmlr
 from lib.supplement_porcess import merge_main_supplement
 from lib.openreview import download_icml_papers_given_url_and_group_id
+from lib.my_request import urlopen_with_retry
 
 
 def download_paper(year, save_dir, is_download_supplement=True,
@@ -111,8 +111,7 @@ def download_paper(year, save_dir, is_download_supplement=True,
             'User-Agent':
                 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:23.0) '
                 'Gecko/20100101 Firefox/23.0'}
-        req = urllib.request.Request(url=init_url, headers=headers)
-        content = urllib.request.urlopen(req).read()
+        content = urlopen_with_retry(url=init_url, headers=headers)
         # content = open(f'..\\ICML_{year}.html', 'rb').read()
         with open(dat_file_pathname, 'wb') as f:
             pickle.dump(content, f)
@@ -301,19 +300,14 @@ def download_paper(year, save_dir, is_download_supplement=True,
                         headers = {'User-Agent':
                                        'Mozilla/5.0 (Windows NT 6.1; WOW64; '
                                        'rv:23.0) Gecko/20100101 Firefox/23.0'}
-                        req = urllib.request.Request(
-                            url=abs_link, headers=headers)
-                        for i in range(3):
-                            try:
-                                abs_content = urllib.request.urlopen(
-                                    req, timeout=10).read()
-                                break
-                            except Exception as e:
-                                if i == 2:
-                                    print('error'+title+str(e))
-                                    error_log.append(
-                                        (title, abs_link, 'download error',
-                                         str(e)))
+                        abs_content = urlopen_with_retry(
+                            url=abs_link, headers=headers,
+                            raise_error_if_failed=False)
+                        if abs_content is None:
+                            print('error'+title)
+                            error_log.append(
+                                (title, abs_link, 'download error'))
+                            continue
                         abs_soup = BeautifulSoup(abs_content, 'html5lib')
                         for a in abs_soup.find_all('a'):
                             try:

@@ -1,13 +1,6 @@
 """paper_downloader_ICLR.py"""
 
-import time
 from tqdm import tqdm
-from selenium import webdriver
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as EC
-from webdriver_manager.chrome import ChromeDriverManager
-from selenium.webdriver.chrome.service import Service
 import os
 # https://stackoverflow.com/questions/295135/turn-a-string-into-a-valid-filename
 from slugify import slugify
@@ -713,14 +706,15 @@ def get_pdf_link_from_openreview(abs_link):
 
 
 if __name__ == '__main__':
-    year = 2013
+    year = 2023
     save_dir_iclr = rf'E:\ICLR_{year}'
     # save_dir_iclr_oral = os.path.join(save_dir_iclr, 'oral')
     # save_dir_iclr_top5 = os.path.join(save_dir_iclr, 'top5')
     # save_dir_iclr_spotlight = os.path.join(save_dir_iclr, 'spotlight')
     # save_dir_iclr_top25 = os.path.join(save_dir_iclr, 'top25')
     # save_dir_iclr_poster = os.path.join(save_dir_iclr, 'poster')
-    proxy_ip_port = None  # "127.0.0.1:7890"
+    proxy_ip_port = None
+    # proxy_ip_port = "http://127.0.0.1:7890"
     # download_iclr_oral_papers(save_dir_iclr_oral, year,
     #                           time_step_in_seconds=5)
     # download_iclr_top5_papers(save_dir_iclr_top5, year, start_page=1,

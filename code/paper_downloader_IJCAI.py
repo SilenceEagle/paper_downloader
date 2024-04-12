@@ -1,9 +1,6 @@
 """paper_downloader_IJCAI.py"""
 
 import urllib
-from urllib.request import urlopen
-import http
-# import time
 from bs4 import BeautifulSoup
 import pickle
 import os
@@ -14,8 +11,8 @@ import sys
 root_folder = os.path.abspath(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.append(root_folder)
-from lib.downloader import Downloader
 from lib import csv_process
+from lib.my_request import urlopen_with_retry
 
 
 def save_csv(year):
@@ -86,16 +83,7 @@ def save_csv(year):
                 with open(data_file_pathname, 'rb') as f:
                     content = pickle.load(f)
             else:
-                req = urllib.request.Request(url=init_urls[0], headers=headers)
-                content = urllib.request.urlopen(req).read()
-                # html_path = r'D:\IJCAI2021.html'
-                # content = open(html_path, 'rb').read()
-                # cookie = http.cookiejar.CookieJar()  # 声明一个CookieJar对象实例来保存cookie
-                # handler = urllib.request.HTTPCookieProcessor(cookie)  # 利用urllib2库的HTTPCookieProcessor对象来创建cookie处理器
-                # opener = urllib.request.build_opener(handler)  # 通过handler来构建opener
-                # urllib.request.install_opener(opener)
-                # request = urllib.request.Request(url=init_urls[0], headers=headers, method='POST')
-                # content = urllib.request.urlopen(request).read()
+                content = urlopen_with_retry(url=init_urls[0], headers=headers)
                 with open(f'..\\urls\\init_url_IJCAI_{year}.dat', 'wb') as f:
                     pickle.dump(content, f)
             contents = [content]
@@ -108,9 +96,7 @@ def save_csv(year):
                 with open(data_file_pathname, 'rb') as f:
                     content = pickle.load(f)
             else:
-                # content = urlopen(init_urls[0]).read()
-                req = urllib.request.Request(url=init_urls[0], headers=headers)
-                content = urllib.request.urlopen(req).read()
+                content = urlopen_with_retry(url=init_urls[0], headers=headers)
                 with open(data_file_pathname, 'wb') as f:
                     pickle.dump(content, f)
             contents.append(content)
@@ -121,9 +107,7 @@ def save_csv(year):
                 with open(data_file_pathname, 'rb') as f:
                     content = pickle.load(f)
             else:
-                # content = urlopen(init_urls[1]).read()
-                req = urllib.request.Request(url=init_urls[1], headers=headers)
-                content = urllib.request.urlopen(req).read()
+                content = urlopen_with_retry(url=init_urls[1], headers=headers)
                 with open(data_file_pathname, 'wb') as f:
                     pickle.dump(content, f)
             contents.append(content)
