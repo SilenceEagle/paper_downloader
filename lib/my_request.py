@@ -6,10 +6,11 @@ my_request.py
 import urllib
 import random
 from urllib.error import URLError, HTTPError
+from lib.proxy import set_proxy_4_urllib_request
 
 
 def urlopen_with_retry(url, headers=dict(), retry_time=3, time_out=20,
-                       raise_error_if_failed=True):
+                       raise_error_if_failed=True, proxy_ip_port=None):
     """
     load content from url with given headers. Retry if error occurs.
     Args:
@@ -19,11 +20,15 @@ def urlopen_with_retry(url, headers=dict(), retry_time=3, time_out=20,
         time_out (int): time out in seconds. Default: 10.
         raise_error_if_failed (bool): whether to raise error if failed.
             Default: True.
+        proxy_ip_port(str|None): proxy server ip address with or without
+            protocol prefix, eg: "127.0.0.1:7890", "http://127.0.0.1:7890".
+            Default: None
 
     Returns:
         content(str|None): url content. None will be returned if failed.
 
     """
+    set_proxy_4_urllib_request(proxy_ip_port)
     req = urllib.request.Request(url=url, headers=headers)
     for r in range(retry_time):
         try:

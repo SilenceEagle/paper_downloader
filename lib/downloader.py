@@ -9,10 +9,11 @@ import os
 import random
 from tqdm import tqdm
 from threading import Thread
+from lib.proxy import get_proxy_4_requests
 
 
 def _download(urls, save_path, time_sleep_in_seconds=5, is_random_step=True,
-              verbose=False):
+              verbose=False, proxy_ip_port=None):
     """
     download file from given urls and save it to given path
     :param urls: str, urls
@@ -24,14 +25,17 @@ def _download(urls, save_path, time_sleep_in_seconds=5, is_random_step=True,
         Default: True.
     :param verbose: bool, whether to display time step information.
         Default: False
+    :param proxy_ip_port: str or None, proxy server ip address with or without
+        protocol prefix, eg: "127.0.0.1:7890", "http://127.0.0.1:7890".
     :return: None
     """
 
-    def __download(urls, save_path):
+    def __download(urls, save_path, proxy_ip_port):
         head, tail = os.path.split(save_path)
         # debug
         # print(f'downloading {tail}')
-        r = requests.get(urls, stream=True)
+        proxies = get_proxy_4_requests(proxy_ip_port)
+        r = requests.get(urls, stream=True, proxies=proxies)
         # file size in MB
         length = round(int(r.headers['content-length']) / 1024**2, 2)
         process_bar = tqdm(
@@ -48,7 +52,8 @@ def _download(urls, save_path, time_sleep_in_seconds=5, is_random_step=True,
 
     # set daemon as False to continue downloading even if the main threading
     # has been killed due to KeyboardInterrupt
-    t = Thread(target=__download, args=(urls, save_path), daemon=False)
+    t = Thread(
+        target=__download, args=(urls, save_path, proxy_ip_port), daemon=False)
     t.start()
 
     if is_random_step:
@@ -62,7 +67,8 @@ def _download(urls, save_path, time_sleep_in_seconds=5, is_random_step=True,
 
 
 class Downloader(object):
-    def __init__(self, downloader=None, is_random_step=True):
+    def __init__(self, downloader=None, is_random_step=True,
+                 proxy_ip_port=None):
         """
         :param downloader: None or str, the downloader's name.
             if downloader is None, 'request' will be used to
@@ -73,6 +79,10 @@ class Downloader(object):
             two adjacent download requests. If True, the time step will be
             sampled from Uniform(0.5t, 1.5t), where t is the given
             time_step_in_seconds. Default: True.
+        :param proxy_ip_port: str or None, proxy server ip address with or without
+            protocol prefix, eg: "127.0.0.1:7890", "http://127.0.0.1:7890".
+            (only useful for None|"request" downloader)
+            Default: None
         """
         super(Downloader, self).__init__()
         if downloader is not None and downloader.lower() not in ['idm']:
@@ -84,6 +94,7 @@ class Downloader(object):
 
         self.downloader = downloader
         self.is_random_step = is_random_step
+        self.proxy_ip_port = proxy_ip_port
 
     def download(self, urls, save_path, time_sleep_in_seconds=5):
         """
@@ -98,7 +109,8 @@ class Downloader(object):
                 urls=urls,
                 save_path=save_path,
                 time_sleep_in_seconds=time_sleep_in_seconds,
-                is_random_step=self.is_random_step
+                is_random_step=self.is_random_step,
+                proxy_ip_port=self.proxy_ip_port
             )
         elif self.downloader.lower() == 'idm':
             IDM.download(

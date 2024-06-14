@@ -346,3 +346,94 @@ def merge_main_supplement(main_path, supplement_path, save_path, is_delete_ori_f
                 f.write('\n')
 
             f.write('\n')
+
+
+def rename_2_short_name(src_path, save_path, target_max_length=128,
+                        extension='pdf'):
+    """
+    rename file to short filename while remain the conference postfix
+    Args:
+        src_path (str): path that contains files directly.
+        save_path (str): path to save the renamed files.
+        target_max_length (int): max filen name length after renaming. All the
+            files whose name length is not less than this will be renamed, the
+            others will stay unchanged and copy into the save path. Default:
+            128.
+        extension (str | None): only the files with this extension will be
+            processed. None means all file will be processed. Default: 'pdf'.
+    Returns:
+        None
+    """
+    if not os.path.exists(src_path):
+        raise ValueError(f'Path not found: {src_path}!')
+
+    os.makedirs(save_path, exist_ok=True)
+
+    for f in tqdm(os.scandir(src_path)):
+        f_name = f.name
+
+        # compare extension
+        ext = os.path.splitext(f_name)[1]
+        if extension is not None and ext[1:] != extension:
+            continue
+        # compare file name length
+        l = len(f_name)
+        if l < target_max_length:
+            if not os.path.exists(os.path.join(save_path, f_name)):
+                print(f'\ncopying {f_name}')
+                shutil.copyfile(f.path, os.path.join(save_path, f_name))
+        else:
+            # rename
+            try:
+                [title, postfix] = f_name.split('_', 1)  # only split to 2 parts
+                new_title = title[:target_max_length-len(postfix)-2]
+                new_name = f'{new_title}_{postfix}'
+                if not os.path.exists(os.path.join(save_path, new_name)):
+                    print(f'\nrenaming {f_name} \n\t-> {new_name}')
+                    shutil.copyfile(f.path, os.path.join(save_path, new_name))
+            except ValueError:
+                # ValueError: not enough values to unpack (expected 2, got 1)
+                print(f'\nWARNING!!!:\n\tunable to parse postfix from {f.path}')
+                print('\tSo, it will be just copy/rename to short name')
+                new_title = f_name[:target_max_length - len(ext) - 1]
+                new_name = f'{new_title}{ext}'
+                if not os.path.exists(os.path.join(save_path, new_name)):
+                    print(f'\nrenaming {f_name} \n\t-> {new_name}')
+                    shutil.copyfile(f.path, os.path.join(save_path, new_name))
+
+
+def rename_2_short_name_within_group(src_path, save_path, target_max_length=128,
+                        extension='pdf'):
+    """
+    rename file to short filename while remain the conference postfix
+    Args:
+        src_path (str): path that contains files:
+            src_path/group_name/files
+        save_path (str): path to save the renamed files.
+        target_max_length (int): max filen name length after renaming. All the
+            files whose name length is not less than this will be renamed, the
+            others will stay unchanged and copy into the save path. Default:
+            128.
+        extension (str | None): only the files with this extension will be
+            processed. None means all file will be processed. Default: 'pdf'.
+    Returns:
+        None
+    """
+    if not os.path.exists(src_path):
+        raise ValueError(f'Path not found: {src_path}!')
+
+    os.makedirs(save_path, exist_ok=True)
+
+    for d in tqdm(os.scandir(src_path)):
+        if not d.is_dir():
+            continue
+        print(f'\nprocessing {d.name}')
+        d_name = d.name
+        d_name = d_name[:min(len(d_name), target_max_length-1)]
+        rename_2_short_name(
+            src_path=d.path,
+            save_path=os.path.join(save_path, d_name),
+            target_max_length=target_max_length,
+            extension=extension
+        )
+

@@ -14,7 +14,9 @@ def download_from_csv(
         postfix, save_dir, csv_file_path, is_download_main_paper=True,
         is_download_bib=True, is_download_supplement=True,
         time_step_in_seconds=5, total_paper_number=None,
-        downloader='IDM', is_random_step=True):
+        downloader='IDM', is_random_step=True, proxy_ip_port=None,
+        max_length_filename=128
+):
     """
     download paper, bibtex and supplement files and save them to
         save_dir/main_paper and save_dir/supplement respectively
@@ -34,10 +36,18 @@ def download_from_csv(
         adjacent download requests. If True, the time step will be sampled
         from Uniform(0.5t, 1.5t), where t is the given time_step_in_seconds.
         Default: True.
+    :param proxy_ip_port: str or None, proxy server ip address with or without
+        protocol prefix, eg: "127.0.0.1:7890", "http://127.0.0.1:7890".
+        Default: None
+    :param max_length_filename: int or None, max filen name length. All the
+            files whose name length is not less than this will be renamed
+            before saving, the others will stay unchanged. None means
+            no limitation. Default: 128.
     :return: True
     """
     downloader = Downloader(
-        downloader=downloader, is_random_step=is_random_step)
+        downloader=downloader, is_random_step=is_random_step,
+        proxy_ip_port=proxy_ip_port)
     if not os.path.exists(csv_file_path):
         raise ValueError(f'ERROR: file not found in {csv_file_path}!!!')
 
@@ -61,22 +71,32 @@ def download_from_csv(
             if is_grouped:
                 group = slugify(this_paper['group'])
             title = slugify(this_paper['title'])
+            title_main_pdf = short_name(
+                name=f'{title}_{postfix}.pdf',
+                max_length=max_length_filename
+            )
             if total_paper_number is not None:
                 pbar.set_description(
                     f'Downloading {postfix} paper {i} /{total_paper_number}')
             else:
                 pbar.set_description(f'Downloading {postfix} paper {i}')
             this_paper_main_path = os.path.join(
-                main_save_path, f'{title}_{postfix}.pdf')
+                main_save_path, title_main_pdf)
             if is_grouped:
                 this_paper_main_path = os.path.join(
-                    main_save_path, group, f'{title}_{postfix}.pdf')
+                    main_save_path, group, title_main_pdf)
             if is_download_supplement:
+                this_paper_supp_title_no_ext = short_name(
+                    name=f'{title}_{postfix}_supp.',
+                    max_length=max_length_filename-3  # zip or pdf, so 3
+                )
                 this_paper_supp_path_no_ext = os.path.join(
-                    supplement_save_path, f'{title}_{postfix}_supp.')
+                    supplement_save_path, this_paper_supp_title_no_ext)
                 if is_grouped:
                     this_paper_supp_path_no_ext = os.path.join(
-                        supplement_save_path, group, f'{title}_{postfix}_supp.')
+                        supplement_save_path, group,
+                        this_paper_supp_title_no_ext
+                    )
                 if '' != this_paper['supplemental link'] and os.path.exists(
                         this_paper_main_path) and \
                         (os.path.exists(
@@ -177,3 +197,39 @@ def download_from_csv(
                 f.write('\n')
 
     return True
+
+
+def short_name(name, max_length, verbose=False):
+    """
+    rename to shorter name
+    Args:
+        name (str): original name
+        max_length (int): max filen name length. All the
+            files whose name length is not less than this will be renamed
+            before saving, the others will stay unchanged. None means
+            no limitation.
+        verbose (bool): whether to print debug information. Default: False.
+    Returns:
+        new_name (str): short name.
+    """
+    if len(name) < max_length:
+        new_name = name
+    else:
+        # rename
+        try:
+            [title, postfix] = name.split('_', 1)  # only split to 2 parts
+            new_title = title[:max_length - len(postfix) - 2]
+            new_name = f'{new_title}_{postfix}'
+            if verbose:
+                print(f'\nrenaming {name} \n\t-> {new_name}')
+        except ValueError:
+            # ValueError: not enough values to unpack (expected 2, got 1)
+            if verbose:
+                print(f'\nWARNING!!!:\n\tunable to parse postfix from {name}')
+                print('\tSo, it will be just rename to short name')
+            ext = os.path.splitext(name)[1]
+            new_title = name[:max_length - len(ext) - 1]
+            new_name = f'{new_title}{ext}'
+            if verbose:
+                print(f'\nrenaming {name} \n\t-> {new_name}')
+    return new_name
