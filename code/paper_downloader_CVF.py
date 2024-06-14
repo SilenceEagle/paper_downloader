@@ -11,18 +11,22 @@ root_folder = os.path.abspath(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.append(root_folder)
 from lib.supplement_porcess import merge_main_supplement, move_main_and_supplement_2_one_directory, \
-    move_main_and_supplement_2_one_directory_with_group
+    move_main_and_supplement_2_one_directory_with_group, \
+    rename_2_short_name, rename_2_short_name_within_group
 from lib.cvf import get_paper_dict_list
 from lib import csv_process
 import time
 from lib.my_request import urlopen_with_retry
 
 
-def save_csv(year, conference):
+def save_csv(year, conference, proxy_ip_port=None):
     """
     write CVF conference papers' and supplemental material's urls in one csv file
     :param year: int
     :param conference: str, one of ['CVPR', 'ICCV', 'WACV', 'ACCV']
+    :param proxy_ip_port: str or None, proxy server ip address with or without
+        protocol prefix, eg: "127.0.0.1:7890", "http://127.0.0.1:7890".
+        Default: None
     :return: True
     """
     project_root_folder = os.path.abspath(
@@ -34,6 +38,7 @@ def save_csv(year, conference):
     csv_file_pathname = os.path.join(
         project_root_folder, 'csv', f'{conference}_{year}.csv'
     )
+    print(f'saving {conference}-{year} paper urls into {csv_file_pathname}')
     with open(csv_file_pathname, 'w', newline='') as csvfile:
         fieldnames = ['title', 'main link', 'supplemental link', 'arxiv']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
@@ -54,7 +59,8 @@ def save_csv(year, conference):
                 'User-Agent':
                     'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:23.0) '
                     'Gecko/20100101 Firefox/23.0'}
-            content = urlopen_with_retry(url=init_url, headers=headers)
+            content = urlopen_with_retry(
+                url=init_url, headers=headers, proxy_ip_port=proxy_ip_port)
             with open(url_file_pathname, 'wb') as f:
                 pickle.dump(content, f)
 
@@ -85,11 +91,14 @@ def save_csv(year, conference):
             return len(paper_dict_list)
 
 
-def save_csv_workshops(year, conference):
+def save_csv_workshops(year, conference, proxy_ip_port=None):
     """
     write CVF workshops papers' and supplemental material's urls in one csv file
     :param year: int
     :param conference: str, one of ['CVPR', 'ICCV', 'WACV', 'ACCV']
+    :param proxy_ip_port: str or None, proxy server ip address with or without
+        protocol prefix, eg: "127.0.0.1:7890", "http://127.0.0.1:7890".
+        Default: None
     :return: True
     """
     project_root_folder = os.path.abspath(
@@ -101,6 +110,7 @@ def save_csv_workshops(year, conference):
     csv_file_pathname = os.path.join(
         project_root_folder, 'csv', f'{conference}_WS_{year}.csv'
     )
+    print(f'saving {conference}-WS-{year} paper urls into {csv_file_pathname}')
     with open(csv_file_pathname, 'w', newline='') as csvfile:
         fieldnames = ['group', 'title', 'main link', 'supplemental link',
                       'arxiv']
@@ -121,7 +131,8 @@ def save_csv_workshops(year, conference):
             with open(url_file_pathname, 'rb') as f:
                 content = pickle.load(f)
         else:
-            content = urlopen_with_retry(url=init_url, headers=headers)
+            content = urlopen_with_retry(
+                url=init_url, headers=headers, proxy_ip_port=proxy_ip_port)
             # content = open(f'..\\{conference}_WS_{year}.html', 'rb').read()
             with open(url_file_pathname, 'wb') as f:
                 pickle.dump(content, f)
@@ -160,7 +171,8 @@ def save_csv_workshops(year, conference):
 def download_from_csv(
         year, conference, save_dir, is_download_main_paper=True,
         is_download_supplement=True, time_step_in_seconds=5,
-        total_paper_number=None, is_workshops=False, downloader='IDM'):
+        total_paper_number=None, is_workshops=False, downloader='IDM',
+        proxy_ip_port=None):
     """
     download all CVF paper and supplement files given year, restore in
     save_dir/main_paper and save_dir/supplement
@@ -177,7 +189,10 @@ def download_from_csv(
         download
     :param is_workshops: bool, is to download workshops from csv file.
     :param downloader: str, the downloader to download, could be 'IDM' or
-        'Thunder', default to 'IDM'.
+        None, default to 'IDM'.
+    :param proxy_ip_port: str or None, proxy server ip address with or without
+        protocol prefix, eg: "127.0.0.1:7890", "http://127.0.0.1:7890".
+        Default: None
     :return: True
     """
     project_root_folder = os.path.abspath(
@@ -199,7 +214,8 @@ def download_from_csv(
         is_download_supplement=is_download_supplement,
         time_step_in_seconds=time_step_in_seconds,
         total_paper_number=total_paper_number,
-        downloader=downloader
+        downloader=downloader,
+
     )
     return True
 
@@ -208,7 +224,7 @@ def download_paper(
         year, conference, save_dir, is_download_main_paper=True,
         is_download_supplement=True, time_step_in_seconds=5,
         is_download_main_conference=True, is_download_workshops=True,
-        downloader='IDM'):
+        downloader='IDM', proxy_ip_port=None):
     """
     download all CVF papers in given year, support downloading main conference
     and workshops.
@@ -230,7 +246,10 @@ def download_paper(
     :param is_download_workshops: bool, True for downloading workshops paper
         and is similar with is_download_main_conference.
     :param downloader: str, the downloader to download, could be 'IDM' or
-        'Thunder', default to 'IDM'.
+        None, default to 'IDM'.
+    :param proxy_ip_port: str or None, proxy server ip address with or without
+        protocol prefix, eg: "127.0.0.1:7890", "http://127.0.0.1:7890".
+        Default: None
     :return:
     """
     project_root_folder = os.path.abspath(
@@ -240,7 +259,8 @@ def download_paper(
         csv_file_path = os.path.join(
             project_root_folder, 'csv', f'{conference}_{year}.csv')
         if not os.path.exists(csv_file_path):
-            total_paper_number = save_csv(year=year, conference=conference)
+            total_paper_number = save_csv(
+                year=year, conference=conference, proxy_ip_port=proxy_ip_port)
         else:
             with open(csv_file_path, newline='') as csvfile:
                 myreader = csv.DictReader(csvfile, delimiter=',')
@@ -255,7 +275,8 @@ def download_paper(
             time_step_in_seconds=time_step_in_seconds,
             total_paper_number=total_paper_number,
             is_workshops=False,
-            downloader=downloader
+            downloader=downloader,
+            proxy_ip_port=proxy_ip_port
         )
 
     # workshops
@@ -264,7 +285,7 @@ def download_paper(
             project_root_folder, 'csv', f'{conference}_WS_{year}.csv')
         if not os.path.exists(csv_file_path):
             total_paper_number = save_csv_workshops(
-                year=year, conference=conference)
+                year=year, conference=conference, proxy_ip_port=proxy_ip_port)
         else:
             with open(csv_file_path, newline='') as csvfile:
                 myreader = csv.DictReader(csvfile, delimiter=',')
@@ -278,23 +299,25 @@ def download_paper(
             time_step_in_seconds=time_step_in_seconds,
             total_paper_number=total_paper_number,
             is_workshops=True,
-            downloader=downloader
+            downloader=downloader,
+            proxy_ip_port=proxy_ip_port
         )
 
 
 if __name__ == '__main__':
-    year = 2024
-    conference = 'WACV'
-    download_paper(
-        year,
-        conference=conference,
-        save_dir=fr'E:\{conference}',
-        is_download_main_paper=True,
-        is_download_supplement=True,
-        time_step_in_seconds=5,
-        is_download_main_conference=True,
-        is_download_workshops=True
-    )
+    # year = 2024
+    # conference = 'CVPR'
+    # download_paper(
+    #     year,
+    #     conference=conference,
+    #     save_dir=fr'E:\{conference}',
+    #     is_download_main_paper=True,
+    #     is_download_supplement=True,
+    #     time_step_in_seconds=10,
+    #     is_download_main_conference=True,
+    #     is_download_workshops=True,
+    #     # proxy_ip_port='127.0.0.1:7897'
+    # )
     #
     # move_main_and_supplement_2_one_directory(
     #     main_path=rf'E:\{conference}\{conference}_{year}\main_paper',
@@ -306,4 +329,16 @@ if __name__ == '__main__':
     #     supplement_path=rf'E:\{conference}\{conference}_WS_{year}\supplement',
     #     supp_pdf_save_path=rf'E:\{conference}\{conference}_WS_{year}\main_paper'
     # )
+
+    # rename to short filename for uploading to 123pan
+    # rename_2_short_name(
+    #     src_path=r'E:\CVPR\CVPR_2024\main_paper',
+    #     save_path=r'E:\short_name_cvpr2024',
+    #     target_max_length=128
+    # )
+    rename_2_short_name_within_group(
+        src_path=r'E:\CVPR\CVPR_WS_2024\main_paper',
+        save_path=r'E:\short_name_cvpr2024_ws',
+        target_max_length=128
+    )
     pass
