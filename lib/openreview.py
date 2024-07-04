@@ -27,9 +27,10 @@ from lib.arxiv import get_pdf_link_from_arxiv
 
 
 def __download_papers_given_divs(driver, divs, save_dir, paper_postfix,
-                                 time_step_in_seconds=10, downloader='IDM'):
+                                 time_step_in_seconds=10, downloader='IDM',
+                                 proxy_ip_port=None):
     error_log = []
-    downloader = Downloader(downloader=downloader)
+    downloader = Downloader(downloader=downloader, proxy_ip_port=proxy_ip_port)
 
     titles = [d.text for d in divs]
     valid_divs = []
@@ -101,7 +102,8 @@ def __get_into_pages_given_number(driver, page_number, pages, wait_fn,
 
 def download_nips_papers_given_url(
         save_dir, year, base_url, conference='NIPS', start_page=1,
-        time_step_in_seconds=10, download_groups='all', downloader='IDM'):
+        time_step_in_seconds=10, download_groups='all', downloader='IDM',
+        proxy_ip_port=None):
     """
     download NeurIPS papers from the given web url.
     :param save_dir: str, paper save path
@@ -117,7 +119,12 @@ def download_nips_papers_given_url(
     :param groups: group name, such as 'oral', 'spotlight', 'poster'.
         Default: 'all'.
     :type download_groups: str | list[str]
-    :param downloader: str, the downloader to download, could be 'IDM' or 'Thunder', default to 'IDM'
+    :param downloader: str, the downloader to download, could be 'IDM' or None,
+        default to 'IDM'
+    :param proxy_ip_port: str or None, proxy server ip address with or without
+        protocol prefix, eg: "127.0.0.1:7890", "http://127.0.0.1:7890".
+        (only useful for None|"request" downloader and webdriver)
+        Default: None
     :return:
     """
     if year < 2023:
@@ -155,7 +162,13 @@ def download_nips_papers_given_url(
     paper_postfix = f'{conference}_{year}'
     error_log = []
     # driver = webdriver.Chrome(driver_path)
-    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
+    capabilities = webdriver.DesiredCapabilities.CHROME
+    if proxy_ip_port is not None:
+        proxy = get_proxy(proxy_ip_port)
+        proxy.add_to_capabilities(capabilities)
+    driver = webdriver.Chrome(
+        service=Service(ChromeDriverManager().install()),
+        desired_capabilities=capabilities)
     driver.get(base_url)
 
     if not os.path.exists(save_dir):
@@ -282,7 +295,8 @@ def download_nips_papers_given_url(
                 save_dir=group_save_dir,
                 paper_postfix=paper_postfix,
                 time_step_in_seconds=time_step_in_seconds,
-                downloader=downloader
+                downloader=downloader,
+                proxy_ip_port=proxy_ip_port
             )
             for e in this_error_log:
                 error_log.append(e)
@@ -341,7 +355,8 @@ def download_iclr_papers_given_url_and_group_id(
     :param downloader: str, the downloader to download, could be 'IDM' or
         'Thunder'. Default: 'IDM'
     :param proxy_ip_port: str or None, proxy ip address and port, eg.
-        eg: "127.0.0.1:7890". Default: None.
+        eg: "127.0.0.1:7890".  Only useful for webdriver and request
+        downloader (downloader=None). Default: None.
     :type proxy_ip_port: str | None
     :param is_have_pages: bool, is there pages in webpage. Default:
         True.
@@ -461,7 +476,7 @@ def download_iclr_papers_given_url_and_group_id(
         while current_page <= total_pages_number:
             if page is None:
                 break
-            print(f'downloading papers in page: {current_page}')
+            print(f'downloading {group_id} papers in page: {current_page}')
             mywait(driver)
 
             divs = driver.find_element(By.ID, group_id). \
@@ -500,7 +515,8 @@ def download_iclr_papers_given_url_and_group_id(
                 save_dir=save_dir,
                 paper_postfix=paper_postfix,
                 time_step_in_seconds=time_step_in_seconds,
-                downloader=downloader
+                downloader=downloader,
+                proxy_ip_port=proxy_ip_port
             )
             for e in this_error_log:
                 error_log.append(e)
@@ -551,7 +567,8 @@ def download_iclr_papers_given_url_and_group_id(
                 save_dir=save_dir,
                 paper_postfix=paper_postfix,
                 time_step_in_seconds=time_step_in_seconds,
-                downloader=downloader
+                downloader=downloader,
+                proxy_ip_port=proxy_ip_port
             )
             for e in this_error_log:
                 error_log.append(e)
@@ -589,7 +606,8 @@ def download_icml_papers_given_url_and_group_id(
     :param downloader: str, the downloader to download, could be 'IDM' or
         'Thunder'. Default: 'IDM'
     :param proxy_ip_port: str or None, proxy ip address and port, eg.
-        eg: "127.0.0.1:7890". Default: None.
+        eg: "127.0.0.1:7890". Only useful for webdriver and request
+        downloader (downloader=None). Default: None.
     :type proxy_ip_port: str | None
     :return:
     """
@@ -697,7 +715,7 @@ def download_icml_papers_given_url_and_group_id(
     while current_page <= total_pages_number:
         if page is None:
             break
-        print(f'downloading papers in page: {current_page}')
+        print(f'downloading {group_id} papers in page: {current_page}')
 
         divs = driver.find_elements(
             By.XPATH, f'''//*[@id='{aria_controls}']/div/div/ul/li''')
@@ -735,7 +753,8 @@ def download_icml_papers_given_url_and_group_id(
             save_dir=save_dir,
             paper_postfix=paper_postfix,
             time_step_in_seconds=time_step_in_seconds,
-            downloader=downloader
+            downloader=downloader,
+            proxy_ip_port=proxy_ip_port
         )
         for e in this_error_log:
             error_log.append(e)

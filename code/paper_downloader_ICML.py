@@ -18,7 +18,8 @@ from lib.my_request import urlopen_with_retry
 
 
 def download_paper(year, save_dir, is_download_supplement=True,
-                   time_step_in_seconds=5, downloader='IDM', source='pmlr'):
+                   time_step_in_seconds=5, downloader='IDM', source='pmlr',
+                   proxy_ip_port=None):
     """
     download all ICML paper and supplement files given year, restore in
         save_dir/main_paper and save_dir/supplement
@@ -32,13 +33,16 @@ def download_paper(year, save_dir, is_download_supplement=True,
     :param downloader: str, the downloader to download, could be 'IDM' or
         'Thunder', default to 'IDM'
     :param source: str, source website, 'pmlr' or 'openreview'
+    :param proxy_ip_port: str or None, proxy ip address and port, eg.
+        eg: "127.0.0.1:7890". Default: None.
+    :type proxy_ip_port: str | None
     :return: True
     """
     assert source in ['pmlr', 'openreview'], \
         f'only support source pmlr or openreview, but get {source}'
     project_root_folder = os.path.abspath(
         os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    downloader = Downloader(downloader=downloader)
+    downloader = Downloader(downloader=downloader, proxy_ip_port=proxy_ip_port)
     ICML_year_dict = {
         2023: 202,
         2022: 162,
@@ -87,7 +91,10 @@ def download_paper(year, save_dir, is_download_supplement=True,
             base_url=init_url,
             group_id=group_id,
             start_page=1,
-            time_step_in_seconds=time_step_in_seconds)
+            time_step_in_seconds=time_step_in_seconds,
+            downloader=downloader.downloader,
+            proxy_ip_port=proxy_ip_port
+        )
         # poster paper
         group_id = 'poster'
         save_dir_poster = os.path.join(save_dir, group_id)
@@ -98,7 +105,27 @@ def download_paper(year, save_dir, is_download_supplement=True,
             base_url=init_url,
             group_id=group_id,
             start_page=1,
-            time_step_in_seconds=time_step_in_seconds)
+            time_step_in_seconds=time_step_in_seconds,
+            downloader=downloader.downloader,
+            proxy_ip_port=proxy_ip_port
+        )
+        # spotlight paper
+        group_id = 'spotlight'
+        save_dir_poster = os.path.join(save_dir, group_id)
+        os.makedirs(save_dir_poster, exist_ok=True)
+        try:
+            download_icml_papers_given_url_and_group_id(
+                save_dir=os.path.join(save_dir, 'spotlight'),
+                year=year,
+                base_url=init_url,
+                group_id=group_id,
+                start_page=1,
+                time_step_in_seconds=time_step_in_seconds,
+                downloader=downloader.downloader,
+                proxy_ip_port=proxy_ip_port
+            )
+        except ValueError as e:  # no spotlight paper
+            print(f"WARNING: {str(e)}")
         return
 
     dat_file_pathname = os.path.join(
@@ -391,10 +418,10 @@ def rename_downloaded_paper(year, source_path):
 
 
 if __name__ == '__main__':
-    year = 2023
+    year = 2024
     download_paper(
         year,
-        rf'D:\ICML_{year}',
+        rf'E:\ICML_{year}',
         is_download_supplement=True,
         time_step_in_seconds=5,
         downloader='IDM',
