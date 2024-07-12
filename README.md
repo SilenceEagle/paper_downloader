@@ -7,7 +7,7 @@ website, such as **AAAI**, **AISTATS**, **COLT**, **CORL**, **CVPR**, **ECCV**,
 
 ---
 
-The number of papers that could be downloaded using this repo (with Aliyundrive share link and `access code`):
+The number of papers that could be downloaded using this repo (with Aliyundrive share link and `access code` or 123Pan share link):
 
 
 
@@ -84,7 +84,7 @@ NOTE: all the shared papers' pdf files are collected from network, and the origi
 ****
 ## Usage
 **For example: download AAAI-2022 papers**
-1. Install [Internet Downloader Manager/IDM](https://www.internetdownloadmanager.com/) [Windows Specific][OPTIONAL]
+1. Install [Internet Downloader Manager/IDM](https://www.internetdownloadmanager.com/) [*Windows Only*] [*OPTIONAL*]
 
 **Note:** If the IDM is NOT installed at the DEFAULT location, then the 
    code in [lib/IDM.py](./lib/IDM.py) should also be modified:
@@ -124,3 +124,7 @@ python code/paper_downloader_AAAI.py  # download AAAI papers
 **This repo also provides the function to process supplemental material:**
 1. Merge the main supplemental material pdf file and the main paper into one single pdf file;
 2. Move the supplemental material pdf files (extracted from the downloaded zip files if presented) into the main papers' folder.
+
+
+## Star history
+[![Star History Chart](https://api.star-history.com/svg?repos=SilenceEagle/paper_downloader&type=Date)](https://star-history.com/#SilenceEagle/paper_downloader&Date)
