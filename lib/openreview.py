@@ -127,6 +127,8 @@ def download_nips_papers_given_url(
         Default: None
     :return:
     """
+    project_root_folder = os.path.abspath(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     if year < 2023:
         sub_xpath = '''id="accepted-papers"'''
     else:
@@ -322,7 +324,10 @@ def download_nips_papers_given_url(
     driver.quit()
     # 2. write error log
     print('write error log')
-    with open('..\\log\\download_err_log.txt', 'w') as f:
+    log_file_pathname = os.path.join(
+        project_root_folder, 'log', 'download_err_log.txt'
+    )
+    with open(log_file_pathname, 'w') as f:
         for log in tqdm(error_log):
             for e in log:
                 f.write(e)
@@ -368,6 +373,8 @@ def download_iclr_papers_given_url_and_group_id(
     :type is_need_click_group_button: bool
     :return:
     """
+    project_root_folder = os.path.abspath(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     def _get_pages_xpath(year):
         if year <= 2023:
             xpath = f'''//*[@id="{group_id}"]/nav/ul/li'''
@@ -576,7 +583,10 @@ def download_iclr_papers_given_url_and_group_id(
     driver.quit()
     # 2. write error log
     print('write error log')
-    with open('..\\log\\download_err_log.txt', 'w') as f:
+    log_file_pathname = os.path.join(
+        project_root_folder, 'log', 'download_err_log.txt'
+    )
+    with open(log_file_pathname, 'w') as f:
         for log in tqdm(error_log):
             for e in log:
                 f.write(e)
@@ -611,6 +621,8 @@ def download_icml_papers_given_url_and_group_id(
     :type proxy_ip_port: str | None
     :return:
     """
+    project_root_folder = os.path.abspath(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     def mywait(driver, aria_controls=None):
         # wait for the select element to become visible
         # print('Starting web driver wait...')
@@ -775,7 +787,10 @@ def download_icml_papers_given_url_and_group_id(
     driver.quit()
     # 2. write error log
     print('write error log')
-    with open('..\\log\\download_err_log.txt', 'w') as f:
+    log_file_pathname = os.path.join(
+        project_root_folder, 'log', 'download_err_log.txt'
+    )
+    with open(log_file_pathname, 'w') as f:
         for log in tqdm(error_log):
             for e in log:
                 f.write(e)

@@ -45,6 +45,8 @@ def download_from_csv(
             no limitation. Default: 128.
     :return: True
     """
+    project_root_folder = os.path.abspath(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     downloader = Downloader(
         downloader=downloader, is_random_step=is_random_step,
         proxy_ip_port=proxy_ip_port)
@@ -185,7 +187,10 @@ def download_from_csv(
 
         # 2. write error log
         print('write error log')
-        with open('..\\log\\download_err_log.txt', 'w') as f:
+        log_file_pathname = os.path.join(
+            project_root_folder, 'log', 'download_err_log.txt'
+        )
+        with open(log_file_pathname, 'w') as f:
             for log in tqdm(error_log):
                 for e in log:
                     if e is not None:
