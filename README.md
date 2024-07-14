@@ -1,15 +1,13 @@
 # paper_downloader
 
-Download papers and supplemental materials only from **OPEN ACCESS** paper 
-website, such as **AAAI**, **AISTATS**, **COLT**, **CORL**, **CVPR**, **ECCV**, 
-**ICCV**, **ICLR**, **ICML**, **IJCAI**, **JMLR**, **NIPS**, 
-**RSS**, **WACV**.   
+Download papers and supplemental materials only from **OPEN ACCESS** paper
+website, such as **AAAI**, **AISTATS**, **COLT**, **CORL**, **CVPR**, **ECCV**,
+**ICCV**, **ICLR**, **ICML**, **IJCAI**, **JMLR**, **NIPS**,
+**RSS**, **WACV**.
 
 ---
 
 The number of papers that could be downloaded using this repo (with Aliyundrive share link and `access code` or 123Pan share link):
-
-
 
 <sub>
 <sup>
@@ -66,13 +64,12 @@ The number of papers that could be downloaded using this repo (with Aliyundrive 
 | **2021/v22** |  [1961](https://www.aliyundrive.com/s/cdeGciNZch8)`b69m`   |                                                      --                                                      | [845](https://www.aliyundrive.com/s/3hbAhxYFHER)`93ig` | [140](https://www.aliyundrive.com/s/gwhdNT1vGDD)`96ln` |              166              |                          1660+[517](https://www.aliyundrive.com/s/ziBfXVKPXSY)`le14`                           |                           --                            | [1612](https://www.aliyundrive.com/s/ME21PfkyAec)`99uu`+[465](https://www.aliyundrive.com/s/ZahPmXSn9an)`16es` |     [860](https://www.aliyundrive.com/s/wGos6n5R93v)`ef43`     | [1183](https://www.aliyundrive.com/s/SYTtH38GiVS)`g8b1` | [723](https://www.aliyundrive.com/s/io3sAjsN5pw)`40is` |             290              | [2334](https://www.aliyundrive.com/s/13sHmhuEdxA)`v6g1` |                          92                           | [406](https://www.aliyundrive.com/s/kTwfaX9tren)`1id9`+[23](https://www.aliyundrive.com/s/7Joy4svvUfy)`90rl` |
 | **2022/v23** |  [1624](https://www.aliyundrive.com/s/ePXvUw4VFdQ)`fp76`   | [279](https://www.aliyundrive.com/s/zCCTJMPrfSr)`47jy`+[25](https://www.aliyundrive.com/s/f4kdMXixwJL)`s7a9` | [492](https://www.aliyundrive.com/s/xj2fRMwZxfC)`f16o` |                          155                           |              197              | [2077](https://www.aliyundrive.com/s/Q8DG9dKbx6S)`i16a`+[562](https://www.aliyundrive.com/s/f9Zx3hFFyq4)`11kj` | [1645](https://www.aliyundrive.com/s/dv4fhuueRHs)`6d7j` |                                                       --                                                       | [54+176+865](https://www.aliyundrive.com/s/gfANcdbM9TC)`b1l3`  | [1234](https://www.aliyundrive.com/s/eopQ5H8Hz2a)`81ov` | [862](https://www.aliyundrive.com/s/DBVKNsqN2UZ)`ea46` |             351              | [2673](https://www.aliyundrive.com/s/VFLmfnzSAsA)`eh49` |                          74                           | [406](https://www.aliyundrive.com/s/xRhdpencLQU)`ab53`+[80](https://www.aliyundrive.com/s/JCCcQXij7WX)`q6d2` |
 | **2023/v24** |                            2021                            |                                                      --                                                      | [496](https://www.aliyundrive.com/s/CD3Kz9cxu1U)`l5m9` |                          170                           |              199              |                                          [2358+698](./sharelinks.md)                                           |                           --                            |                                                    2161+491                                                    | [90+284+1205](https://www.aliyundrive.com/s/PZ1Wann4B8A)`29sf` |                          1805                           |                          846                           |             397              |                       67+378+2773                       |                          112                          | [639](https://www.aliyundrive.com/s/fP52KxJEUE5)`mo78`+[74](https://www.aliyundrive.com/s/XZG992JqQfn)`nj80` |
-| **2024/v25** |                            2581                            |                                                   Dec 12th                                                   |                          547                           |                          170                           |            Nov 9th            |                                                    2716+773                                                    |                         Oct 4th                         |                                                       --                                                       |                          86+369+1810                           |                      144+191+2275                       |                        Aug 9th                         |             167              |                        Det 15th                         |                       Jul 19th                        |                                                   846+120                                                    |
+| **2024/v25** |                            2581                            |                                                   Dec 12th                                                   |                          547                           |                          170                           |            Nov 9th            |                                                    2716+773                                                    |                         Oct 4th                         |                                                       --                                                       |                          86+369+1810                           |                      144+191+2275                       |                        Aug 9th                         |             167              |                        Det 15th                         |                          131                          |                                                   846+120                                                    |
 
 </sup>
 </sub>
 
-
-<!--| **2023/v24** |                                                         
+<!--| **2023/v24** |                                                       
 |                                                                                                                   |                                                             |                                                             |                                                                                                                     |                                                                                                                    |                                                                                                                     |                                                                    |                                                              |                                                             |                              |                                                              |      |                                                                                                             |-->
 
 [Download from 123pan.com](https://www.123pan.com/s/PwXljv-QErwd.html)
@@ -81,13 +78,18 @@ The number of papers that could be downloaded using this repo (with Aliyundrive 
  (May miss some papers due to the 123pan's limitation on the length of filename)
 
 NOTE: all the shared papers' pdf files are collected from network, and the original authors/providers hold the copyrights.
-****
+
+---
+
 ## Usage
+
 **For example: download AAAI-2022 papers**
+
 1. Install [Internet Downloader Manager/IDM](https://www.internetdownloadmanager.com/) [*Windows Only*] [*OPTIONAL*]
 
-**Note:** If the IDM is NOT installed at the DEFAULT location, then the 
+**Note:** If the IDM is NOT installed at the DEFAULT location, then the
    code in [lib/IDM.py](./lib/IDM.py) should also be modified:
+
 ```python
 # should replace with your IDM path
 idm_path = '"your path to IDMan.exe"'  
@@ -97,8 +99,9 @@ idm_path = '"your path to IDMan.exe"'
 
 ```
 
-2. Change the code block at the end of 
-[code/paper_downloader_AAAI.py](./code/paper_downloader_AAAI.py)
+2. Change the code block at the end of
+   [code/paper_downloader_AAAI.py](./code/paper_downloader_AAAI.py)
+
 ```python
 if __name__ == '__main__':
     year = 2022
@@ -115,16 +118,18 @@ if __name__ == '__main__':
 ```
 
 3. Then run the code:
+
 ```python
 python code/paper_downloader_AAAI.py  # download AAAI papers
 ```
 
-****
+---
 
 **This repo also provides the function to process supplemental material:**
+
 1. Merge the main supplemental material pdf file and the main paper into one single pdf file;
 2. Move the supplemental material pdf files (extracted from the downloaded zip files if presented) into the main papers' folder.
 
-
 ## Star history
+
 [![Star History Chart](https://api.star-history.com/svg?repos=SilenceEagle/paper_downloader&type=Date)](https://star-history.com/#SilenceEagle/paper_downloader&Date)

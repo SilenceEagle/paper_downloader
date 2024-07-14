@@ -123,7 +123,12 @@ def move_main_and_supplement_2_one_directory_with_group(main_path, supplement_pa
 
     # 2. write error log
     print('write error log')
-    with open('..\\merge_err_log.txt', 'w') as f:
+    project_root_folder = os.path.abspath(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    log_file_pathname = os.path.join(
+        project_root_folder, 'log', 'merge_err_log.txt'
+    )
+    with open(log_file_pathname, 'w') as f:
         for log in tqdm(error_log):
             for e in log:
                 if e is None:
@@ -213,7 +218,12 @@ def move_main_and_supplement_2_one_directory(main_path, supplement_path, supp_pd
 
     # 2. write error log
     print('write error log')
-    with open('..\\log\\merge_err_log.txt', 'w') as f:
+    project_root_folder = os.path.abspath(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    log_file_pathname = os.path.join(
+        project_root_folder, 'log', 'merge_err_log.txt'
+    )
+    with open(log_file_pathname, 'w') as f:
         for log in tqdm(error_log):
             for e in log:
                 if e is None:
@@ -336,7 +346,12 @@ def merge_main_supplement(main_path, supplement_path, save_path, is_delete_ori_f
 
     # 2. write error log
     print('write error log')
-    with open('..\\log\\merge_err_log.txt', 'w') as f:
+    project_root_folder = os.path.abspath(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    log_file_pathname = os.path.join(
+        project_root_folder, 'log', 'merge_err_log.txt'
+    )
+    with open(log_file_pathname, 'w') as f:
         for log in tqdm(error_log):
             for e in log:
                 if e is None:
