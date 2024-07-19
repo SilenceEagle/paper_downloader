@@ -98,8 +98,11 @@ idm_path = '"your path to IDMan.exe"'
 # idm_path = '"C:\Program Files (x86)\Internet Download Manager\IDMan.exe"'
 
 ```
+2. Install [Chrome](https://www.google.com/chrome) [For `ICLR`, `ICML` papers]
 
-2. Change the code block at the end of
+[Disable the downloading popup pages of IDM would be better](https://github.com/SilenceEagle/paper_downloader/issues/17#issuecomment-773763300)
+
+3. Change the code block at the end of
    [code/paper_downloader_AAAI.py](./code/paper_downloader_AAAI.py)
 
 ```python
@@ -117,7 +120,7 @@ if __name__ == '__main__':
     )
 ```
 
-3. Then run the code:
+4. Then run the code:
 
 ```python
 python code/paper_downloader_AAAI.py  # download AAAI papers
