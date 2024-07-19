@@ -2,7 +2,7 @@ bs4
 tqdm
 python-slugify
 html5lib
-selenium
+selenium==4.9.1
 PyPDF3  # optional
 requests
 webdriver_manager
