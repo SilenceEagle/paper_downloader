@@ -84,7 +84,7 @@ def save_csv(year):
                     content = pickle.load(f)
             else:
                 content = urlopen_with_retry(url=init_urls[0], headers=headers)
-                with open(f'..\\urls\\init_url_IJCAI_{year}.dat', 'wb') as f:
+                with open(data_file_pathname, 'wb') as f:
                     pickle.dump(content, f)
             contents = [content]
         else:
@@ -490,13 +490,14 @@ if __name__ == '__main__':
     #     # time.sleep(2)
     #     download_from_csv(year, save_dir=f'..\\IJCAI_{year}',
     #     time_step_in_seconds=1)
-    year = 2023
+    year = 2024
     # total_paper_number = 723
     total_paper_number = save_csv(year)
     download_from_csv(
         year,
         save_dir=fr'E:\IJCAI_{year}',
         time_step_in_seconds=5,
-        total_paper_number=total_paper_number)
+        total_paper_number=total_paper_number,
+        downloader=None)
 
     pass
