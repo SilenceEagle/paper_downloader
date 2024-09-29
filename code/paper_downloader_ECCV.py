@@ -76,7 +76,7 @@ def save_csv(year):
                                                                  a.get('href'))
                                 paper_dict['main link'] = main_link
                                 is_new_paper = True
-                            elif 'supp' == slugify(a.text.strip())[:4]:
+                            elif 'supp' in slugify(a.text.strip()):
                                 supp_link = urllib.parse.urljoin(init_url,
                                                                  a.get('href'))
                                 paper_dict['supplemental link'] = supp_link
@@ -404,20 +404,20 @@ def __download_from_springer(
 
 
 if __name__ == '__main__':
-    year = 2022
-    # total_paper_number = 1645
+    year = 2024
+    # total_paper_number = 2387
     total_paper_number = save_csv(year)
     download_from_csv(year,
-                      save_dir=f'E:\\ECCV_{year}',
+                      save_dir=fr'Z:\all_papers\ECCV\ECCV_{year}',
                       is_download_supplement=True,
                       time_step_in_seconds=5,
                       total_paper_number=total_paper_number,
                       is_workshops=False)
-    move_main_and_supplement_2_one_directory(
-        main_path=f'E:\\ECCV_{year}\\main_paper',
-        supplement_path=f'E:\\ECCV_{year}\\supplement',
-        supp_pdf_save_path=f'E:\\ECCV_{year}\\main_paper'
-    )
+    # move_main_and_supplement_2_one_directory(
+    #     main_path=f'E:\\ECCV_{year}\\main_paper',
+    #     supplement_path=f'E:\\ECCV_{year}\\supplement',
+    #     supp_pdf_save_path=f'E:\\ECCV_{year}\\main_paper'
+    # )
     # for year in range(2018, 2017, -2):
     #     # download_from_springer(
     #     #     save_dir=f'F:\\ECCV_{year}',
