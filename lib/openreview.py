@@ -25,6 +25,22 @@ import urllib
 from lib.arxiv import get_pdf_link_from_arxiv
 
 
+def get_driver(proxy_ip_port=None):
+    # driver = webdriver.Chrome(driver_path)
+    capabilities = webdriver.DesiredCapabilities.CHROME
+    if proxy_ip_port is not None:
+        proxy = get_proxy(proxy_ip_port)
+        proxy.add_to_capabilities(capabilities)
+    
+    # https://stackoverflow.com/a/78797164
+    chrome_install = ChromeDriverManager().install()
+    folder = os.path.dirname(chrome_install)
+    chromedriver_path = os.path.join(folder, "chromedriver.exe")
+    driver = webdriver.Chrome(
+        service=Service(executable_path=chromedriver_path),
+        desired_capabilities=capabilities)
+    return driver
+
 
 def __download_papers_given_divs(driver, divs, save_dir, paper_postfix,
                                  time_step_in_seconds=10, downloader='IDM',
@@ -45,8 +61,19 @@ def __download_papers_given_divs(driver, divs, save_dir, paper_postfix,
         try:
             a_hrefs = paper.find_elements(By.TAG_NAME, "a")
             name = slugify(a_hrefs[0].text.strip())
-            link = a_hrefs[1].get_attribute('href')
-            link = urllib.parse.urljoin('https://openreview.net', link)
+            if a_hrefs[1].get_attribute('class') == 'pdf-link':
+                # has pdf button
+                link = a_hrefs[1].get_attribute('href')
+                link = urllib.parse.urljoin('https://openreview.net', link)
+            else:
+                # raise ValueError('pdf link not found!')
+                print('\tWarning: pdf link not found, skip this download...')
+                if name is not None:
+                    error_log.append((name, str(index)))
+                else:
+                    error_log.append((str(index), str(index)))
+                continue
+                # TODO: find pdf link in paper abstract page
             if name == '':
                 continue
             is_get_paper = True
@@ -163,14 +190,7 @@ def download_nips_papers_given_url(
 
     paper_postfix = f'{conference}_{year}'
     error_log = []
-    # driver = webdriver.Chrome(driver_path)
-    capabilities = webdriver.DesiredCapabilities.CHROME
-    if proxy_ip_port is not None:
-        proxy = get_proxy(proxy_ip_port)
-        proxy.add_to_capabilities(capabilities)
-    driver = webdriver.Chrome(
-        service=Service(ChromeDriverManager().install()),
-        desired_capabilities=capabilities)
+    driver = get_driver(proxy_ip_port=proxy_ip_port)
     driver.get(base_url)
 
     if not os.path.exists(save_dir):
@@ -413,14 +433,7 @@ def download_iclr_papers_given_url_and_group_id(
 
     paper_postfix = f'{conference}_{year}'
     error_log = []
-    # driver = webdriver.Chrome(driver_path)
-    capabilities = webdriver.DesiredCapabilities.CHROME
-    if proxy_ip_port is not None:
-        proxy = get_proxy(proxy_ip_port)
-        proxy.add_to_capabilities(capabilities)
-    driver = webdriver.Chrome(
-        service=Service(ChromeDriverManager().install()),
-        desired_capabilities=capabilities)
+    driver = get_driver(proxy_ip_port=proxy_ip_port)
     driver.get(base_url)
 
     if not os.path.exists(save_dir):
@@ -652,14 +665,7 @@ def download_icml_papers_given_url_and_group_id(
 
     paper_postfix = f'{conference}_{year}'
     error_log = []
-    # driver = webdriver.Chrome(driver_path)
-    capabilities = webdriver.DesiredCapabilities.CHROME
-    if proxy_ip_port is not None:
-        proxy = get_proxy(proxy_ip_port)
-        proxy.add_to_capabilities(capabilities)
-    driver = webdriver.Chrome(
-        service=Service(ChromeDriverManager().install()),
-        desired_capabilities=capabilities)
+    driver = get_driver(proxy_ip_port=proxy_ip_port)
     driver.get(base_url)
 
     if not os.path.exists(save_dir):
@@ -813,6 +819,259 @@ def get_max_page_number(page_str_list):
             is_find_number = True
     return int(page_str_list[-1])
 
+
+def download_papers_given_url_and_group_id(
+        save_dir, year, base_url, group_id, conference, start_page=1,
+        time_step_in_seconds=10, downloader='IDM', proxy_ip_port=None,
+        is_have_pages=True, is_need_click_group_button=False):
+    """
+    downlaod papers for the given web url and the paper group id
+    :param save_dir: str, paper save path
+    :type save_dir: str
+    :param year: int, iclr year, current only support year >= 2018
+    :type year: int
+    :param base_url: str, paper website url
+    :type base_url: str
+    :param group_id: str, paper group id, such as "notable-top-5-",
+        "notable-top-25-", "poster", "oral-submissions",
+        "spotlight-submissions", "poster-submissions", etc.
+    :type group_id: str
+    :param conference: str, conference name, such as CORL.
+    :param start_page: int, the initial downloading webpage number, only the
+        pages whose number is equal to or greater than this number will be
+        processed. Default: 1
+    :param time_step_in_seconds: int, the interval time between two download
+        request in seconds. Default: 10
+    :param downloader: str, the downloader to download, could be 'IDM' or
+        'Thunder'. Default: 'IDM'
+    :param proxy_ip_port: str or None, proxy ip address and port, eg.
+        eg: "127.0.0.1:7890".  Only useful for webdriver and request
+        downloader (downloader=None). Default: None.
+    :type proxy_ip_port: str | None
+    :param is_have_pages: bool, is there pages in webpage. Default:
+        True.
+    :type is_have_pages: bool
+    :param is_need_click_group_button: bool, is there need to click the
+        group button in webpage. For some years, for example 2018, the
+        navigation part "#xxxxx" in base url will not work. And it should
+        be clicked before reading content from webpage. Default: False.
+    :type is_need_click_group_button: bool
+    :return:
+    """
+    project_root_folder = os.path.abspath(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    def _get_pages_xpath(year):
+        if year <= 2023:
+            xpath = f'''//*[@id="{group_id}"]/nav/ul/li'''
+        else:
+            xpath = f'''//*[@id="{group_id}"]/div/div/nav/ul/li'''
+        return xpath
+
+    def mywait(driver, condition=None):
+        # wait for the select element to become visible
+        # print('Starting web driver wait...')
+        # ignored_exceptions = (NoSuchElementException, 
+        # StaleElementReferenceException,)
+        # wait = WebDriverWait(driver, 20, ignored_exceptions=ignored_exceptions)
+        wait = WebDriverWait(driver, 20)
+        # print('Starting web driver wait... finished')
+        # res = wait.until(EC.presence_of_element_located((By.ID, "notes")))
+        # print("Successful load the website!->", res)
+        # if year <= 2023:
+        #     res = wait.until(
+        #         EC.presence_of_element_located((By.CLASS_NAME, "note")))
+        # print("Successful load the website notes!->", res)
+        # res = wait.until(EC.presence_of_element_located(
+        #     (By.XPATH, f'''//*[@id="{group_id}"]/nav''')))
+        if is_have_pages:
+            # scroll to bottom of page
+            # https://stackoverflow.com/questions/45576958/scrolling-to-top-of-the-page-in-python-using-selenium
+            driver.find_element(By.TAG_NAME, 'body').send_keys(
+                Keys.CONTROL + Keys.END)
+            if year <= 2023:
+                wait.until(EC.element_to_be_clickable(
+                    (By.XPATH, f'{_get_pages_xpath(year)}[3]/a')))
+            else:
+                wait.until(EC.element_to_be_clickable(
+                    (By.XPATH, f'{_get_pages_xpath(year)}[3]/a')))
+            # print("Successful load the website pagination!->", res)
+        time.sleep(2)  # seconds, workaround for bugs
+
+    paper_postfix = f'{conference}_{year}'
+    error_log = []
+    
+    driver = get_driver(proxy_ip_port=proxy_ip_port)
+    driver.get(base_url)
+
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
+
+    if is_need_click_group_button:
+        archive_is_have_pages = is_have_pages
+        is_have_pages = False
+        mywait(driver)
+        aria_controls = base_url.split('#')[-1]
+        # scroll to home of page
+        driver.find_element(By.TAG_NAME, 'body').send_keys(
+            Keys.CONTROL + Keys.HOME)
+        group_button = driver.find_element(
+            By.XPATH, f"""//a[@aria-controls="{aria_controls}"]"""
+        )
+        group_button.click()
+        is_have_pages = archive_is_have_pages
+    mywait(driver)
+    if is_have_pages:
+        pages = driver.find_elements(By.XPATH, _get_pages_xpath(year))
+        current_page = 1
+        ind_page = 2  # 0 << ; 1 <
+        total_pages_number = int(pages[-3].text)
+        # << | < | 1, 2, 3, ... | > | >>
+        last_total_pages = total_pages_number
+        # get into start pages
+        while current_page < start_page:
+            # flip pages until seeing the start page
+            if total_pages_number < start_page:
+                current_page = total_pages_number
+                __get_into_pages_given_number(
+                    driver=driver, page_number=current_page, pages=pages,
+                    wait_fn=mywait)
+                print(f'getting into web page {current_page}...')
+                # res = wait.until(EC.presence_of_element_located(
+                #     (By.XPATH, f'//*[@id="{group_id}"]/ul/li/h4/a')))
+                # res = wait.until(EC.presence_of_element_located(
+                #     (By.XPATH, f'''//*[@id="{group_id}"]/nav''')))
+                mywait(driver)
+
+                # print("Successful load the website pagination!->", res)
+                pages = driver.find_elements(
+                    By.XPATH, _get_pages_xpath(year))
+                total_pages_number = int(pages[-3].text)
+                # total page remain unchanged after reload
+                if total_pages_number == last_total_pages:
+                    print(f'reached last({total_pages_number}-th) webpage')
+                    # when get the last page, but the page number is till
+                    # less than start page, so the start page doesn't exist.
+                    # PRINT ERROR and return
+                    print(f'ERROR: THE {start_page}-th webpage not found!')
+                    return
+            else:
+                current_page = start_page
+
+        page = __get_into_pages_given_number(
+            driver=driver, page_number=current_page, pages=pages, wait_fn=mywait)
+
+        while current_page <= total_pages_number:
+            if page is None:
+                break
+            print(f'downloading {group_id} papers in page: {current_page}')
+            mywait(driver)
+
+            divs = driver.find_element(By.ID, group_id). \
+                find_elements(By.CLASS_NAME, 'note ')
+
+            # temp workaround
+            repeat_times = 3
+            is_find_paper = False
+            for r in range(repeat_times):
+                try:
+                    a_hrefs = divs[0].find_elements(By.TAG_NAME, "a")
+                    name = slugify(a_hrefs[0].text.strip())
+                    link = a_hrefs[1].get_attribute('href')
+                    a_hrefs = divs[-1].find_elements(By.TAG_NAME, "a")
+                    name = slugify(a_hrefs[0].text.strip())
+                    link = a_hrefs[1].get_attribute('href')
+                    is_find_paper = True
+                    break
+                except Exception as e:
+                    if (r + 1) < repeat_times:
+                        print(f'\terror occurre: {str(e.msg)}')
+                        print(f'\tsleep {(r + 1) * 5} seconds...')
+                        time.sleep((r + 1) * 5)
+                        print(f'{r + 1}-th reloading page')
+                        divs = driver.find_element(By.ID, group_id). \
+                            find_elements(By.CLASS_NAME, 'note ')
+                    else:
+                        print('\tskip this page.')
+            if not is_find_paper:
+                continue
+
+            # time.sleep(time_step_in_seconds)
+            this_error_log, this_number_paper = __download_papers_given_divs(
+                driver=driver,
+                divs=divs,
+                save_dir=save_dir,
+                paper_postfix=paper_postfix,
+                time_step_in_seconds=time_step_in_seconds,
+                downloader=downloader,
+                proxy_ip_port=proxy_ip_port
+            )
+            for e in this_error_log:
+                error_log.append(e)
+            # get into next page
+            current_page += 1
+            pages = driver.find_elements(
+                By.XPATH, _get_pages_xpath(year))
+            total_pages_number = int(pages[-3].text)
+            # if we do not reread the pages, all the pages will be not available
+            # with an exception:
+            # selenium.common.exceptions.StaleElementReferenceException:
+            # Message: stale element reference: element is not attached to the
+            # page document
+            page = __get_into_pages_given_number(
+                driver=driver, page_number=current_page, pages=pages,
+                wait_fn=mywait)
+    else:  # no pages
+        divs = driver.find_element(By.ID, group_id). \
+            find_elements(By.CLASS_NAME, 'note ')
+        # temp workaround
+        repeat_times = 3
+        is_find_paper = False
+        for r in range(repeat_times):
+            try:
+                a_hrefs = divs[0].find_elements(By.TAG_NAME, "a")
+                name = slugify(a_hrefs[0].text.strip())
+                link = a_hrefs[1].get_attribute('href')
+                a_hrefs = divs[-1].find_elements(By.TAG_NAME, "a")
+                name = slugify(a_hrefs[0].text.strip())
+                link = a_hrefs[1].get_attribute('href')
+                is_find_paper = True
+                break
+            except Exception as e:
+                if (r + 1) < repeat_times:
+                    print(f'\terror occurre: {str(e.msg)}')
+                    print(f'\tsleep {(r + 1) * 5} seconds...')
+                    time.sleep((r + 1) * 5)
+                    print(f'{r + 1}-th reloading page')
+                    divs = driver.find_element(By.ID, group_id). \
+                        find_elements(By.CLASS_NAME, 'note ')
+                else:
+                    print('\tskipped!!!')
+        if is_find_paper:
+            # time.sleep(time_step_in_seconds)
+            this_error_log, this_number_paper = __download_papers_given_divs(
+                driver=driver,
+                divs=divs,
+                save_dir=save_dir,
+                paper_postfix=paper_postfix,
+                time_step_in_seconds=time_step_in_seconds,
+                downloader=downloader,
+                proxy_ip_port=proxy_ip_port
+            )
+            for e in this_error_log:
+                error_log.append(e)
+
+    driver.quit()
+    # 2. write error log
+    print('write error log')
+    log_file_pathname = os.path.join(
+        project_root_folder, 'log', 'download_err_log.txt'
+    )
+    with open(log_file_pathname, 'w') as f:
+        for log in tqdm(error_log):
+            for e in log:
+                f.write(e)
+                f.write('\n')
+            f.write('\n')
 
 
 
