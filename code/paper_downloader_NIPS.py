@@ -169,7 +169,7 @@ def download_from_csv(
 
 
 if __name__ == '__main__':
-    year = 2023
+    year = 2024
     # total_paper_number = 1899
     # total_paper_number = save_csv(year)
     # download_from_csv(

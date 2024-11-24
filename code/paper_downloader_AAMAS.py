@@ -19,29 +19,10 @@ from lib import csv_process
 from lib.my_request import urlopen_with_retry
 
 
-def get_paper_pdf_link(abs_url):
-    """get paper pdf link in the abstract url.
-       For newest papers that have not been added to 
-       "https://www.roboticsproceedings.org/rss19/index.html"
-
-    Args:
-        abs_url (str): paper abstract page url.
-    """
-    headers = {
-                'User-Agent':
-                    'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:23.0) '
-                    'Gecko/20100101 Firefox/23.0'}
-    content = urlopen_with_retry(url=abs_url, headers=headers)
-    soup = BeautifulSoup(content, 'html5lib')
-    paper_pdf_div = soup.find('div', {'class': 'paper-pdf'})
-    paper_pdf_div = paper_pdf_div.find('a').get('href')
-    return paper_pdf_div
-
-
 def save_csv(year):
     """
     write AAMAS papers' urls in one csv file
-    :param year: int, RSS year, such 2023
+    :param year: int, AAMAS year, such 2023
     :return: peper_index: int, the total number of papers
     """
     conference = "AAMAS"
@@ -123,7 +104,7 @@ def save_csv(year):
 
                     for p in papers:
                         # group title is in <strong>...</strong>
-                        if p.find('strong'):
+                        if p.find('strong', recursive=False):
                             group_title = slugify(p.text)
                             continue
                         paper_dict = {'title': '',
@@ -170,7 +151,10 @@ def save_csv(year):
                                 'main link': '',
                                 'supplemental link': ''}
                     a = p.find('span', {'class': 'title'}).find('a')
-                    title = slugify(a.find(string=True, recursive=False)) # drop abs
+                    # title = slugify(a.find(string=True, recursive=False)) # drop abs
+                    direct_text = ''.join(child for child in a.contents 
+                                          if isinstance(child, str)).strip()
+                    title = slugify(direct_text)
                     main_link = urllib.parse.urljoin(init_url, a.get('href'))
                     paper_dict['title'] = title
                     paper_dict['main link'] = main_link
@@ -287,8 +271,8 @@ def download_from_csv(
         csv_filename=None, downloader='IDM', is_random_step=True,
         proxy_ip_port=None):
     """
-    download all RSS paper given year
-    :param year: int, RSS year, such as 2019
+    download all AAMAS paper given year
+    :param year: int, AAMAS year, such as 2019
     :param save_dir: str, paper and supplement material's save path
     :param time_step_in_seconds: int, the interval time between two download
         request in seconds
@@ -341,7 +325,7 @@ if __name__ == '__main__':
         # total_paper_number = 134
         total_paper_number = save_csv(year)
         download_from_csv(year, save_dir=fr'E:\AAMAS\AAMAS_{year}',
-                          time_step_in_seconds=15,
+                          time_step_in_seconds=10,
                           total_paper_number=total_paper_number)
         time.sleep(2)
 
