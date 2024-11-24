@@ -184,8 +184,12 @@ def download_nips_papers_given_url(
             divs = driver.find_element(By.ID, group_id). \
                 find_elements(By.CLASS_NAME, 'note ')
         else:
-            divs = driver.find_element(By.ID, group_id). \
-                find_elements(By.XPATH, '//*[@class="note  undefined"]')
+            # divs = driver.find_element(By.ID, group_id). \
+            #     find_elements(By.XPATH, '//*[@class="note  undefined"]')
+            divs = driver.find_element(By.ID, group_id).find_elements(
+                By.XPATH, 
+                '//*[contains(@class, "note") and contains(@class, "undefined")]'
+            )
         return divs
 
     paper_postfix = f'{conference}_{year}'
@@ -230,6 +234,7 @@ def download_nips_papers_given_url(
         # https://stackoverflow.com/questions/45576958/scrolling-to-top-of-the-page-in-python-using-selenium
         driver.find_element(By.TAG_NAME, 'body').send_keys(
             Keys.CONTROL + Keys.HOME)
+        time.sleep(0.2)
         accept_group_link.click()
         mywait(driver)
         pages = driver.find_elements(
@@ -300,7 +305,7 @@ def download_nips_papers_given_url(
                     break
                 except Exception as e:
                     if (r + 1) < repeat_times:
-                        print(f'\terror occurre: {str(e.msg)}')
+                        print(f'\terror occurre: {str(e)}')
                         print(f'\tsleep {(r + 1) * 5} seconds...')
                         time.sleep((r + 1) * 5)
                         print(f'{r + 1}-th reloading page')
