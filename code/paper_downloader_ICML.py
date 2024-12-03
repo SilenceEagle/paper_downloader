@@ -44,6 +44,7 @@ def download_paper(year, save_dir, is_download_supplement=True,
         os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     downloader = Downloader(downloader=downloader, proxy_ip_port=proxy_ip_port)
     ICML_year_dict = {
+        2024: 235,
         2023: 202,
         2022: 162,
         2021: 139,
