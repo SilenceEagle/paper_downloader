@@ -305,19 +305,19 @@ def download_paper(
 
 
 if __name__ == '__main__':
-    # year = 2024
-    # conference = 'CVPR'
-    # download_paper(
-    #     year,
-    #     conference=conference,
-    #     save_dir=fr'E:\{conference}',
-    #     is_download_main_paper=True,
-    #     is_download_supplement=True,
-    #     time_step_in_seconds=10,
-    #     is_download_main_conference=True,
-    #     is_download_workshops=True,
-    #     # proxy_ip_port='127.0.0.1:7897'
-    # )
+    year = 2024
+    conference = 'ACCV'
+    download_paper(
+        year,
+        conference=conference,
+        save_dir=fr'E:\{conference}',
+        is_download_main_paper=True,
+        is_download_supplement=True,
+        time_step_in_seconds=10,
+        is_download_main_conference=True,
+        is_download_workshops=True,
+        # proxy_ip_port='127.0.0.1:7897'
+    )
     #
     # move_main_and_supplement_2_one_directory(
     #     main_path=rf'E:\{conference}\{conference}_{year}\main_paper',
@@ -336,9 +336,9 @@ if __name__ == '__main__':
     #     save_path=r'E:\short_name_cvpr2024',
     #     target_max_length=128
     # )
-    rename_2_short_name_within_group(
-        src_path=r'E:\CVPR\CVPR_WS_2024\main_paper',
-        save_path=r'E:\short_name_cvpr2024_ws',
-        target_max_length=128
-    )
+    # rename_2_short_name_within_group(
+    #     src_path=r'E:\CVPR\CVPR_WS_2024\main_paper',
+    #     save_path=r'E:\short_name_cvpr2024_ws',
+    #     target_max_length=128
+    # )
     pass
