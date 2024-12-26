@@ -9,6 +9,7 @@ from bs4 import BeautifulSoup
 from tqdm import tqdm
 from slugify import slugify
 from .my_request import urlopen_with_retry
+import re
 
 
 def get_paper_name_link_from_url(url):
@@ -18,15 +19,29 @@ def get_paper_name_link_from_url(url):
     paper_dict = dict()
     content = urlopen_with_retry(url=url, headers=headers)
     soup = BeautifulSoup(content, 'html5lib')
-    paper_list_bar = tqdm(soup.find_all(['li'], {'class': 'chapter-item content-type-list__item'}))
+    paper_list_bar = tqdm(
+        soup.find('section', {'data-title': 'Table of contents'}).find(
+            'div', {'class': 'c-book-section'}).find_all(
+            ['li'], {'data-test': 'chapter'}))
     for paper in paper_list_bar:
         try:
-            title = slugify(paper.find('div', {'class': 'content-type-list__title'}).text)
-            link = urllib.parse.urljoin(url, paper.find('div', {'class': 'content-type-list__action'}).a.get('href'))
+            title = slugify(
+                paper.find(['h3', 'h4'], {'class': 'app-card-open__heading'}).text)
+            link = urllib.parse.urljoin(
+                url, 
+                paper.find(
+                    ['h3', 'h4'], {'class': 'app-card-open__heading'}
+                    ).a.get('href'))
+            # 'https://link.springer.com/chapter/10.1007/978-3-642-33718-5_2' 
+            # >>
+            # 'https://link.springer.com/content/pdf/10.1007/978-3-642-33718-5_2.pdf'
+            link = f'''{link.replace('/chapter/', '/content/pdf/')}.pdf'''
             paper_dict[title] = link
         except Exception as e:
             print(f'ERROR: {str(e)}')
     return paper_dict
+
+
 
 
 if __name__ == '__main__':
