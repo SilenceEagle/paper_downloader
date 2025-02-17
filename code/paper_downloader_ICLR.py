@@ -22,7 +22,7 @@ def download_iclr_oral_papers(save_dir, year, base_url=None,
                               time_step_in_seconds=10, downloader='IDM',
                               start_page=1, proxy_ip_port=None):
     """
-    Download iclr oral papers for year 2017 ~ 2022, 2024.
+    Download iclr oral papers for year 2017 ~ 2022, 2024~2025.
     :param save_dir: str, paper save path
     :param year: int, iclr year, current only support year >= 2018
     :param base_url: str, paper website url
@@ -35,35 +35,13 @@ def download_iclr_oral_papers(save_dir, year, base_url=None,
         processed. Currently, this parameter is only used in year 2024.
         Default: 1.
     :param proxy_ip_port: str or None, proxy ip address and port, eg.
-        eg: "127.0.0.1:7890". Currently, this parameter is only used in year
-        2024. Default: None.
+        eg: "127.0.0.1:7890". Default: None.
     :type proxy_ip_port: str | None
     :return:
     """
-    if base_url is None:
-        if year == 2013:
-            base_url = 'https://openreview.net/group?id=ICLR.cc/' \
-                       '2013/conference#conferenceoral-iclr2013-conference'
-        elif year == 2017:
-            base_url = 'https://openreview.net/group?id=ICLR.cc/' \
-                       '2017/conference#oral-presentations'
-        elif year == 2018:
-            base_url = 'https://openreview.net/group?id=ICLR.cc/' \
-                       '2018/Conference#accepted-oral-papers'
-        elif 2019 <= year <= 2021:
-            base_url = f'https://openreview.net/group?id=ICLR.cc/' \
-                       f'{year}/Conference#oral-presentations'
-        elif year == 2022:
-            base_url = 'https://openreview.net/group?id=ICLR.cc/' \
-                       '2022/Conference#oral-submissions'
-        elif year == 2024:
-            base_url = 'https://openreview.net/group?id=ICLR.cc/' \
-                       '2024/Conference#tab-accept-oral'
-        else:
-            raise ValueError('the website url is not given for this year!')
-    print(f'Downloading ICLR-{year} oral papers...')
     group_id_dict = {
-        2024: "accept-oral",
+        2025: "tab-accept-oral",
+        2024: "tab-accept-oral",
         2022: "oral-submissions",
         2021: "oral-presentations",
         2020: "oral-presentations",
@@ -72,7 +50,16 @@ def download_iclr_oral_papers(save_dir, year, base_url=None,
         2017: "oral-presentations",
         2013: "conferenceoral-iclr2013-conference"
     }
-    group_id = group_id_dict[year]
+    
+    if base_url is None:
+        if year in group_id_dict:
+            base_url = 'https://openreview.net/group?id=ICLR.cc/' \
+                f'{year}/Conference#{group_id_dict[year]}'
+        else:
+            raise ValueError('the website url is not given for this year!')
+        
+    print(f'Downloading ICLR-{year} oral papers...')
+    group_id = group_id_dict[year].replace('tab-', '')
     download_iclr_papers_given_url_and_group_id(
         save_dir=save_dir,
         year=year,
@@ -83,6 +70,52 @@ def download_iclr_oral_papers(save_dir, year, base_url=None,
         downloader=downloader,
         proxy_ip_port=proxy_ip_port,
         is_have_pages=(year > 2021)
+    )
+
+
+def download_iclr_conditional_oral_papers(save_dir, year, base_url=None,
+                              time_step_in_seconds=10, downloader='IDM',
+                              start_page=1, proxy_ip_port=None):
+    """
+    Download iclr conditional oral papers for year 2025.
+    :param save_dir: str, paper save path
+    :param year: int, iclr year, current only support year >= 2018
+    :param base_url: str, paper website url
+    :param time_step_in_seconds: int, the interval time between two download
+        request in seconds.
+    :param downloader: str, the downloader to download, could be 'IDM' or
+        None, default to 'IDM'.
+    :param start_page: int, the initial downloading webpage number, only the
+        pages whose number is equal to or greater than this number will be
+        processed. Currently, this parameter is only used in year 2024.
+        Default: 1.
+    :param proxy_ip_port: str or None, proxy ip address and port, eg.
+        eg: "127.0.0.1:7890". Default: None.
+    :type proxy_ip_port: str | None
+    :return:
+    """
+    group_id_dict = {
+        2025: "tab-accept-conditional-oral"
+    }
+    no_pages_year = [2025]
+    if base_url is None:
+        if year in group_id_dict:
+            base_url = 'https://openreview.net/group?id=ICLR.cc/' \
+                f'{year}/Conference#{group_id_dict[year]}'
+        else:
+            raise ValueError('the website url is not given for this year!')
+    print(f'Downloading ICLR-{year} conditional oral papers...')
+    group_id = group_id_dict[year].replace('tab-', '')
+    download_iclr_papers_given_url_and_group_id(
+        save_dir=save_dir,
+        year=year,
+        base_url=base_url,
+        group_id=group_id,
+        start_page=start_page,
+        time_step_in_seconds=time_step_in_seconds,
+        downloader=downloader,
+        proxy_ip_port=proxy_ip_port,
+        is_have_pages=(year not in no_pages_year)
     )
 
 
@@ -148,33 +181,9 @@ def download_iclr_poster_papers(save_dir, year, base_url=None, start_page=1,
     :type proxy_ip_port: str | None
     :return:
     """
-    if base_url is None:
-        if year == 2013:
-            base_url = 'https://openreview.net/group?id=ICLR.cc/' \
-                       '2013/conference#conferenceposter-iclr2013-conference'
-        elif year == 2017:
-            base_url = 'https://openreview.net/group?id=ICLR.cc/' \
-                       '2017/conference#poster-presentations'
-        elif year == 2018:
-            base_url = 'https://openreview.net/group?id=ICLR.cc/' \
-                       '2018/Conference#accepted-poster-papers'
-        elif 2019 <= year <= 2021:
-            base_url = f'https://openreview.net/group?id=ICLR.cc/' \
-                       f'{year}/Conference#poster-presentations'
-        elif year == 2022:
-            base_url = 'https://openreview.net/group?id=ICLR.cc/' \
-                       '2022/Conference#poster-submissions'
-        elif year == 2023:
-            base_url = "https://openreview.net/group?id=ICLR.cc/" \
-                       "2023/Conference#poster"
-        elif year == 2024:
-            base_url = "https://openreview.net/group?id=ICLR.cc/" \
-                       "2024/Conference#tab-accept-poster"
-        else:
-            raise ValueError('the website url is not given for this year!')
-    print(f'Downloading ICLR-{year} poster papers...')
     group_id_dict = {
-        2024: "accept-poster",
+        2025: "tab-accept-poster",
+        2024: "tab-accept-poster",
         2023: "poster",
         2022: "poster-submissions",
         2021: "poster-presentations",
@@ -184,12 +193,19 @@ def download_iclr_poster_papers(save_dir, year, base_url=None, start_page=1,
         2017: "poster-presentations",
         2013: "conferenceposter-iclr2013-conference"
     }
+    if base_url is None:
+        if year in group_id_dict:
+            base_url = 'https://openreview.net/group?id=ICLR.cc/' \
+                f'{year}/Conference#{group_id_dict[year]}'
+        else:
+            raise ValueError('the website url is not given for this year!')
+    print(f'Downloading ICLR-{year} poster papers...')
     no_pages_year = [2013, 2018, 2019, 2020, 2021]
     download_iclr_papers_given_url_and_group_id(
         save_dir=save_dir,
         year=year,
         base_url=base_url,
-        group_id=group_id_dict[year],
+        group_id=group_id_dict[year].replace('tab-', ''),
         start_page=start_page,
         time_step_in_seconds=time_step_in_seconds,
         downloader=downloader,
@@ -199,11 +215,56 @@ def download_iclr_poster_papers(save_dir, year, base_url=None, start_page=1,
     )
 
 
+def download_iclr_conditional_poster_papers(save_dir, year, base_url=None,
+                              time_step_in_seconds=10, downloader='IDM',
+                              start_page=1, proxy_ip_port=None):
+    """
+    Download iclr conditional poster papers for year 2025.
+    :param save_dir: str, paper save path
+    :param year: int, iclr year, current only support year >= 2018
+    :param base_url: str, paper website url
+    :param time_step_in_seconds: int, the interval time between two download
+        request in seconds.
+    :param downloader: str, the downloader to download, could be 'IDM' or
+        None, default to 'IDM'.
+    :param start_page: int, the initial downloading webpage number, only the
+        pages whose number is equal to or greater than this number will be
+        processed. Currently, this parameter is only used in year 2024.
+        Default: 1.
+    :param proxy_ip_port: str or None, proxy ip address and port, eg.
+        eg: "127.0.0.1:7890". Default: None.
+    :type proxy_ip_port: str | None
+    :return:
+    """
+    group_id_dict = {
+        2025: "tab-accept-conditional-poster"
+    }
+    if base_url is None:
+        if year in group_id_dict:
+            base_url = 'https://openreview.net/group?id=ICLR.cc/' \
+                f'{year}/Conference#{group_id_dict[year]}'
+        else:
+            raise ValueError('the website url is not given for this year!')
+    print(f'Downloading ICLR-{year} conditional poster papers...')
+    group_id = group_id_dict[year].replace('tab-', '')
+    download_iclr_papers_given_url_and_group_id(
+        save_dir=save_dir,
+        year=year,
+        base_url=base_url,
+        group_id=group_id,
+        start_page=start_page,
+        time_step_in_seconds=time_step_in_seconds,
+        downloader=downloader,
+        proxy_ip_port=proxy_ip_port,
+        is_have_pages=(year > 2021)
+    )
+
+
 def download_iclr_spotlight_papers(save_dir, year, base_url=None,
                                    time_step_in_seconds=10, downloader='IDM',
                                    start_page=1, proxy_ip_port=None):
     """
-    Download iclr spotlight papers between year 2020 and 2022, 2024.
+    Download iclr spotlight papers between year 2020 and 2022, 2024~2025.
     :param save_dir: str, paper save path
     :param year: int, iclr year, current only support year >= 2018
     :param base_url: str, paper website url
@@ -216,35 +277,75 @@ def download_iclr_spotlight_papers(save_dir, year, base_url=None,
         processed. Currently, this parameter is only used in year 2024.
         Default: 1.
     :param proxy_ip_port: str or None, proxy ip address and port, eg.
-        eg: "127.0.0.1:7890". Currently, this parameter is only used in year
-        2024. Default: None.
+        eg: "127.0.0.1:7890". Default: None.
     :return:
     """
-    if base_url is None:
-        if year == 2024:
-            base_url = 'https://openreview.net/group?id=ICLR.cc/' \
-                       '2024/Conference#tab-accept-spotlight'
-        elif year == 2022:
-            base_url = 'https://openreview.net/group?id=ICLR.cc/' \
-                       '2022/Conference#spotlight-submissions'
-        elif 2020 <= year <= 2021:
-            base_url = f'https://openreview.net/group?id=ICLR.cc/' \
-                       f'{year}/Conference#spotlight-presentations'
-        else:
-            raise ValueError('the website url is not given for this year!')
-    print(f'Downloading ICLR-{year} spotlight papers...')
     group_id_dict = {
-        2024: "accept-spotlight",
+        2025: "tab-accept-spotlight",
+        2024: "tab-accept-spotlight",
         2022: "spotlight-submissions",
         2021: "spotlight-presentations",
         2020: "spotlight-presentations",
     }
+    if base_url is None:
+        if year in group_id_dict:
+            base_url = 'https://openreview.net/group?id=ICLR.cc/' \
+                f'{year}/Conference#{group_id_dict[year]}'
+        else:
+            raise ValueError('the website url is not given for this year!')
+    print(f'Downloading ICLR-{year} spotlight papers...')
     no_pages_year = [2020, 2021]
     download_iclr_papers_given_url_and_group_id(
         save_dir=save_dir,
         year=year,
         base_url=base_url,
-        group_id=group_id_dict[year],
+        group_id=group_id_dict[year].replace('tab-', ''),
+        start_page=start_page,
+        time_step_in_seconds=time_step_in_seconds,
+        downloader=downloader,
+        proxy_ip_port=proxy_ip_port,
+        is_have_pages=(year not in no_pages_year)
+    )
+
+
+def download_iclr_conditional_spotlight_papers(save_dir, year, base_url=None,
+                              time_step_in_seconds=10, downloader='IDM',
+                              start_page=1, proxy_ip_port=None):
+    """
+    Download iclr conditional spotlight papers for year 2025.
+    :param save_dir: str, paper save path
+    :param year: int, iclr year, current only support year >= 2018
+    :param base_url: str, paper website url
+    :param time_step_in_seconds: int, the interval time between two download
+        request in seconds.
+    :param downloader: str, the downloader to download, could be 'IDM' or
+        None, default to 'IDM'.
+    :param start_page: int, the initial downloading webpage number, only the
+        pages whose number is equal to or greater than this number will be
+        processed. Currently, this parameter is only used in year 2024.
+        Default: 1.
+    :param proxy_ip_port: str or None, proxy ip address and port, eg.
+        eg: "127.0.0.1:7890". Default: None.
+    :type proxy_ip_port: str | None
+    :return:
+    """
+    group_id_dict = {
+        2025: "tab-accept-conditional-spotlight"
+    }
+    no_pages_year = [2025]
+    if base_url is None:
+        if year in group_id_dict:
+            base_url = 'https://openreview.net/group?id=ICLR.cc/' \
+                f'{year}/Conference#{group_id_dict[year]}'
+        else:
+            raise ValueError('the website url is not given for this year!')
+    print(f'Downloading ICLR-{year} conditional spotlight papers...')
+    group_id = group_id_dict[year].replace('tab-', '')
+    download_iclr_papers_given_url_and_group_id(
+        save_dir=save_dir,
+        year=year,
+        base_url=base_url,
+        group_id=group_id,
         start_page=start_page,
         time_step_in_seconds=time_step_in_seconds,
         downloader=downloader,
@@ -312,8 +413,7 @@ def download_iclr_paper(save_dir, year, base_url=None,
         processed. Currently, this parameter is only used in year 2024.
         Default: 1.
     :param proxy_ip_port: str or None, proxy ip address and port, eg.
-        eg: "127.0.0.1:7890". Currently, this parameter is only used in year
-        2024. Default: None.
+        eg: "127.0.0.1:7890". Default: None.
     :type proxy_ip_port: str | None
     :return:
     """
@@ -323,26 +423,15 @@ def download_iclr_paper(save_dir, year, base_url=None,
     year_no_group = [2014]
     year_no_group_iclrcc = [2015, 2016]
     year_oral_poster = [2013, 2017, 2018, 2019]
-    year_oral_spotlight_poster = [2020, 2021, 2022, 2024]
+    year_oral_spotlight_poster = [2020, 2021, 2022, 2024, 2025]
     year_top5_top25_poster = [2023]
+    year_oral_spotlight_poster_conditional = [2025]
 
     # no group, openreview website
     if year in year_no_group:
         if base_url is None:
             if year == 2014:
                 base_url = 'https://openreview.net/group?id=ICLR.cc/2014/conference'
-            elif year == 2018:
-                base_url = 'https://openreview.net/group?id=ICLR.cc/' \
-                           '2018/Conference#accepted-oral-papers'
-            elif 2019 <= year <= 2021:
-                base_url = f'https://openreview.net/group?id=ICLR.cc/' \
-                           f'{year}/Conference#oral-presentations'
-            elif year == 2022:
-                base_url = 'https://openreview.net/group?id=ICLR.cc/' \
-                           '2022/Conference#oral-submissions'
-            elif year == 2024:
-                base_url = 'https://openreview.net/group?id=ICLR.cc/' \
-                           '2024/Conference#tab-accept-oral'
             else:
                 raise ValueError('the website url is not given for this year!')
         print(f'Downloading ICLR-{year} oral papers...')
@@ -641,9 +730,20 @@ def download_iclr_paper(save_dir, year, base_url=None,
     # oral openreview
     if year in (year_oral_poster + year_oral_spotlight_poster):
         save_dir_oral = os.path.join(save_dir, 'oral')
-
         download_iclr_oral_papers(
             save_dir_oral,
+            year,
+            time_step_in_seconds=time_step_in_seconds,
+            downloader=downloader,
+            start_page=start_page,
+            proxy_ip_port=proxy_ip_port
+        )
+    
+    # conditional oral openreview
+    if year in (year_oral_spotlight_poster_conditional):
+        save_dir_cond_oral = os.path.join(save_dir, 'conditional-oral')
+        download_iclr_conditional_oral_papers(
+            save_dir_cond_oral,
             year,
             time_step_in_seconds=time_step_in_seconds,
             downloader=downloader,
@@ -663,12 +763,36 @@ def download_iclr_paper(save_dir, year, base_url=None,
             start_page=start_page,
             proxy_ip_port=proxy_ip_port
         )
+    
+    # conditional poster openreview
+    if year in (year_oral_spotlight_poster_conditional):
+        save_dir_cond_poster = os.path.join(save_dir, 'conditional-poster')
+        download_iclr_conditional_poster_papers(
+            save_dir_cond_poster,
+            year,
+            time_step_in_seconds=time_step_in_seconds,
+            downloader=downloader,
+            start_page=start_page,
+            proxy_ip_port=proxy_ip_port
+        )
 
     # spotlight openreview
     if year in year_oral_spotlight_poster:
         save_dir_spotlight = os.path.join(save_dir, 'spotlight')
         download_iclr_spotlight_papers(
             save_dir_spotlight,
+            year,
+            time_step_in_seconds=time_step_in_seconds,
+            downloader=downloader,
+            start_page=start_page,
+            proxy_ip_port=proxy_ip_port
+        )
+
+    # conditional spotlight openreview
+    if year in (year_oral_spotlight_poster_conditional):
+        save_dir_cond_spotlight = os.path.join(save_dir, 'conditional-spotlight')
+        download_iclr_conditional_spotlight_papers(
+            save_dir_cond_spotlight,
             year,
             time_step_in_seconds=time_step_in_seconds,
             downloader=downloader,
@@ -706,7 +830,7 @@ def get_pdf_link_from_openreview(abs_link):
 
 
 if __name__ == '__main__':
-    year = 2023
+    year = 2025
     save_dir_iclr = rf'E:\ICLR_{year}'
     # save_dir_iclr_oral = os.path.join(save_dir_iclr, 'oral')
     # save_dir_iclr_top5 = os.path.join(save_dir_iclr, 'top5')
