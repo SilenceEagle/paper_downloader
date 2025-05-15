@@ -184,7 +184,7 @@ def get_papers_of_track_ojs(track_url):
 def get_papers_of_track(track_url):
     """
     get all the papers' title, belonging track group name and download link.
-    the link should be hosted on https://.aaai.org/
+    the link should be hosted on https://aaai.org/
     Args:
         track_url (str): track url
 
@@ -324,13 +324,13 @@ def download_from_csv(
 
 
 if __name__ == '__main__':
-    year = 2024
-    total_paper_number = 2581
-    # total_paper_number = save_csv(year)
+    year = 2025
+    # total_paper_number = 3028
+    total_paper_number = save_csv(year)
     download_from_csv(
         year,
-        save_dir=fr'E:\AAAI_{year}',
-        time_step_in_seconds=120,
+        save_dir=fr'D:\AAAI_{year}',
+        time_step_in_seconds=15,
         total_paper_number=total_paper_number)
     # for year in range(2012, 2018, 2):
     #     print(year)
