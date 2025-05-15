@@ -25,6 +25,7 @@ def download_paper(year, save_dir, is_download_supplement=True, time_step_in_sec
     :return: True
     """
     AISTATS_year_dict = {
+        2025: 258,
         2024: 238,
         2023: 206,
         2022: 151,
@@ -71,12 +72,12 @@ def download_paper(year, save_dir, is_download_supplement=True, time_step_in_sec
 
 
 if __name__ == '__main__':
-    year = 2024
+    year = 2025
     download_paper(
         year,
-        rf'E:\AISTATS_{year}',
+        rf'D:\AISTATS_{year}',
         is_download_supplement=True,
-        time_step_in_seconds=10,
+        time_step_in_seconds=25,
         downloader='IDM'
     )
     # move_main_and_supplement_2_one_directory(
