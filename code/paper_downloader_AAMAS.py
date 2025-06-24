@@ -73,8 +73,9 @@ def save_csv(year):
                 pickle.dump(content, f)
 
         soup = BeautifulSoup(content, 'html5lib')
+        # soup = BeautifulSoup(content, 'html.parser')
         if year >=  2013:
-            group_list = soup.find_all('tr')[3:]
+            group_list = soup.find('tbody').find_all('tr', recursive=False)[3:]
             # skip "conference title", "Table of Contents" and "Contents table"  
             
             group_list_bar = tqdm(group_list)
@@ -96,7 +97,7 @@ def save_csv(year):
                         continue
                 
                 try:
-                    tds = group.find_all('td')
+                    tds = group.find_all('td', recursive=False)
                     if len(tds) < 2:
                         continue
                     group = tds[1]
@@ -312,21 +313,21 @@ def download_from_csv(
 
 
 if __name__ == '__main__':
-    # year = 2023
+    year = 2025
     # total_paper_number = 2021
-    # total_paper_number = save_csv(year)
-    # download_from_csv(
-    #     year,
-    #     save_dir=fr'E:\AAAI_{year}',
-    #     time_step_in_seconds=5,
-    #     total_paper_number=total_paper_number)
-    for year in range(2008, 2025, 1):
-        print(year)
-        # total_paper_number = 134
-        total_paper_number = save_csv(year)
-        download_from_csv(year, save_dir=fr'E:\AAMAS\AAMAS_{year}',
-                          time_step_in_seconds=10,
-                          total_paper_number=total_paper_number)
-        time.sleep(2)
+    total_paper_number = save_csv(year)
+    download_from_csv(
+        year,
+        save_dir=fr'D:\AAMAS_{year}',
+        time_step_in_seconds=5,
+        total_paper_number=total_paper_number)
+    # for year in range(2008, 2025, 1):
+    #     print(year)
+    #     # total_paper_number = 134
+    #     total_paper_number = save_csv(year)
+    #     download_from_csv(year, save_dir=fr'E:\AAMAS\AAMAS_{year}',
+    #                       time_step_in_seconds=10,
+    #                       total_paper_number=total_paper_number)
+    #     time.sleep(2)
 
     pass
