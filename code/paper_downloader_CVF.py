@@ -305,12 +305,12 @@ def download_paper(
 
 
 if __name__ == '__main__':
-    year = 2024
-    conference = 'ACCV'
+    year = 2025
+    conference = 'CVPR'
     download_paper(
         year,
         conference=conference,
-        save_dir=fr'E:\{conference}',
+        save_dir=fr'D:\{conference}',
         is_download_main_paper=True,
         is_download_supplement=True,
         time_step_in_seconds=10,
