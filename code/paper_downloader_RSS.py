@@ -10,6 +10,7 @@ from tqdm import tqdm
 from slugify import slugify
 import csv
 import sys
+from datetime import datetime
 
 root_folder = os.path.abspath(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -72,7 +73,11 @@ def save_csv(year):
             urllib.request.urlopen(req, timeout=20)
         except HTTPError as e:
             if e.code == 404:  # not added
-                init_url = f'https://roboticsconference.org/{year}/program/papers/'
+                current_year = datetime.now().year
+                if year == current_year:
+                    init_url = f'https://roboticsconference.org/program/papers/'
+                else:
+                    init_url = f'https://roboticsconference.org/{year}/program/papers/'
                 is_from_proceed = False
         url_file_pathname = os.path.join(
             project_root_folder, 'urls', 
@@ -98,12 +103,18 @@ def save_csv(year):
             paper_list = soup.find('table', {'id': 'myTable'}).find_all('tr')
         paper_list_bar = tqdm(paper_list)
         paper_index = 0
-        for paper in paper_list_bar:
+        title_index = 0
+        for i, paper in enumerate(paper_list_bar):
             paper_dict = {'title': '',
                           'main link': '',
                           'supplemental link': ''}
             # get title
             try:
+                if not is_from_proceed and i == 0:
+                    # header
+                    fields = paper.find_all('th')
+                    fields = [f.text.lower() for f in fields]
+                    title_index = fields.index('title')
                 tds = paper.find_all('td')
                 if len(tds) < 2:  # seperator
                     continue
@@ -112,8 +123,8 @@ def save_csv(year):
                     main_link = tds[1].a.get('href')
                     main_link = urllib.parse.urljoin(init_url, main_link)
                 else:
-                    title = slugify(tds[1].a.text)
-                    abs_link = tds[1].a.get('href')
+                    title = slugify(tds[title_index].a.text)
+                    abs_link = tds[title_index].a.get('href')
                     abs_link = urllib.parse.urljoin(init_url, abs_link)
                     main_link = get_paper_pdf_link(abs_link)
                 
@@ -191,21 +202,12 @@ def download_from_csv(
 
 
 if __name__ == '__main__':
-    # year = 2023
-    # total_paper_number = 2021
-    # total_paper_number = save_csv(year)
-    # download_from_csv(
-    #     year,
-    #     save_dir=fr'E:\AAAI_{year}',
-    #     time_step_in_seconds=5,
-    #     total_paper_number=total_paper_number)
-    for year in range(2024, 2025, 1):
-        print(year)
-        # total_paper_number = 134
-        total_paper_number = save_csv(year)
-        download_from_csv(year, save_dir=fr'E:\RSS\RSS_{year}',
-                          time_step_in_seconds=15,
-                          total_paper_number=total_paper_number)
-        time.sleep(2)
+    year = 2025
+    total_paper_number = save_csv(year)
+    # total_paper_number = 134
+    download_from_csv(year, save_dir=fr'E:\RSS\RSS_{year}',
+                        time_step_in_seconds=15,
+                        total_paper_number=total_paper_number)
+    time.sleep(2)
 
     pass
