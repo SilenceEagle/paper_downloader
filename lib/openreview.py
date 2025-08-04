@@ -47,8 +47,25 @@ def __download_papers_given_divs(driver, divs, save_dir, paper_postfix,
                                  proxy_ip_port=None):
     error_log = []
     downloader = Downloader(downloader=downloader, proxy_ip_port=proxy_ip_port)
+    
+    # scroll to top of page
+    # https://stackoverflow.com/questions/45576958/scrolling-to-top-of-the-page-in-python-using-selenium
+    driver.find_element(By.TAG_NAME, 'body').send_keys(
+        Keys.CONTROL + Keys.HOME)
+    time.sleep(0.3)
 
-    titles = [d.text for d in divs]
+    # titles = [d.text for d in divs]
+    titles = []
+    for d in divs:
+        for i in range(3):  # temp workaround
+            try:
+                titles.append(d.text)    
+                break
+            except Exception as e:
+                if i == 2:
+                    print(f'\tget Exception: {str(e.msg)}')
+                time.sleep(0.3)
+                       
     valid_divs = []
     for i, t in enumerate(titles):
         if len(t):
@@ -655,6 +672,11 @@ def download_icml_papers_given_url_and_group_id(
         # print("Successful load the website notes!->", res)
         # res = wait.until(EC.presence_of_element_located(
         #     (By.XPATH, f'''//*[@id="{group_id}"]/nav''')))
+        # scroll to bottom of page
+        # https://stackoverflow.com/questions/45576958/scrolling-to-top-of-the-page-in-python-using-selenium
+        driver.find_element(By.TAG_NAME, 'body').send_keys(
+            Keys.CONTROL + Keys.END)
+        time.sleep(0.3)
         if aria_controls is None:
             wait.until(EC.element_to_be_clickable(
                 (By.XPATH, f'//*[@class="submissions-list"]/nav/ul/li[3]/a''')))
@@ -685,6 +707,10 @@ def download_icml_papers_given_url_and_group_id(
     is_found_group = False
     for li in nav_tap:
         if group_id in li.text.lower():
+            if 'poster' in group_id and 'spotlight' in li.text.lower():
+                # spotlight-poster should be recognized as spotlight rather
+                # than poster
+                continue
             page_link = li.find_element(By.TAG_NAME, "a")
             # scroll to top of page, if not at top, the click action not work
             # https://stackoverflow.com/questions/45576958/scrolling-to-top-of-the-page-in-python-using-selenium

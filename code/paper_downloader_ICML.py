@@ -419,15 +419,15 @@ def rename_downloaded_paper(year, source_path):
 
 
 if __name__ == '__main__':
-    year = 2024
+    year = 2025
     download_paper(
         year,
         rf'E:\ICML_{year}',
         is_download_supplement=True,
-        time_step_in_seconds=5,
+        time_step_in_seconds=10,
         downloader='IDM',
         source='openreview'
-    )
+    ) 
     # merge_main_supplement(main_path=f'..\\ICML_{year}\\main_paper',
     #                       supplement_path=f'..\\ICML_{year}\\supplement',
     #                       save_path=f'..\\ICML_{year}',
