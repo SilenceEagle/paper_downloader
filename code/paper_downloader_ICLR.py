@@ -40,6 +40,7 @@ def download_iclr_oral_papers(save_dir, year, base_url=None,
     :return:
     """
     group_id_dict = {
+        2026: "tab-accept-oral",
         2025: "tab-accept-oral",
         2024: "tab-accept-oral",
         2022: "oral-submissions",
@@ -182,6 +183,7 @@ def download_iclr_poster_papers(save_dir, year, base_url=None, start_page=1,
     :return:
     """
     group_id_dict = {
+        2026: "tab-accept-poster",
         2025: "tab-accept-poster",
         2024: "tab-accept-poster",
         2023: "poster",
@@ -422,7 +424,7 @@ def download_iclr_paper(save_dir, year, base_url=None,
 
     year_no_group = [2014]
     year_no_group_iclrcc = [2015, 2016]
-    year_oral_poster = [2013, 2017, 2018, 2019]
+    year_oral_poster = [2013, 2017, 2018, 2019, 2026]
     year_oral_spotlight_poster = [2020, 2021, 2022, 2024, 2025]
     year_top5_top25_poster = [2023]
     year_oral_spotlight_poster_conditional = [2025]
