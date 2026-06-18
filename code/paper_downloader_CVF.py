@@ -19,7 +19,7 @@ import time
 from lib.my_request import urlopen_with_retry
 
 
-def save_csv(year, conference, proxy_ip_port=None):
+def save_csv(year, conference, proxy_ip_port=None, is_findings=False):
     """
     write CVF conference papers' and supplemental material's urls in one csv file
     :param year: int
@@ -27,6 +27,7 @@ def save_csv(year, conference, proxy_ip_port=None):
     :param proxy_ip_port: str or None, proxy server ip address with or without
         protocol prefix, eg: "127.0.0.1:7890", "http://127.0.0.1:7890".
         Default: None
+    :param is_findings: bool, True for finding papers. New in CVPR 2026.
     :return: True
     """
     project_root_folder = os.path.abspath(
@@ -35,10 +36,12 @@ def save_csv(year, conference, proxy_ip_port=None):
         raise ValueError(f'{conference} is not found in '
                          f'https://openaccess.thecvf.com/menu, '
                          f'maybe a spelling mistake!')
+    if is_findings and not (conference == "CVPR" and year>=2026):
+        raise ValueError(f'ERROR: only CVPR {2026} and laters have finding papers!')
     csv_file_pathname = os.path.join(
-        project_root_folder, 'csv', f'{conference}_{year}.csv'
+        project_root_folder, 'csv', f'{conference}_{year}{"_findings" if is_findings else ""}.csv'
     )
-    print(f'saving {conference}-{year} paper urls into {csv_file_pathname}')
+    print(f'saving {conference}-{year}{"-findings" if is_findings else ""} paper urls into {csv_file_pathname}')
     with open(csv_file_pathname, 'w', newline='') as csvfile:
         fieldnames = ['title', 'main link', 'supplemental link', 'arxiv']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
@@ -48,8 +51,10 @@ def save_csv(year, conference, proxy_ip_port=None):
             init_url = 'https://openaccess.thecvf.com/ICCV2021?day=all'
         elif conference == 'CVPR' and year >= 2022:
             init_url = f'https://openaccess.thecvf.com/CVPR{year}?day=all'
+            if is_findings:
+                init_url = f'https://openaccess.thecvf.com/CVPR{year}_findings?day=all'
         url_file_pathname = os.path.join(
-            project_root_folder, 'urls', f'init_url_{conference}_{year}.dat'
+            project_root_folder, 'urls', f'init_url_{conference}_{year}{"_findings" if is_findings else ""}.dat'
         )
         if os.path.exists(url_file_pathname):
             with open(url_file_pathname, 'rb') as f:
@@ -165,6 +170,8 @@ def save_csv_workshops(year, conference, proxy_ip_port=None):
             paper_index += len(group_paper_dict_list)
             for paper_dict in group_paper_dict_list:
                 writer.writerow(paper_dict)
+                csvfile.flush()
+            time.sleep(10)
     return paper_index
 
 
@@ -172,7 +179,7 @@ def download_from_csv(
         year, conference, save_dir, is_download_main_paper=True,
         is_download_supplement=True, time_step_in_seconds=5,
         total_paper_number=None, is_workshops=False, downloader='IDM',
-        proxy_ip_port=None):
+        proxy_ip_port=None, is_findings=False):
     """
     download all CVF paper and supplement files given year, restore in
     save_dir/main_paper and save_dir/supplement
@@ -193,18 +200,22 @@ def download_from_csv(
     :param proxy_ip_port: str or None, proxy server ip address with or without
         protocol prefix, eg: "127.0.0.1:7890", "http://127.0.0.1:7890".
         Default: None
+    :param is_findings: bool, True for finding papers. New in CVPR 2026.
     :return: True
     """
     project_root_folder = os.path.abspath(
         os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     postfix = f'{conference}_{year}'
+    csv_filename = f'{conference}{'_WS' if is_workshops else ""}_{year}'\
+        f'{"_findings" if is_findings else ""}.csv'
     if is_workshops:
         postfix = f'{conference}_WS_{year}'
+    elif is_findings:
+        postfix = f'{conference}_Findings_{year}'
     csv_file_path = os.path.join(
         project_root_folder,
         'csv',
-        f'{conference}_{year}.csv' if not is_workshops else
-        f'{conference}_WS_{year}.csv'
+        csv_filename
     )
     csv_process.download_from_csv(
         postfix=postfix,
@@ -215,6 +226,7 @@ def download_from_csv(
         time_step_in_seconds=time_step_in_seconds,
         total_paper_number=total_paper_number,
         downloader=downloader,
+        proxy_ip_port=proxy_ip_port
 
     )
     return True
@@ -224,6 +236,7 @@ def download_paper(
         year, conference, save_dir, is_download_main_paper=True,
         is_download_supplement=True, time_step_in_seconds=5,
         is_download_main_conference=True, is_download_workshops=True,
+        is_download_findings=False,
         downloader='IDM', proxy_ip_port=None):
     """
     download all CVF papers in given year, support downloading main conference
@@ -245,6 +258,8 @@ def download_paper(
         conference (vs. workshops) will be downloaded.
     :param is_download_workshops: bool, True for downloading workshops paper
         and is similar with is_download_main_conference.
+    :param is_download_findings: bool, True for downloading finding papers. 
+        Defaults to False.
     :param downloader: str, the downloader to download, could be 'IDM' or
         None, default to 'IDM'.
     :param proxy_ip_port: str or None, proxy server ip address with or without
@@ -303,9 +318,36 @@ def download_paper(
             proxy_ip_port=proxy_ip_port
         )
 
+    # findings (only for CVPR 2026 and later)
+    if is_download_findings:
+        csv_file_path = os.path.join(
+            project_root_folder, 'csv', f'{conference}_{year}_findings.csv')
+        if not os.path.exists(csv_file_path):
+            total_paper_number = save_csv(
+                year=year, conference=conference, proxy_ip_port=proxy_ip_port,
+                is_findings=True)
+        else:
+            with open(csv_file_path, newline='') as csvfile:
+                myreader = csv.DictReader(csvfile, delimiter=',')
+                total_paper_number = sum(1 for row in myreader)
+
+        download_from_csv(
+            year=year,
+            conference=conference,
+            save_dir=os.path.join(save_dir, f'{conference}_findings_{year}'),
+            is_download_main_paper=is_download_main_paper,
+            is_download_supplement=is_download_supplement,
+            time_step_in_seconds=time_step_in_seconds,
+            total_paper_number=total_paper_number,
+            is_workshops=False,
+            is_findings=True,
+            downloader=downloader,
+            proxy_ip_port=proxy_ip_port
+        )
+
 
 if __name__ == '__main__':
-    year = 2025
+    year = 2026
     conference = 'CVPR'
     download_paper(
         year,
@@ -313,9 +355,10 @@ if __name__ == '__main__':
         save_dir=fr'D:\{conference}',
         is_download_main_paper=True,
         is_download_supplement=True,
-        time_step_in_seconds=10,
+        time_step_in_seconds=20,
         is_download_main_conference=True,
         is_download_workshops=True,
+        is_download_findings=True,
         # proxy_ip_port='127.0.0.1:7897'
     )
     #

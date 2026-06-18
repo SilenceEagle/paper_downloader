@@ -37,13 +37,13 @@ def urlopen_with_retry(url, headers=dict(), retry_time=3, time_out=20,
         except HTTPError as e:
             print('The server couldn\'t fulfill the request.')
             print('Error code: ', e.code)
-            s = random.randint(3, 7)
+            s = random.randint(min(3**(r+1), 27), min(7**(r+1), 30))
             print(f'random sleeping {s} seconds and doing {r + 1}/{retry_time}'
                   f'-th retrying...')
         except URLError as e:
             print('We failed to reach a server.')
             print('Reason: ', e.reason)
-            s = random.randint(3, 7)
+            s = random.randint(min(3**(r+1), 27), min(7**(r+1), 30))
             print(f'random sleeping {s} seconds and doing {r + 1}/{retry_time}'
                   f'-th retrying...')
     if raise_error_if_failed:

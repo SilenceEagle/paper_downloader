@@ -33,6 +33,7 @@ def get_driver(proxy_ip_port=None):
         proxy.add_to_capabilities(capabilities)
     
     # https://stackoverflow.com/a/78797164
+    print('Installing chromedriver...')
     chrome_install = ChromeDriverManager().install()
     folder = os.path.dirname(chrome_install)
     chromedriver_path = os.path.join(folder, "chromedriver.exe")
@@ -1070,7 +1071,7 @@ def download_papers_given_url_and_group_id(
                 break
             except Exception as e:
                 if (r + 1) < repeat_times:
-                    print(f'\terror occurre: {str(e.msg)}')
+                    print(f'\terror occurre: {str(e)}')
                     print(f'\tsleep {(r + 1) * 5} seconds...')
                     time.sleep((r + 1) * 5)
                     print(f'{r + 1}-th reloading page')
