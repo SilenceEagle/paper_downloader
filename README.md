@@ -136,4 +136,4 @@ NOTE: all the shared papers' pdf files are collected from network, and the origi
 
 ## Star history
 
-[![Star History Chart](https://api.star-history.com/svg?repos=SilenceEagle/paper_downloader&type=Date)](https://star-history.com/#SilenceEagle/paper_downloader&Date)
+[![Star History Chart](https://star-history.dera.page/svg?repos=SilenceEagle/paper_downloader&type=Date)](https://star-history.dera.page/#SilenceEagle/paper_downloader&Date)
