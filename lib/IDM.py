@@ -23,7 +23,7 @@ def download(urls, save_path, time_sleep_in_seconds=5, is_random_step=True,
     # do not start new downloads after the first Ctrl+C
     if graceful_exit.is_stop_requested():
         return
-    idm_path = '"C:\Program Files (x86)\Internet Download Manager\IDMan.exe"'  # should replace by the local IDM path
+    idm_path = r'"C:\Program Files (x86)\Internet Download Manager\IDMan.exe"'  # should replace by the local IDM path
     basic_command = [idm_path, '/d', 'xxxx', '/p', 'xxx', '/f', 'xxxx', '/n']
     head, tail = os.path.split(save_path)
     if '' != head:

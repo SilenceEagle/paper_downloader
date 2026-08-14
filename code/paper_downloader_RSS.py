@@ -2,6 +2,7 @@
 20240322"""
 import time
 import urllib
+import ssl
 from urllib.error import HTTPError
 from bs4 import BeautifulSoup
 import pickle
@@ -19,6 +20,21 @@ from lib import csv_process
 from lib.my_request import urlopen_with_retry
 
 
+def ssl_context_for(url):
+    """roboticsproceedings.org and roboticsconference.org serve certificates
+    that are missing the Authority Key Identifier extension, which OpenSSL
+    3.x rejects during verification (SSL: CERTIFICATE_VERIFY_FAILED: Missing
+    Authority Key Identifier). Return an unverified SSL context for those
+    hosts only, otherwise None (i.e. the default verified context)."""
+    for host in ('roboticsproceedings.org', 'roboticsconference.org'):
+        if host in url:
+            context = ssl.create_default_context()
+            context.check_hostname = False
+            context.verify_mode = ssl.CERT_NONE
+            return context
+    return None
+
+
 def get_paper_pdf_link(abs_url):
     """get paper pdf link in the abstract url.
        For newest papers that have not been added to 
@@ -31,7 +47,8 @@ def get_paper_pdf_link(abs_url):
                 'User-Agent':
                     'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:23.0) '
                     'Gecko/20100101 Firefox/23.0'}
-    content = urlopen_with_retry(url=abs_url, headers=headers)
+    content = urlopen_with_retry(url=abs_url, headers=headers,
+                                 ssl_context=ssl_context_for(abs_url))
     soup = BeautifulSoup(content, 'html5lib')
     paper_pdf_div = soup.find('div', {'class': 'paper-pdf'})
     if paper_pdf_div is None:
@@ -73,7 +90,8 @@ def save_csv(year):
                     'Gecko/20100101 Firefox/23.0'}
             req = urllib.request.Request(url=init_url, headers=headers)
             print(f'Try to open {init_url}...')
-            urllib.request.urlopen(req, timeout=20)
+            urllib.request.urlopen(req, timeout=20,
+                                   context=ssl_context_for(init_url))
         except HTTPError as e:
             if e.code == 404:  # not added
                 print(f'Not found {init_url}, try to get papers from '
@@ -97,7 +115,9 @@ def save_csv(year):
                 'User-Agent':
                     'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:23.0) '
                     'Gecko/20100101 Firefox/23.0'}
-            content = urlopen_with_retry(url=init_url, headers=headers)
+            content = urlopen_with_retry(
+                url=init_url, headers=headers,
+                ssl_context=ssl_context_for(init_url))
             if content is None:
                 print(f'Failed to open {init_url}, please check your network '
                       f'connection or proxy server setting!')

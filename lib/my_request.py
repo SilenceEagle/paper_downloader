@@ -11,7 +11,8 @@ from lib import graceful_exit
 
 
 def urlopen_with_retry(url, headers=dict(), retry_time=3, time_out=20,
-                       raise_error_if_failed=True, proxy_ip_port=None):
+                       raise_error_if_failed=True, proxy_ip_port=None,
+                       ssl_context=None):
     """
     load content from url with given headers. Retry if error occurs.
     Args:
@@ -24,6 +25,8 @@ def urlopen_with_retry(url, headers=dict(), retry_time=3, time_out=20,
         proxy_ip_port(str|None): proxy server ip address with or without
             protocol prefix, eg: "127.0.0.1:7890", "http://127.0.0.1:7890".
             Default: None
+        ssl_context(ssl.SSLContext|None): custom SSL context. Default: None,
+            which means the default verified context is used.
 
     Returns:
         content(str|None): url content. None will be returned if failed.
@@ -36,7 +39,8 @@ def urlopen_with_retry(url, headers=dict(), retry_time=3, time_out=20,
         if graceful_exit.is_stop_requested():
             raise SystemExit(0)
         try:
-            content = urllib.request.urlopen(req, timeout=time_out).read()
+            content = urllib.request.urlopen(
+                req, timeout=time_out, context=ssl_context).read()
             return content
         except HTTPError as e:
             print('The server couldn\'t fulfill the request.')
