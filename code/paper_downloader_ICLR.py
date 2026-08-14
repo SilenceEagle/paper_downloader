@@ -13,7 +13,7 @@ import sys
 root_folder = os.path.abspath(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.append(root_folder)
-from lib.downloader import Downloader
+from lib.downloader import Downloader, shorten_title
 from lib.openreview import download_iclr_papers_given_url_and_group_id
 from lib.arxiv import get_pdf_link_from_arxiv
 
@@ -507,7 +507,7 @@ def download_iclr_paper(save_dir, year, base_url=None,
                                 os.path.join(save_dir,
                                              title + f'_{paper_postfix}.pdf')):
                             pdf_link = get_pdf_link_from_arxiv(link)
-                            print(f'downloading {title}')
+                            print(f'downloading {shorten_title(title)}')
                             downloader.download(
                                 urls=pdf_link,
                                 save_path=os.path.join(save_dir, pdf_name),
@@ -532,7 +532,7 @@ def download_iclr_paper(save_dir, year, base_url=None,
                         if not os.path.exists(
                                 os.path.join(save_dir, 'ws', pdf_name)):
                             pdf_link = get_pdf_link_from_openreview(link)
-                            print(f'downloading {title}')
+                            print(f'downloading {shorten_title(title)}')
                             downloader.download(
                                 urls=pdf_link,
                                 save_path=os.path.join(save_dir, 'ws',
@@ -557,7 +557,7 @@ def download_iclr_paper(save_dir, year, base_url=None,
                         if not os.path.exists(
                                 os.path.join(save_dir, 'ws', pdf_name)):
                             pdf_link = get_pdf_link_from_openreview(link)
-                            print(f'downloading {title}')
+                            print(f'downloading {shorten_title(title)}')
                             downloader.download(
                                 urls=pdf_link,
                                 save_path=os.path.join(save_dir, 'ws',
@@ -585,7 +585,7 @@ def download_iclr_paper(save_dir, year, base_url=None,
                                 os.path.join(oral_save_path,
                                              title + f'_{paper_postfix}.pdf')):
                             pdf_link = get_pdf_link_from_arxiv(link)
-                            print(f'downloading {title}')
+                            print(f'downloading {shorten_title(title)}')
                             downloader.download(
                                 urls=pdf_link,
                                 save_path=os.path.join(oral_save_path,
@@ -617,7 +617,7 @@ def download_iclr_paper(save_dir, year, base_url=None,
                                 os.path.join(workshop_save_path,
                                              title + f'_{paper_postfix}.pdf')):
                             pdf_link = get_pdf_link_from_arxiv(link)
-                            print(f'downloading {title}')
+                            print(f'downloading {shorten_title(title)}')
                             downloader.download(
                                 urls=pdf_link,
                                 save_path=os.path.join(workshop_save_path,
@@ -643,7 +643,7 @@ def download_iclr_paper(save_dir, year, base_url=None,
                                 os.path.join(poster_save_path,
                                              title + f'_{paper_postfix}.pdf')):
                             pdf_link = get_pdf_link_from_arxiv(link)
-                            print(f'downloading {title}')
+                            print(f'downloading {shorten_title(title)}')
                             downloader.download(
                                 urls=pdf_link,
                                 save_path=os.path.join(poster_save_path,
@@ -666,7 +666,7 @@ def download_iclr_paper(save_dir, year, base_url=None,
                     try:
                         if not os.path.exists(os.path.join(save_dir, pdf_name)):
                             pdf_link = get_pdf_link_from_arxiv(link)
-                            print(f'downloading {title}')
+                            print(f'downloading {shorten_title(title)}')
                             downloader.download(
                                 urls=pdf_link,
                                 save_path=os.path.join(save_dir, pdf_name),
@@ -701,7 +701,7 @@ def download_iclr_paper(save_dir, year, base_url=None,
                         if not os.path.exists(
                                 os.path.join(workshop_save_path, pdf_name)):
                             pdf_link = get_pdf_link_from_arxiv(link)
-                            print(f'downloading {title}')
+                            print(f'downloading {shorten_title(title)}')
                             downloader.download(
                                 urls=pdf_link,
                                 save_path=os.path.join(workshop_save_path,

@@ -13,6 +13,7 @@ root_folder = os.path.abspath(
 sys.path.append(root_folder)
 from lib import csv_process
 from lib.my_request import urlopen_with_retry
+from lib.downloader import shorten_title
 
 
 def save_csv(year):
@@ -130,7 +131,7 @@ def save_csv(year):
                         title = slugify(
                             paper.find('div', {'class': 'title'}).text)
                         pbar.set_description(
-                            f'downloading paper {paper_index}: {title}')
+                            f'downloading paper {paper_index}: {shorten_title(title)}')
                         for a in paper.find(
                                 'div', {'class': 'details'}).find_all('a'):
                             if 'PDF' == a.text:
@@ -161,7 +162,7 @@ def save_csv(year):
                         paper_index += 1
                         title = slugify(paper.text.split('\n')[0])
                         papers_bar.set_description(
-                            f'downloading paper {paper_index}: {title}')
+                            f'downloading paper {paper_index}: {shorten_title(title)}')
                         is_get_link = False
                         for a in all_as:
                             if 'PDF' == a.text:
@@ -198,7 +199,7 @@ def save_csv(year):
                                 paper_index += 1
                                 title = slugify(paper.text.split('\n')[0])
                                 papers_bar.set_description(
-                                    f'downloading paper {paper_index}: {title}')
+                                    f'downloading paper {paper_index}: {shorten_title(title)}')
                                 is_get_link = False
                                 for a in all_as:
                                     if 'PDF' == a.text:
@@ -254,7 +255,7 @@ def save_csv(year):
                                         is_get_link = True
                                         papers_bar.set_description(
                                             f'downloading paper {paper_index}: '
-                                            f'{title}')
+                                            f'{shorten_title(title)}')
                                         break
                                 if is_get_link:
                                     paper_dict = {'title': title,
@@ -285,7 +286,7 @@ def save_csv(year):
                         title = slugify(paper.a.text)
                         link = paper.a.get('href')
                         papers_bar.set_description(
-                            f'downloading paper {paper_index}: {title}')
+                            f'downloading paper {paper_index}: {shorten_title(title)}')
                         paper_dict = {'title': title,
                                       'main link': link,
                                       'group': this_group}
@@ -305,7 +306,7 @@ def save_csv(year):
                         link = base_url + paper.a.get('href')
                         paper_index += 1
                         papers_bar.set_description(
-                            f'downloading paper {paper_index}: {title}')
+                            f'downloading paper {paper_index}: {shorten_title(title)}')
                         paper_dict = {'title': title,
                                       'main link': link,
                                       'group': this_group}
@@ -322,7 +323,7 @@ def save_csv(year):
                         link = paper.a.get('href')
                         paper_index += 1
                         papers_bar.set_description(
-                            f'downloading paper {paper_index}: {title}')
+                            f'downloading paper {paper_index}: {shorten_title(title)}')
                         paper_dict = {'title': title,
                                       'main link': link,
                                       'group': this_group}
@@ -348,7 +349,7 @@ def save_csv(year):
                             if link[-3:] == 'pdf' and '' != title:
                                 paper_index += 1
                                 papers_bar.set_description(
-                                    f'downloading paper {paper_index}: {title}')
+                                    f'downloading paper {paper_index}: {shorten_title(title)}')
                                 paper_dict = {'title': title,
                                               'main link': link,
                                               'group': this_group}
@@ -371,7 +372,7 @@ def save_csv(year):
                             if link[-3:] == 'pdf' and '' != title:
                                 paper_index += 1
                                 papers_bar.set_description(
-                                    f'downloading paper {paper_index}: {title}')
+                                    f'downloading paper {paper_index}: {shorten_title(title)}')
                                 paper_dict = {'title': title,
                                               'main link': link,
                                               'group': this_group}
@@ -399,7 +400,7 @@ def save_csv(year):
                             if link[-3:] == 'pdf' and '' != title:
                                 paper_index += 1
                                 papers_bar.set_description(
-                                    f'downloading paper {paper_index}: {title}')
+                                    f'downloading paper {paper_index}: {shorten_title(title)}')
                                 paper_dict = {'title': title,
                                               'main link': link,
                                               'group': this_group}
@@ -427,7 +428,7 @@ def save_csv(year):
                             if link[-3:] == 'pdf' and '' != title:
                                 paper_index += 1
                                 papers_bar.set_description(
-                                    f'downloading paper {paper_index}: {title}')
+                                    f'downloading paper {paper_index}: {shorten_title(title)}')
                                 paper_dict = {'title': title,
                                               'main link': link,
                                               'group': this_group}

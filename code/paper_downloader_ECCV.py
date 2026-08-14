@@ -15,7 +15,7 @@ sys.path.append(root_folder)
 from lib.supplement_porcess import move_main_and_supplement_2_one_directory
 import lib.springer as springer
 from lib import csv_process
-from lib.downloader import Downloader
+from lib.downloader import Downloader, shorten_title
 from lib.my_request import urlopen_with_retry
 
 
@@ -67,7 +67,7 @@ def save_csv(year):
                         paper_dict['title'] = title
                         paper_index += 1
                         paper_list_bar.set_description_str(
-                            f'Downloading paper {paper_index}: {title}')
+                            f'Downloading paper {paper_index}: {shorten_title(title)}')
                     elif '' != paper_dict['title'] and 'dd' == paper.name:
                         all_as = paper.find_all('a')
                         for a in all_as:
@@ -113,7 +113,7 @@ def save_csv(year):
                         title = slugify(paper.find('strong').text)
                         paper_dict['title'] = title
                         paper_list_bar.set_description_str(
-                            f'Downloading paper {paper_index}: {title}')
+                            f'Downloading paper {paper_index}: {shorten_title(title)}')
                         main_link = paper.find('a').get('href')
                         paper_dict['main link'] = main_link
                         writer.writerow(paper_dict)

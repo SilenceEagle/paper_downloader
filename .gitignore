@@ -166,3 +166,5 @@ log/
 temp_zip
 urls/
 *.txt
+CLAUDE.local.md
+.claude/settings.local.json

@@ -10,7 +10,7 @@ import sys
 root_folder = os.path.abspath(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.append(root_folder)
-from lib.downloader import Downloader
+from lib.downloader import Downloader, shorten_title
 import lib.pmlr as pmlr
 from lib.supplement_porcess import merge_main_supplement
 from lib.openreview import download_icml_papers_given_url_and_group_id
@@ -19,7 +19,7 @@ from lib.my_request import urlopen_with_retry
 
 def download_paper(year, save_dir, is_download_supplement=True,
                    time_step_in_seconds=5, downloader='IDM', source='pmlr',
-                   proxy_ip_port=None):
+                   proxy_ip_port=None, paper_types=None, start_page=1):
     """
     download all ICML paper and supplement files given year, restore in
         save_dir/main_paper and save_dir/supplement
@@ -36,6 +36,13 @@ def download_paper(year, save_dir, is_download_supplement=True,
     :param proxy_ip_port: str or None, proxy ip address and port, eg.
         eg: "127.0.0.1:7890". Default: None.
     :type proxy_ip_port: str | None
+    :param paper_types: str or list[str] or None, which paper groups to
+        download, e.g. 'regular' or ['oral', 'spotlight']. None (default)
+        means all groups of the year. Only effective when source is
+        'openreview'.
+    :param start_page: int, the initial downloading webpage number, e.g. 2
+        to resume from page 2. Default: 1. Only effective when source is
+        'openreview'.
     :return: True
     """
     assert source in ['pmlr', 'openreview'], \
@@ -56,6 +63,12 @@ def download_paper(year, save_dir, is_download_supplement=True,
         2015: 37,
         2014: 32,
         2013: 28
+    }
+    ICML_group_dict = {
+        2026: ['spotlight', 'regular'],
+        2025: ['oral', 'poster', 'spotlight'],
+        2024: ['oral', 'poster', 'spotlight'],
+        2023: ['oral', 'poster']  
     }
     if source == 'openreview':
         init_url = f'https://openreview.net/group?id=ICML.cc/{year}/Conference'
@@ -82,51 +95,38 @@ def download_paper(year, save_dir, is_download_supplement=True,
 
     postfix = f'ICML_{year}'
     if source == 'openreview':  # download from openreview website:
-        # oral paper
-        group_id = 'oral'
-        save_dir_oral = os.path.join(save_dir, group_id)
-        os.makedirs(save_dir_oral, exist_ok=True)
-        download_icml_papers_given_url_and_group_id(
-            save_dir=save_dir_oral,
-            year=year,
-            base_url=init_url,
-            group_id=group_id,
-            start_page=1,
-            time_step_in_seconds=time_step_in_seconds,
-            downloader=downloader.downloader,
-            proxy_ip_port=proxy_ip_port
-        )
-        # poster paper
-        group_id = 'poster'
-        save_dir_poster = os.path.join(save_dir, group_id)
-        os.makedirs(save_dir_poster, exist_ok=True)
-        download_icml_papers_given_url_and_group_id(
-            save_dir=os.path.join(save_dir, 'poster'),
-            year=year,
-            base_url=init_url,
-            group_id=group_id,
-            start_page=1,
-            time_step_in_seconds=time_step_in_seconds,
-            downloader=downloader.downloader,
-            proxy_ip_port=proxy_ip_port
-        )
-        # spotlight paper
-        group_id = 'spotlight'
-        save_dir_poster = os.path.join(save_dir, group_id)
-        os.makedirs(save_dir_poster, exist_ok=True)
-        try:
+        if year not in ICML_group_dict.keys():
+            raise ValueError(f'No OPENREVIEW page for ICML {year}!')
+        valid_groups = ICML_group_dict[year]
+        if paper_types is None:
+            groups_to_download = valid_groups
+        elif isinstance(paper_types, str):
+            groups_to_download = [paper_types]
+        else:
+            groups_to_download = list(paper_types)
+        if start_page < 1:
+            raise ValueError(f'start_page must be >= 1, but get {start_page}')
+        for group_id in groups_to_download:
+            if group_id not in valid_groups:
+                raise ValueError(
+                    f'No "{group_id}" papers for ICML {year}, valid groups: '
+                    f'{valid_groups}')
+            print(f'downloading ICML {year} {group_id} papers...')
+            # do not mutate save_dir, otherwise the second group would be
+            # saved into "save_dir/{first_group}/{second_group}"
+            this_save_dir = os.path.join(save_dir, group_id)
+            os.makedirs(this_save_dir, exist_ok=True)
             download_icml_papers_given_url_and_group_id(
-                save_dir=os.path.join(save_dir, 'spotlight'),
+                save_dir=this_save_dir,
                 year=year,
                 base_url=init_url,
                 group_id=group_id,
-                start_page=1,
+                start_page=start_page,
                 time_step_in_seconds=time_step_in_seconds,
                 downloader=downloader.downloader,
                 proxy_ip_port=proxy_ip_port
             )
-        except ValueError as e:  # no spotlight paper
-            print(f"WARNING: {str(e)}")
+
         return
 
     dat_file_pathname = os.path.join(
@@ -181,7 +181,7 @@ def download_paper(year, save_dir, is_download_supplement=True,
                     f'find paper {paper_index}:{title}')
                 if not os.path.exists(this_paper_main_path) :
                     paper_list_bar.set_description(
-                        f'downloading paper {paper_index}:{title}')
+                        f'downloading paper {paper_index}:{shorten_title(title)}')
                     downloader.download(
                         urls=link,
                         save_path=this_paper_main_path,
@@ -207,7 +207,7 @@ def download_paper(year, save_dir, is_download_supplement=True,
                         f'find paper {paper_index}:{title}')
                     if not os.path.exists(this_paper_main_path) :
                         paper_list_bar.set_description(
-                            f'downloading paper {paper_index}:{title}')
+                            f'downloading paper {paper_index}:{shorten_title(title)}')
                         downloader.download(
                             urls=link,
                             save_path=this_paper_main_path,
@@ -238,7 +238,7 @@ def download_paper(year, save_dir, is_download_supplement=True,
                         f'find paper {paper_index}:{title}')
                     if not os.path.exists(this_paper_main_path):
                         paper_list_bar.set_description(
-                            f'downloading paper {paper_index}:{title}')
+                            f'downloading paper {paper_index}:{shorten_title(title)}')
                         downloader.download(
                             urls=link,
                             save_path=this_paper_main_path,
@@ -263,7 +263,7 @@ def download_paper(year, save_dir, is_download_supplement=True,
                     f'find paper {paper_index}:{title}')
                 if not os.path.exists(this_paper_main_path):
                     paper_list_bar.set_description(
-                        f'downloading paper {paper_index}:{title}')
+                        f'downloading paper {paper_index}:{shorten_title(title)}')
                     downloader.download(
                         urls=link,
                         save_path=this_paper_main_path,
@@ -296,7 +296,7 @@ def download_paper(year, save_dir, is_download_supplement=True,
                                 f'find paper {paper_index}:{title}')
                             if not os.path.exists(this_paper_main_path):
                                 paper_list_bar.set_description(
-                                    f'downloading paper {paper_index}:{title}')
+                                    f'downloading paper {paper_index}:{shorten_title(title)}')
                                 downloader.download(
                                     urls=link,
                                     save_path=this_paper_main_path,
@@ -345,7 +345,7 @@ def download_paper(year, save_dir, is_download_supplement=True,
                                     if link is not None:
                                         paper_list_bar.set_description(
                                             f'downloading paper {paper_index}:'
-                                            f'{title}')
+                                            f'{shorten_title(title)}')
                                         downloader.download(
                                             urls=link,
                                             save_path=this_paper_main_path,
@@ -419,15 +419,23 @@ def rename_downloaded_paper(year, source_path):
 
 
 if __name__ == '__main__':
-    year = 2025
+    year = 2026
     download_paper(
         year,
-        rf'E:\ICML_{year}',
+        rf'D:\ICML_{year}',
         is_download_supplement=True,
-        time_step_in_seconds=10,
-        downloader='IDM',
-        source='openreview'
-    ) 
+        time_step_in_seconds=20,
+        # since 2026-08, OpenReview requires the login/challenge cookies for
+        # all requests, and 'IDM' cannot send cookies (it will get 403).
+        # Use downloader=None (python requests) which forwards the cookies
+        # of the logged-in browser. If the network is unstable, pass
+        # proxy_ip_port, e.g. '127.0.0.1:7897'.
+        downloader=None,
+        source='openreview',
+        proxy_ip_port=None,
+        # paper_types='regular',
+        # start_page=219
+    )
     # merge_main_supplement(main_path=f'..\\ICML_{year}\\main_paper',
     #                       supplement_path=f'..\\ICML_{year}\\supplement',
     #                       save_path=f'..\\ICML_{year}',

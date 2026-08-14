@@ -11,7 +11,7 @@ import sys
 root_folder = os.path.abspath(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.append(root_folder)
-from lib.downloader import Downloader
+from lib.downloader import Downloader, shorten_title
 from lib.my_request import urlopen_with_retry
 
 
@@ -100,7 +100,7 @@ def download_paper(
                 # download paper with IDM
                 if not os.path.exists(this_paper_main_path) and main_link is not None:
                     try:
-                        print('Downloading paper {}/{}: {}'.format(paper[1] + 1, num_download, title))
+                        print('Downloading paper {}/{}: {}'.format(paper[1] + 1, num_download, shorten_title(title)))
                     except:
                         print(title.encode('utf8'))
                     downloader.download(

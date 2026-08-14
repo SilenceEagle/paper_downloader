@@ -6,8 +6,10 @@ from bs4 import BeautifulSoup
 import os
 from tqdm import tqdm
 from slugify import slugify
-from lib.downloader import Downloader
+from lib.downloader import Downloader, shorten_title, \
+    is_valid_downloaded_file
 from .my_request import urlopen_with_retry
+import lib.graceful_exit as graceful_exit
 
 
 def download_paper_given_volume(
@@ -53,17 +55,20 @@ def download_paper_given_volume(
     num_download = len(paper_list)
     pbar = tqdm(zip(paper_list, range(num_download)), total=num_download)
     for paper in pbar:
+        if graceful_exit.is_stop_requested():
+            print('stop requested, stop downloading new papers...')
+            break
         # get title
         this_paper = paper[0]
         title = slugify(this_paper.find_all('p', {'class': 'title'})[0].text)
         try:
             pbar.set_description(
                 f'Downloading {postfix} paper {paper[1] + 1}/{num_download}:'
-                f' {title}')
+                f' {shorten_title(title)}')
         except:
             pbar.set_description(
                 f'''Downloading {postfix} paper {paper[1] + 1}/{num_download}: '''
-                f'''{title.encode('utf8')}''')
+                f'''{shorten_title(title).encode('utf8')}''')
         title_list.append(title)
 
         this_paper_main_path = os.path.join(main_save_path,
@@ -74,11 +79,13 @@ def download_paper_given_volume(
             this_paper_supp_path_no_ext = os.path.join(
                 supplement_save_path, f'{title}_{postfix}_supp.')
 
-            if os.path.exists(this_paper_main_path) and os.path.exists(
-                    this_paper_supp_path):
+            # also re-download suspiciously small files left by previous
+            # failed runs (e.g. error pages)
+            if is_valid_downloaded_file(this_paper_main_path) and \
+                    is_valid_downloaded_file(this_paper_supp_path):
                 continue
         else:
-            if os.path.exists(this_paper_main_path):
+            if is_valid_downloaded_file(this_paper_main_path):
                 continue
 
         # get abstract page url

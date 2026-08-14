@@ -34,6 +34,8 @@ def get_paper_pdf_link(abs_url):
     content = urlopen_with_retry(url=abs_url, headers=headers)
     soup = BeautifulSoup(content, 'html5lib')
     paper_pdf_div = soup.find('div', {'class': 'paper-pdf'})
+    if paper_pdf_div is None:
+        return ""
     paper_pdf_div = paper_pdf_div.find('a').get('href')
     return paper_pdf_div
 
@@ -70,9 +72,12 @@ def save_csv(year):
                     'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:23.0) '
                     'Gecko/20100101 Firefox/23.0'}
             req = urllib.request.Request(url=init_url, headers=headers)
+            print(f'Try to open {init_url}...')
             urllib.request.urlopen(req, timeout=20)
         except HTTPError as e:
             if e.code == 404:  # not added
+                print(f'Not found {init_url}, try to get papers from '
+                      f'"https://roboticsconference.org/"')
                 current_year = datetime.now().year
                 if year == current_year:
                     init_url = f'https://roboticsconference.org/program/papers/'
@@ -93,6 +98,10 @@ def save_csv(year):
                     'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:23.0) '
                     'Gecko/20100101 Firefox/23.0'}
             content = urlopen_with_retry(url=init_url, headers=headers)
+            if content is None:
+                print(f'Failed to open {init_url}, please check your network '
+                      f'connection or proxy server setting!')
+                return
             with open(url_file_pathname, 'wb') as f:
                 pickle.dump(content, f)
 
@@ -128,6 +137,10 @@ def save_csv(year):
                     abs_link = urllib.parse.urljoin(init_url, abs_link)
                     main_link = get_paper_pdf_link(abs_link)
                 
+                if not main_link:
+                    error_log.append(
+                        [f'Warning: Failed to get main link for paper {title}'])
+                    continue
                 paper_dict['title'] = title
                 paper_dict['main link'] = main_link
                 paper_index += 1
@@ -202,7 +215,7 @@ def download_from_csv(
 
 
 if __name__ == '__main__':
-    year = 2025
+    year = 2026
     total_paper_number = save_csv(year)
     # total_paper_number = 134
     download_from_csv(year, save_dir=fr'E:\RSS\RSS_{year}',

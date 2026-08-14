@@ -23,6 +23,7 @@ def download_paper(year, save_dir, is_download_supplement=False, time_step_in_se
     :return: True
     """
     COLT_year_dict = {
+        2026: 336,
         2025: 291,
         2024: 247,
         2023: 195,
@@ -56,12 +57,12 @@ def download_paper(year, save_dir, is_download_supplement=False, time_step_in_se
 
 
 if __name__ == '__main__':
-    year = 2025
+    year = 2026
     download_paper(
         year,
         rf'D:\COLT_{year}',
         is_download_supplement=False,
-        time_step_in_seconds=3,
+        time_step_in_seconds=15,
         downloader='IDM'
     )
     pass

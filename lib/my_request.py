@@ -7,6 +7,7 @@ import urllib
 import random
 from urllib.error import URLError, HTTPError
 from lib.proxy import set_proxy_4_urllib_request
+from lib import graceful_exit
 
 
 def urlopen_with_retry(url, headers=dict(), retry_time=3, time_out=20,
@@ -31,6 +32,9 @@ def urlopen_with_retry(url, headers=dict(), retry_time=3, time_out=20,
     set_proxy_4_urllib_request(proxy_ip_port)
     req = urllib.request.Request(url=url, headers=headers)
     for r in range(retry_time):
+        # stop retrying after the first Ctrl+C
+        if graceful_exit.is_stop_requested():
+            raise SystemExit(0)
         try:
             content = urllib.request.urlopen(req, timeout=time_out).read()
             return content
